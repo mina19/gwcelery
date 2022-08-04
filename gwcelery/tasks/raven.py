@@ -414,3 +414,43 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
     for message in messages:
         gracedb.upload.si(None, None, superevent_id, message,
                           tags=['ext_coinc']).delay()
+
+
+@app.task(shared=False)
+def sog_paper_pipeline(superevent, ext_event):
+    """Determine whether an a speed of gravity measurment manuscript should be
+    triggered for a given coincidence.
+    This is denoted by applying the SOG_READY label to a superevent.
+
+    All of the following conditions must be true for a SoG paper:
+
+    *   The coincidence is significant and FARs more significant than in
+        :obj:`~sog_paper_far_threshold`.
+    *   The external event is a high-significance GRB and from a MOU partner.
+    *   The GW event is a CBC candidate.
+
+    Parameters
+    ----------
+    superevent : dict
+        superevent dictionary
+    ext_event: dict
+        external event dictionary
+
+    """
+    gw_far = superevent['far']
+    coinc_far = superevent['space_coinc_far']
+    gw_far_threshold = app.conf['sog_paper_far_threshold']['gw']
+    joint_far_threshold = app.conf['sog_paper_far_threshold']['joint']
+
+    #  Check publishing conditions
+    pass_gw_far_threshold = gw_far <= gw_far_threshold
+    pass_joint_far_threshold = coinc_far <= joint_far_threshold
+    is_grb = ext_event['search'] == 'GRB'
+    is_mou_partner = ext_event['pipeline'] in ['Fermi', 'Swift']
+    is_cbc = superevent['preferred_event_data']['group'] == 'CBC'
+
+    if is_grb and is_cbc and is_mou_partner and \
+            pass_gw_far_threshold and pass_joint_far_threshold:
+        #  Trigger SOG_READY label alert to alert SOG analysts
+        gracedb.create_label.si('SOG_READY',
+                                superevent['superevent_id']).delay()

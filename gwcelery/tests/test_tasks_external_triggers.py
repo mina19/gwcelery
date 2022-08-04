@@ -348,6 +348,31 @@ def test_handle_skymap_combine(mock_create_combined_skymap):
     mock_create_combined_skymap.assert_called_once_with('S1234', 'E1212')
 
 
+@patch('gwcelery.tasks.gracedb.client')
+@patch('gwcelery.tasks.gracedb.get_superevent.run', return_value={
+    'superevent_id': 'S1234'})
+@patch('gwcelery.tasks.raven.sog_paper_pipeline.run')
+def test_handle_sog_manuscript_pipeline(mock_sog_paper_pipeline,
+                                        mock_get_superevent,
+                                        mock_gracedb):
+    alert = {"uid": "E1212",
+             "alert_type": "label_added",
+             "data": {"name": "GCN_PRELIM_SENT"},
+             "object": {
+                 "graceid": "E1212",
+                 "group": "External",
+                 "labels": ["EM_COINC", "EXT_SKYMAP_READY", "SKYMAP_READY",
+                            "RAVEN_ALERT", "GCN_PRELIM_SENT"],
+                 "superevent": "S1234"}
+             }
+
+    # Create IGWN alert
+    external_triggers.handle_grb_igwn_alert(alert)
+
+    mock_sog_paper_pipeline.assert_called_once_with(
+        {'superevent_id': 'S1234'}, alert['object'])
+
+
 @patch('gwcelery.tasks.detchar.dqr_json', return_value='dqrjson')
 @patch('gwcelery.tasks.gracedb.upload.run')
 @patch('gwcelery.tasks.gracedb.create_event.run', return_value={

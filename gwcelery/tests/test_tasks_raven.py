@@ -467,3 +467,31 @@ def test_trigger_raven_alert(mock_create_label, mock_update_superevent,
         mock_create_label.assert_has_calls(label_calls)
     else:
         mock_create_label.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    'se_id,ext_id,expected_result',
+    [['S2468', 'E5', True],
+     ['S2468', 'E1', True],
+     ['S2468', 'E2', False],
+     ['S2345', 'E1', False],
+     ['S2345', 'E2', False]])
+@patch('gwcelery.tasks.gracedb.create_label.run')
+def test_sog_paper_pipeline(mock_create_label,
+                            se_id, ext_id, expected_result):
+
+    superevent = _mock_get_event(se_id)
+    ext_event = _mock_get_event(ext_id)
+    if se_id == 'S2468':
+        superevent['far'] = 1e-12
+        superevent['space_coinc_far'] = 1e-13
+    elif se_id == 'S2345':
+        superevent['far'] = 1e-14
+        superevent['space_coinc_far'] = 1e-8
+    raven.sog_paper_pipeline(superevent, ext_event)
+
+    if expected_result:
+        mock_create_label.assert_called_once_with(
+            'SOG_READY', superevent['superevent_id'])
+    else:
+        mock_create_label.assert_not_called()

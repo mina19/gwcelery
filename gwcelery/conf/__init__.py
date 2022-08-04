@@ -135,6 +135,11 @@ snews_gw_far_threshold = 1 / (3600 * 24)
 """Maximum false alarm rate for a superevent to send out a coincidence alert
 between an external SNEWS alert and the superevent."""
 
+sog_paper_far_threshold = {'gw': 1 / (1000 * 365 * 86400),
+                           'joint': 1 / (10000 * 365 * 86400)}
+"""False alarm rate thresholds for producing a manuscript of speed of gravity
+measrument in low-latency."""
+
 superevent_clean_up_timeout = 270.
 """The orchestrator will wait this many seconds from the time of the
 application of the GCN_PRELIM_SENT label to revise the preferred

@@ -11,6 +11,9 @@ Changelog
     ``pipeline.p_astro.json``, where pipeline is the name of the pipeline that
     uploaded the event.
 
+-   Indicate a joint CBC-GRB event should be used for a measurement of the
+    speed of gravity by applying the SOG_READY label to the superevent.
+
 -   Add button to apply RAVEN alert labels to flask app. This will manually
     trigger a RAVEN alert. 
 

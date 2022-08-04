@@ -17,10 +17,13 @@ log = get_logger(__name__)
 
 REQUIRED_LABELS_BY_TASK = {
     'compare': {'SKYMAP_READY', 'EXT_SKYMAP_READY', 'EM_COINC'},
-    'combine': {'SKYMAP_READY', 'EXT_SKYMAP_READY', 'RAVEN_ALERT'}
+    'combine': {'SKYMAP_READY', 'EXT_SKYMAP_READY', 'RAVEN_ALERT'},
+    'SoG': {'SKYMAP_READY', 'EXT_SKYMAP_READY', 'RAVEN_ALERT',
+            'GCN_PRELIM_SENT'}
 }
 """These labels should be present on an external event to consider it to
-be ready for sky map comparison.
+be ready for sky map comparison or for post-alert analsis, such as a
+measurment of the speed of gravity (SoG).
 """
 
 FERMI_GRB_CLASS_VALUE = 4
@@ -295,7 +298,7 @@ def handle_grb_igwn_alert(alert):
                                      group=gw_group, searches=['GRB'],
                                      se_searches=se_searches)
     # rerun raven pipeline or created combined sky map when sky maps are
-    # available
+    # available; trigger SoG manuscript once voevent is created
     elif alert['alert_type'] == 'label_added' and \
             alert['object'].get('group') == 'External':
         if _skymaps_are_ready(alert['object'], alert['data']['name'],
@@ -318,20 +321,38 @@ def handle_grb_igwn_alert(alert):
             superevent_id, ext_id = _get_superevent_ext_ids(
                 graceid, alert['object'], 'combine')
             external_skymaps.create_combined_skymap(superevent_id, ext_id)
+        if _skymaps_are_ready(alert['object'], alert['data']['name'],
+                              'SoG'):
+            # if a RAVEN alert has been sent, create SoG manuscript
+            superevent_id, ext_id = _get_superevent_ext_ids(
+                graceid, alert['object'], 'SoG')
+            (
+                gracedb.get_superevent.si(superevent_id)
+                |
+                raven.sog_paper_pipeline.s(alert['object'])
+            ).delay()
         elif 'EM_COINC' in alert['object']['labels']:
             # if not complete, check if GW sky map; apply label to external
             # event if GW sky map
             se_labels = gracedb.get_labels(alert['object']['superevent'])
             if 'SKYMAP_READY' in se_labels:
                 gracedb.create_label.si('SKYMAP_READY', graceid).delay()
-    elif alert['alert_type'] == 'label_added' and 'S' in graceid and \
-            'SKYMAP_READY' in alert['object']['labels']:
-        # if sky map in superevent, apply label to all external events
-        # at the time
-        group(
-            gracedb.create_label.si('SKYMAP_READY', ext_id)
-            for ext_id in alert['object']['em_events']
-        ).delay()
+    # apply labels from superevent to external event to update state
+    # and trigger functionality requiring sky maps, etc.
+    elif alert['alert_type'] == 'label_added' and 'S' in graceid:
+        if 'SKYMAP_READY' in alert['object']['labels']:
+            # if sky map in superevent, apply label to all external events
+            # at the time
+            group(
+                gracedb.create_label.si('SKYMAP_READY', ext_id)
+                for ext_id in alert['object']['em_events']
+            ).delay()
+        if 'GCN_PRELIM_SENT' in alert['object']['labels']:
+            # if VOEvent is available, apply label to preferred external event
+            group(
+                gracedb.create_label.si('GCN_PRELIM_SENT', ext_id)
+                for ext_id in alert['object']['em_type']
+            ).delay()
     elif alert['alert_type'] == 'label_removed' and \
             alert['object'].get('group') == 'External':
         if alert['data']['name'] == 'NOT_GRB' and \
@@ -390,7 +411,7 @@ def _skymaps_are_ready(event, label, task):
 
 
 def _get_superevent_ext_ids(graceid, event, task):
-    if task == 'combine':
+    if task in {'combine', 'SoG'}:
         if 'S' in graceid:
             se_id = event['superevent_id']
             ext_id = event['em_type']
