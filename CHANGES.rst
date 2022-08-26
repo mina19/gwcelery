@@ -9,6 +9,12 @@ Changelog
 
 -   Allow alerts (using multi-order skymaps) for burst events.
 
+-   Add the ability to use multi-order GW sky maps to create combined sky maps
+    and include these in alerts. The presence of the COMBINEDSKYMAP_READY label
+    indicates the combined sky map is now available in that external event or
+    superevent. We will only copy a combined sky map to the superevent when
+    sending an alert once if the preferred external event has one available.
+
 -   Don't compute p-astro for PyCBC/AllSky because it now computes
     and uploads its own.
 

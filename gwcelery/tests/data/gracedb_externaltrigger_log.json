@@ -14,5 +14,13 @@
   "filename": "nasa.gsfc.gcn_Fermi#GBM_Gnd_Pos_2017-08-17T12:41:06.47_524666471_57-431.xml",
   "tags": "https://gracedb.ligo.org/api/events/E12345/log/1/tag/",
   "N": 1
+ },
+ {
+  "comment": "Sky map created from GCN RA, dec, and error.",
+  "file_version": 0,
+  "file": "https://gracedb.ligo.org/api/events/E12345/files/fermi_skymap.fits.gz,0",
+  "filename": "fermi_skymap.fits.gz",
+  "tags": "https://gracedb.ligo.org/api/events/E12345/log/2/tag/",
+  "N": 2
  }
 ]

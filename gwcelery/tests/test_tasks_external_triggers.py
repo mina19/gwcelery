@@ -260,20 +260,26 @@ def test_handle_create_skymap_label_from_superevent(mock_create_label,
     mock_create_label.assert_called_once_with('SKYMAP_READY', 'E1212')
 
 
-@patch('gwcelery.tasks.gracedb.get_group', return_value='CBC')
-@patch('gwcelery.tasks.raven.raven_pipeline')
+@pytest.mark.parametrize('pipeline',
+                         ['Fermi', 'Swift'])
+@patch('gwcelery.tasks.raven.raven_pipeline.run')
+@patch('gwcelery.tasks.external_skymaps.create_combined_skymap.run')
 @patch('gwcelery.tasks.gracedb.get_superevent',
        return_value={
            'superevent_id': 'S1234',
-           'preferred_event': 'G1234'
+           'preferred_event': 'G1234',
+           'preferred_event_data':
+               {'group': 'CBC'}
                     })
-@patch('gwcelery.tasks.gracedb.get_event',
-       return_value={
-           'graceid': 'G1234',
-           'group': 'CBC'
-                    })
-def test_handle_skymap_comparison(mock_get_event, mock_get_superevent,
-                                  mock_raven_pipeline, mock_get_group):
+def test_handle_skymaps_ready(mock_get_superevent,
+                              mock_create_combined_skymap,
+                              mock_raven_pipeline,
+                              pipeline):
+    """This test makes sure that once sky maps are available for a coincidence
+    that the RAVEN pipeline is rerun to calculate the joint FAR with sky map
+    information and check publishing conditions, as well as creating a
+    combined sky map.
+    """
     alert = {"uid": "E1212",
              "alert_type": "label_added",
              "data": {"name": "SKYMAP_READY"},
@@ -282,15 +288,22 @@ def test_handle_skymap_comparison(mock_get_event, mock_get_superevent,
                  "group": "External",
                  "labels": ["EM_COINC", "EXT_SKYMAP_READY", "SKYMAP_READY"],
                  "superevent": "S1234",
-                 "pipeline": "Fermi",
+                 "pipeline": pipeline,
                  "search": "GRB"
                        }
              }
     external_triggers.handle_grb_igwn_alert(alert)
     mock_raven_pipeline.assert_called_once_with([alert['object']], 'S1234',
                                                 {'superevent_id': 'S1234',
-                                                 'preferred_event': 'G1234'},
+                                                 'preferred_event': 'G1234',
+                                                 'preferred_event_data':
+                                                     {'group': 'CBC'}},
                                                 -5, 1, 'CBC')
+    if pipeline != 'Swift':
+        mock_create_combined_skymap.assert_called_once_with(
+            'S1234', 'E1212')
+    else:
+        mock_create_combined_skymap.assert_not_called()
 
 
 @patch('gwcelery.tasks.raven.trigger_raven_alert')
@@ -330,22 +343,6 @@ def test_handle_label_removed(mock_get_superevent,
         coinc_far_dict, superevent, alert['uid'],
         alert['object'], 'CBC'
     )
-
-
-@patch('gwcelery.tasks.external_skymaps.create_combined_skymap')
-def test_handle_skymap_combine(mock_create_combined_skymap):
-    alert = {"uid": "E1212",
-             "alert_type": "label_added",
-             "data": {"name": "RAVEN_ALERT"},
-             "object": {
-                 "graceid": "E1212",
-                 "group": "External",
-                 "labels": ["EM_COINC", "EXT_SKYMAP_READY", "SKYMAP_READY",
-                            "RAVEN_ALERT"],
-                 "superevent": "S1234"}
-             }
-    external_triggers.handle_grb_igwn_alert(alert)
-    mock_create_combined_skymap.assert_called_once_with('S1234', 'E1212')
 
 
 @pytest.mark.parametrize('labels',

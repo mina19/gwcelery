@@ -393,6 +393,7 @@ def _create_voevent(classification, *args, **kwargs):
     if classification is not None:
         # Merge source classification and source properties into kwargs.
         for text in classification:
+            # Ignore filenames, only load dict in bytes form
             if text is not None:
                 kwargs.update(json.loads(text))
 
@@ -524,9 +525,12 @@ def _unpack_args_and_send_earlywarning_preliminary_alert(input_list, alert):
     [skymap, skymap_filename], [em_bright, em_bright_filename], \
         [p_astro, p_astro_filename] = input_list
 
+    # Update to latest state after downloading files
+    superevent = gracedb.get_superevent(alert['object']['superevent_id'])
+
     earlywarning_preliminary_initial_update_alert.delay(
         [skymap_filename, em_bright_filename, p_astro_filename],
-        alert['object'],
+        superevent,
         ('earlywarning' if superevents.EARLY_WARNING_LABEL in
          alert['object']['labels'] else 'preliminary'),
         filecontents=[skymap, em_bright, p_astro]
@@ -768,10 +772,19 @@ def earlywarning_preliminary_initial_update_alert(
         assert alert_type == 'earlywarning' or alert_type == 'preliminary'
 
     skymap_filename, em_bright_filename, p_astro_filename = filenames
+    combined_skymap_filename = None
+    combined_skymap_needed = False
     skymap_needed = (skymap_filename is None)
     em_bright_needed = (em_bright_filename is None)
     p_astro_needed = (p_astro_filename is None)
-    if skymap_needed or em_bright_needed or p_astro_needed:
+    raven_coinc = ('RAVEN_ALERT' in labels and bool(superevent['em_type']))
+    if raven_coinc:
+        ext_labels = gracedb.get_labels(superevent['em_type'])
+        combined_skymap_needed = \
+            {"RAVEN_ALERT", "COMBINEDSKYMAP_READY"}.issubset(set(ext_labels))
+
+    if skymap_needed or em_bright_needed or p_astro_needed or \
+            combined_skymap_needed:
         for message in gracedb.get_log(superevent_id):
             t = message['tag_names']
             f = message['filename']
@@ -781,7 +794,8 @@ def earlywarning_preliminary_initial_update_alert(
                 continue
             if skymap_needed \
                     and {'sky_loc', 'public'}.issubset(t) \
-                    and f.endswith('.multiorder.fits'):
+                    and f.endswith('.multiorder.fits') \
+                    and 'combined' not in f:
                 skymap_filename = fv
             if em_bright_needed \
                     and 'em_bright' in t \
@@ -791,9 +805,55 @@ def earlywarning_preliminary_initial_update_alert(
                     and 'p_astro' in t \
                     and f.endswith('.json'):
                 p_astro_filename = fv
+            if combined_skymap_needed \
+                    and {'sky_loc', 'ext_coinc'}.issubset(t) \
+                    and f.startswith('combined-ext.') \
+                    and 'fit' in f:
+                combined_skymap_filename = fv
+                # only download first sky map and prevent more downloads
+                # FIXME: remove if there exists a system to recalculate
+                # combined sky maps later
+                combined_skymap_needed = False
+
+    if combined_skymap_needed:
+        # if no combined sky map present and needed, download sky map from
+        # external event
+        # FIXME: use file inheritance once available
+        ext_id = superevent['em_type']
+        combined_skymap_filename = \
+            ('combined-ext.multiorder.fits' if '.multiorder.fits' in
+             skymap_filename else 'combined-ext.fits.gz')
+        message = 'Combined LVC-external sky map using {0} and {1}'.format(
+            superevent_id, ext_id)
+        message_png = (
+            'Mollweide projection of <a href="/api/events/{se_id}/files/'
+            '{filename}">{filename}</a>, using {se_id} and {ext_id}').format(
+               se_id=superevent_id,
+               ext_id=ext_id,
+               filename=combined_skymap_filename)
+
+        combined_skymap_canvas = group(
+            gracedb.download.si(combined_skymap_filename, ext_id)
+            |
+            gracedb.upload.s(
+                combined_skymap_filename, superevent_id,
+                message, ['sky_loc', 'ext_coinc', 'public'])
+            |
+            gracedb.create_label.si('COMBINEDSKYMAP_READY', superevent_id),
+
+            gracedb.download.si('combined-ext.png', ext_id)
+            |
+            gracedb.upload.s(
+                'combined-ext.png', superevent_id,
+                message_png, ['sky_loc', 'ext_coinc', 'public']
+            )
+            |
+            # Pass None to download_anor_expose group
+            identity.si()
+        )
 
     if alert_type in {'earlywarning', 'preliminary', 'initial'}:
-        if 'RAVEN_ALERT' in labels:
+        if raven_coinc:
             circular_task = circulars.create_emcoinc_circular.si(superevent_id)
             circular_filename = '{}-emcoinc-circular.txt'.format(alert_type)
             tags = ['em_follow', 'ext_coinc']
@@ -816,7 +876,7 @@ def earlywarning_preliminary_initial_update_alert(
     else:
         circular_canvas = identity.si()
 
-    if filecontents:
+    if filecontents and not combined_skymap_filename:
         skymap, em_bright, p_astro = filecontents
 
         download_andor_expose_group = []
@@ -828,14 +888,15 @@ def earlywarning_preliminary_initial_update_alert(
             skymap_filename=skymap_filename,
             internal=False,
             open_alert=True,
-            raven_coinc=('RAVEN_ALERT' in labels)
+            raven_coinc=raven_coinc,
+            combined_skymap_filename=combined_skymap_filename
         )
 
         kafka_alert_canvas = alerts.send.si(
             (skymap, em_bright, p_astro),
             superevent,
             alert_type,
-            raven_coinc=('RAVEN_ALERT' in labels)
+            raven_coinc=raven_coinc
         )
     else:
         # Download em_bright and p_astro files here for voevent
@@ -850,7 +911,8 @@ def earlywarning_preliminary_initial_update_alert(
             skymap_filename=skymap_filename,
             internal=False,
             open_alert=True,
-            raven_coinc=('RAVEN_ALERT' in labels)
+            raven_coinc=raven_coinc,
+            combined_skymap_filename=combined_skymap_filename
         )
 
         # The skymap has not been downloaded at this point, so we need to
@@ -859,7 +921,8 @@ def earlywarning_preliminary_initial_update_alert(
             superevent,
             alert_type,
             skymap_filename=skymap_filename,
-            raven_coinc=('RAVEN_ALERT' in labels)
+            raven_coinc=raven_coinc,
+            combined_skymap_filename=combined_skymap_filename
         )
 
     download_andor_expose_group += [
@@ -880,6 +943,9 @@ def earlywarning_preliminary_initial_update_alert(
 
         gracedb.create_tag.s('public', superevent_id)
     )
+
+    if combined_skymap_needed:
+        download_andor_expose_group += [combined_skymap_canvas]
 
     canvas = (
         group(download_andor_expose_group)

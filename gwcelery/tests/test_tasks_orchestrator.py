@@ -13,33 +13,41 @@ from . import data
 
 
 @pytest.mark.parametrize(  # noqa: F811
-    'alert_type,label,group,pipeline,offline,far,instruments',
+    ('alert_type,label,group,pipeline,offline,far,instruments,superevent_id,' +
+     'superevent_labels'),
     [['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
-        ['H1']],
+        ['H1'], 'S1234', ['EM_Selected']],
      ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1']],
+         ['H1', 'L1'], 'S1234', ['EM_Selected']],
      ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1']],
+         ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
+     ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
+         ['H1', 'L1', 'V1'], 'S2468',
+         ['EM_Selected', 'COMBINEDSKYMAP_READY', 'RAVEN_ALERT', 'EM_COINC']],
      ['label_added', 'EM_Selected', 'Burst', 'CWB', False, 1.e-9,
-         ['H1', 'L1', 'V1']],
+         ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
      ['label_added', 'EM_Selected', 'Burst', 'oLIB', False, 1.e-9,
-         ['H1', 'L1', 'V1']],
+         ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
      ['label_added', 'GCN_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1']],
-     ['new', '', 'CBC', 'gstlal', False, 1.e-9, ['H1', 'L1']]])
+         ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
+     ['new', '', 'CBC', 'gstlal', False, 1.e-9, ['H1', 'L1'], 'S1234',
+         ['EM_Selected']]])
 def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                            alert_type, label, group, pipeline,
-                           offline, far, instruments):
+                           offline, far, instruments, superevent_id,
+                           superevent_labels):
     """Test a superevent is dispatched to the correct annotation task based on
     its preferred event's search group.
     """
     def get_superevent(superevent_id):
-        assert superevent_id == 'S1234'
         return {
             'preferred_event': 'G1234',
             'gw_events': ['G1234'],
             'preferred_event_data': get_event('G1234'),
-            'category': "Production"
+            'category': "Production",
+            'labels': superevent_labels,
+            'superevent_id': superevent_id,
+            'em_type': None if superevent_id == 'S1234' else 'E1234'
         }
 
     def get_event(graceid):
@@ -68,6 +76,9 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             event['instruments'] = ','.join(instruments)
         return event
 
+    def get_labels(graceid):
+        return ['COMBINEDSKYMAP_READY']
+
     def download(filename, graceid):
         if '.fits' in filename:
             return toy_3d_fits_filecontents
@@ -86,9 +97,9 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
 
     alert = {
         'alert_type': alert_type,
-        'uid': 'S1234',
+        'uid': superevent_id,
         'object': {
-            'superevent_id': 'S1234',
+            'superevent_id': superevent_id,
             't_start': 1214714160,
             't_0': 1214714162,
             't_end': 1214714164,
@@ -105,7 +116,13 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
     else:
         alert['data'] = {'name': label}
 
+    if superevent_id == 'S1234':
+        raven_coinc = False
+    else:
+        raven_coinc = True
+
     create_initial_circular = Mock()
+    create_emcoinc_circular = Mock()
     expose = Mock()
     annotate_fits = Mock(return_value=None)
     proceed_if_no_advocate_action = Mock(
@@ -145,6 +162,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
     monkeypatch.setattr('gwcelery.tasks.gracedb.expose._orig_run', expose)
     monkeypatch.setattr('gwcelery.tasks.gracedb.get_event._orig_run',
                         get_event)
+    monkeypatch.setattr('gwcelery.tasks.gracedb.get_labels', get_labels)
     # FIXME: should test gracedb.create_voevent instead
     monkeypatch.setattr('gwcelery.tasks.orchestrator._create_voevent.run',
                         create_voevent)
@@ -152,6 +170,8 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                         get_superevent)
     monkeypatch.setattr('gwcelery.tasks.circulars.create_initial_circular.run',
                         create_initial_circular)
+    monkeypatch.setattr('gwcelery.tasks.circulars.create_emcoinc_circular.run',
+                        create_emcoinc_circular)
     monkeypatch.setattr('gwcelery.tasks.inference.query_data.run',
                         query_data)
     monkeypatch.setattr('gwcelery.tasks.inference._setup_dag_for_bilby.run',
@@ -178,7 +198,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
     if label == 'GCN_PRELIM_SENT':
         dqr_request_label = list(
             filter(
-                lambda x: x.args == ('DQR_REQUEST', 'S1234'),
+                lambda x: x.args == ('DQR_REQUEST', superevent_id),
                 create_label.call_args_list
             )
         )
@@ -189,12 +209,12 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         annotate_fits.assert_called_once()
         _event_info = get_event('G1234')  # this gets the preferred event info
         assert superevents.should_publish(_event_info)
-        expose.assert_called_once_with('S1234')
+        expose.assert_called_once_with(superevent_id)
         create_tag.assert_has_calls(
-            [call('S1234-1-Preliminary.xml', 'public', 'S1234'),
-             call('em-bright-filename', 'public', 'S1234'),
-             call('p-astro-filename', 'public', 'S1234'),
-             call('skymap-filename', 'public', 'S1234')],
+            [call('S1234-1-Preliminary.xml', 'public', superevent_id),
+             call('em-bright-filename', 'public', superevent_id),
+             call('p-astro-filename', 'public', superevent_id),
+             call('skymap-filename', 'public', superevent_id)],
             any_order=True
         )
         # FIXME: uncomment block below when patching
@@ -207,7 +227,10 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         #         skymap_filename='bayestar.fits.gz', skymap_type='bayestar')
         gcn_send.assert_called_once()
         alerts_send.assert_called_once()
-        create_initial_circular.assert_called_once()
+        if raven_coinc:
+            create_emcoinc_circular.assert_called_once()
+        else:
+            create_initial_circular.assert_called_once()
 
     if alert_type == 'new' and group == 'CBC':
         query_data.assert_called_once()
@@ -220,7 +243,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             call_args = [
                 call_args.args[1:] for call_args in start_pe.call_args_list]
             assert all(
-                [(get_event('G1234'), 'S1234', pipeline) in call_args
+                [(get_event('G1234'), superevent_id, pipeline) in call_args
                  for pipeline in ('bilby', 'rapidpe')])
         else:
             start_pe.assert_not_called()
@@ -261,31 +284,57 @@ def superevent_initial_alert_download(filename, graceid):
     elif filename == 'em_bright.json,0':
         return json.dumps({'HasNS': 0.0, 'HasRemnant': 0.0})
     elif filename == 'p_astro.json,0':
-        return json.dumps(
-            dict(BNS=0.94, NSBH=0.03, BBH=0.02, Terrestrial=0.01))
+        return b'{"BNS": 0.94, "NSBH": 0.03, "BBH": 0.02, "Terrestrial": 0.01}'
     elif filename == 'foobar.multiorder.fits,0':
         return 'contents of foobar.multiorder.fits,0'
+    elif 'combined-ext.multiorder.fits' in filename:
+        return 'contents of combined-ext.multiorder.fits'
+    elif 'combined-ext.png' in filename:
+        return 'contents of combined-ext.png'
     else:
         raise ValueError
 
 
+def _mock_get_labels(ext_id):
+    if ext_id == 'E1':
+        return []
+    elif ext_id == 'E2':
+        return ['EM_COINC', 'RAVEN_ALERT']
+    elif ext_id == 'E3':
+        return ['EM_COINC', 'RAVEN_ALERT', 'COMBINEDSKYMAP_READY']
+
+
+def _mock_get_log(se_id):
+    logs = [{'tag_names': ['sky_loc', 'public'],
+             'filename': 'foobar.multiorder.fits',
+             'file_version': 0},
+            {'tag_names': ['em_bright'],
+             'filename': 'em_bright.json',
+             'file_version': 0},
+            {'tag_names': ['p_astro'],
+             'filename': 'p_astro.json',
+             'file_version': 0}]
+    if se_id == 'S2468':
+        logs.append({'tag_names': ['sky_loc', 'ext_coinc'],
+                     'filename': 'combined-ext.multiorder.fits',
+                     'file_version': 0})
+    return logs
+
+
 @pytest.mark.parametrize(  # noqa: F811
-    'labels',
-    [[], ['EM_COINC', 'RAVEN_ALERT']])
+    'labels,superevent_id,ext_id',
+    [[[], 'S1234', 'E1'],
+     [['EM_COINC', 'RAVEN_ALERT'], 'S1234', 'E2'],
+     [['EM_COINC', 'RAVEN_ALERT', 'COMBINEDSKYMAP_READY'], 'S1234', 'E3'],
+     [['EM_COINC', 'RAVEN_ALERT', 'COMBINEDSKYMAP_READY'], 'S2468', 'E3']])
 @patch('gwcelery.tasks.gracedb.expose._orig_run', return_value=None)
 @patch('gwcelery.tasks.gracedb.get_log',
-       return_value=[{'tag_names': ['sky_loc', 'public'],
-                      'filename': 'foobar.multiorder.fits',
-                      'file_version': 0},
-                     {'tag_names': ['em_bright'],
-                      'filename': 'em_bright.json',
-                      'file_version': 0},
-                     {'tag_names': ['p_astro'],
-                      'filename': 'p_astro.json',
-                      'file_version': 0}])
+       side_effect=_mock_get_log)
 @patch('gwcelery.tasks.gracedb.create_tag._orig_run', return_value=None)
 @patch('gwcelery.tasks.gracedb.create_voevent._orig_run',
        return_value='S1234-Initial-1.xml')
+@patch('gwcelery.tasks.gracedb.get_labels',
+       side_effect=_mock_get_labels)
 @patch('gwcelery.tasks.gracedb.download._orig_run',
        superevent_initial_alert_download)
 @patch('gwcelery.tasks.gcn.send.run')
@@ -296,46 +345,63 @@ def test_handle_superevent_initial_alert(mock_create_initial_circular,
                                          mock_create_emcoinc_circular,
                                          mock_alerts_send,
                                          mock_gcn_send,
+                                         mock_get_labels,
                                          mock_create_voevent,
                                          mock_create_tag, mock_get_log,
-                                         mock_expose, labels):
-    """Test that the ``ADVOK`` label triggers an initial alert."""
+                                         mock_expose, labels,
+                                         superevent_id, ext_id):
+    """Test that the ``ADVOK`` label triggers an initial alert.
+    This test varies the labels in the superevent and external event in order
+    to test the non-RAVEN alerts, RAVEN alerts without a combined sky map, and
+    RAVEN alerts with a combined sky map respectively."""
     alert = {
         'alert_type': 'label_added',
-        'uid': 'S1234',
+        'uid': superevent_id,
         'data': {'name': 'ADVOK'},
         'object': {
             'labels': labels,
-            'superevent_id': 'S1234'
-        }
+            'superevent_id': superevent_id,
+            'em_type': ext_id if labels else ''}
     }
+    combined_skymap_needed = ('COMBINEDSKYMAP_READY' in labels)
+    if combined_skymap_needed:
+        combined_skymap_filename = \
+            ('combined-ext.multiorder.fits' +
+             (',0' if superevent_id == 'S2468' else ''))
+    else:
+        combined_skymap_filename = None
 
     # Run function under test
     orchestrator.handle_superevent(alert)
 
     mock_create_voevent.assert_called_once_with(
-        'S1234', 'initial', BBH=0.02, BNS=0.94, NSBH=0.03, ProbHasNS=0.0,
+        superevent_id, 'initial', BBH=0.02, BNS=0.94, NSBH=0.03, ProbHasNS=0.0,
         ProbHasRemnant=0.0, Terrestrial=0.01, internal=False, open_alert=True,
         skymap_filename='foobar.multiorder.fits,0', skymap_type='foobar',
-        raven_coinc='RAVEN_ALERT' in labels)
-    mock_alerts_send.assert_called_once_with((
-        superevent_initial_alert_download('foobar.multiorder.fits,0', 'S1234'),
-        superevent_initial_alert_download('em_bright.json,0', 'S1234'),
-        superevent_initial_alert_download('p_astro.json,0', 'S1234'),
-        None, None, None, None), alert['object'], 'initial',
-        raven_coinc='RAVEN_ALERT' in labels)
+        raven_coinc='RAVEN_ALERT' in labels,
+        combined_skymap_filename=(combined_skymap_filename if
+                                  combined_skymap_needed else None))
+    mock_alerts_send.assert_called_once_with(
+        (superevent_initial_alert_download('foobar.multiorder.fits,0',
+                                           superevent_id),
+         superevent_initial_alert_download('em_bright.json,0', superevent_id),
+         superevent_initial_alert_download('p_astro.json,0', superevent_id)) +
+        ((6 if combined_skymap_needed and superevent_id == 'S1234' else 4)
+         * (None,)),
+        alert['object'], 'initial', raven_coinc='RAVEN_ALERT' in labels,
+        combined_skymap_filename=combined_skymap_filename)
     mock_gcn_send.assert_called_once_with('contents of S1234-Initial-1.xml')
     if 'RAVEN_ALERT' in labels:
-        mock_create_emcoinc_circular.assert_called_once_with('S1234')
+        mock_create_emcoinc_circular.assert_called_once_with(superevent_id)
     else:
-        mock_create_initial_circular.assert_called_once_with('S1234')
+        mock_create_initial_circular.assert_called_once_with(superevent_id)
     mock_create_tag.assert_has_calls(
-        [call('foobar.multiorder.fits,0', 'public', 'S1234'),
-         call('em_bright.json,0', 'public', 'S1234'),
-         call('p_astro.json,0', 'public', 'S1234'),
-         call('S1234-Initial-1.xml', 'public', 'S1234')],
+        [call('foobar.multiorder.fits,0', 'public', superevent_id),
+         call('em_bright.json,0', 'public', superevent_id),
+         call('p_astro.json,0', 'public', superevent_id),
+         call('S1234-Initial-1.xml', 'public', superevent_id)],
         any_order=True)
-    mock_expose.assert_called_once_with('S1234')
+    mock_expose.assert_called_once_with(superevent_id)
 
 
 def superevent_retraction_alert_download(filename, graceid):

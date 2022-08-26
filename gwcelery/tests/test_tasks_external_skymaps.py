@@ -1,6 +1,7 @@
 from importlib import resources
 from unittest.mock import patch
 
+from astropy.table import Table
 import numpy as np
 import pytest
 
@@ -61,6 +62,23 @@ def mock_get_file_contents(monkeypatch, toy_fits_filecontents):  # noqa: F811
         'astropy.utils.data.get_file_contents', get_file_contents)
 
 
+def get_gw_moc_skymap():
+    array = [np.arange(12, dtype=np.float64)] * 5
+    #  Modify UNIQ table to be allowable values
+    array[4] = array[4] + 4
+    table = Table(
+        array,
+        names=['PROBDENSITY', 'DISTMU', 'DISTSIGMA', 'DISTNORM', 'UNIQ'])
+    table.meta['comment'] = 'This is a comment.'
+    table.meta['HISTORY'] = \
+        ['This is a history line. <This should be escaped.>']
+    table.meta['OBJECT'] = 'T12345'
+    table.meta['LOGBCI'] = 3.5
+    table.meta['ORDERING'] = 'NESTED'
+    table.meta['instruments'] = {'L1', 'H1', 'V1'}
+    return table
+
+
 @patch('gwcelery.tasks.skymaps.plot_allsky.run')
 @patch('gwcelery.tasks.gracedb.upload.run')
 @patch('gwcelery.tasks.external_skymaps.combine_skymaps.run')
@@ -78,10 +96,64 @@ def test_create_combined_skymap(mock_get_skymap_filename,
     mock_upload.assert_called()
 
 
-@patch('gwcelery.tasks.gracedb.get_log', mock_get_log)
-def test_get_skymap_filename():
+def _mock_read_sky_map(filename, moc=True):
+    if moc:
+        return get_gw_moc_skymap()
+    else:
+        ext_sky = np.full(12, 1 / 12)
+        ext_header = {'instruments': set({'Fermi'}), 'nest': True}
+        return ext_sky, ext_header
+
+
+@pytest.mark.parametrize('gw_moc',
+                         [True, False])
+@patch('ligo.skymap.tool.ligo_skymap_combine.main')
+@patch('gwcelery.tasks.external_skymaps.combine_skymaps_moc_flat')
+@patch('ligo.skymap.io.fits.read_sky_map', side_effect=_mock_read_sky_map)
+@patch('ligo.skymap.io.fits.write_sky_map')
+def test_combine_skymaps(mock_write_sky_map,
+                         mock_read_sky_map,
+                         mock_skymap_combine_moc_flat,
+                         mock_skymap_combine_flat_flat,
+                         gw_moc):
+    """Test using our internal MOC-flat sky map combination gives back the
+    input using a uniform sky map, ensuring the test is giving a sane result
+    and is at least running to completion.
+    """
+    external_skymaps.combine_skymaps((b'', b''), gw_moc=gw_moc)
+    if gw_moc:
+        mock_read_sky_map.assert_called()
+        mock_skymap_combine_moc_flat.assert_called_once()
+        mock_write_sky_map.assert_called_once()
+    else:
+        mock_skymap_combine_flat_flat.assert_called()
+
+
+def test_create_combined_skymap_moc_flat():
+    """Test using our internal MOC-flat sky map combination gives back the
+    input using a uniform sky map, ensuring the test is giving a sane result
+    and is at least running to completion.
+    """
+    # Run function under test
+    gw_sky = get_gw_moc_skymap()
+    ext_sky = np.full(12, 1 / 12)
+    ext_header = {'instruments': set({'Fermi'}), 'nest': True}
+    combined_sky = external_skymaps.combine_skymaps_moc_flat(gw_sky, ext_sky,
+                                                             ext_header)
+    assert all(combined_sky['PROBDENSITY'] == gw_sky['PROBDENSITY'])
+    assert 'Fermi' in combined_sky.meta['instruments']
+
+
+@pytest.mark.parametrize('graceid',
+                         ['S12345', 'E12345'])
+@patch('gwcelery.tasks.gracedb.get_log', side_effect=mock_get_log)
+def test_get_skymap_filename(mock_get_logs, graceid):
     """Test getting the LVC skymap fits filename"""
-    external_skymaps.get_skymap_filename('S12345')
+    filename = external_skymaps.get_skymap_filename(graceid)
+    if 'S' in graceid:
+        assert filename == 'bayestar.multiorder.fits'
+    elif 'E' in graceid:
+        assert filename == 'fermi_skymap.fits.gz'
 
 
 @patch('gwcelery.tasks.gracedb.get_event', mock_get_event)

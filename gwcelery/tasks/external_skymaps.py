@@ -1,11 +1,13 @@
 """Create and upload external sky maps."""
 from astropy import units as u
 from astropy.coordinates import ICRS, SkyCoord
+import astropy_healpix as ah
 from astropy_healpix import HEALPix, pixel_resolution_to_nside
 from celery import group
 #  import astropy.utils.data
 import numpy as np
 from ligo.skymap.io import fits
+from ligo.skymap.distance import parameters_to_marginal_moments
 from ligo.skymap.tool import ligo_skymap_combine
 import gcn
 import healpy as hp
@@ -23,42 +25,51 @@ from ..util.tempfile import NamedTemporaryFile
 from ..import _version
 
 
+@app.task(shared=False,
+          queue='exttrig')
 def create_combined_skymap(se_id, ext_id):
-    """Creates and uploads the combined LVC-Fermi skymap.
-
-    This also uploads the external trigger skymap to the external trigger
-    GraceDB page.
+    """Creates and uploads the combined LVC-Fermi skymap, uploading to the
+    external trigger GraceDB page.
     """
     se_skymap_filename = get_skymap_filename(se_id)
     ext_skymap_filename = get_skymap_filename(ext_id)
-    new_skymap_filename = re.findall(r'(.*).fits.gz', se_skymap_filename)[0]
+    # Determine whether GW sky map is multiordered or flat
+    gw_moc = '.multiorder.fits' in se_skymap_filename
 
-    #  FIXME: put download functions in canvas
-    se_skymap = gracedb.download(se_skymap_filename, se_id)
-    ext_skymap = gracedb.download(ext_skymap_filename, ext_id)
+    new_filename = \
+        ('combined-ext.multiorder.fits' if gw_moc else 'combined-ext.fits.gz')
+
     message = 'Combined LVC-external sky map using {0} and {1}'.format(
         se_skymap_filename, ext_skymap_filename)
     message_png = (
         'Mollweide projection of <a href="/api/events/{graceid}/files/'
         '{filename}">{filename}</a>').format(
-            graceid=se_id, filename=new_skymap_filename + '-ext.fits.gz')
+            graceid=ext_id,
+            filename=new_filename)
 
     (
-        combine_skymaps.si(se_skymap, ext_skymap)
+        _download_skymaps.si(
+            se_skymap_filename, ext_skymap_filename, se_id, ext_id
+        )
+        |
+        combine_skymaps.s(gw_moc=gw_moc)
         |
         group(
-            gracedb.upload.s(new_skymap_filename + '-ext.fits.gz', se_id,
-                             message, ['sky_loc', 'public']),
+            gracedb.upload.s(new_filename, ext_id,
+                             message, ['sky_loc', 'ext_coinc']),
 
             skymaps.plot_allsky.s()
             |
-            gracedb.upload.s(new_skymap_filename + '-ext.png', se_id,
-                             message_png, ['sky_loc', 'ext_coinc', 'public'])
+            gracedb.upload.s('combined-ext.png', ext_id,
+                             message_png, ['sky_loc', 'ext_coinc'])
         )
+        |
+        gracedb.create_label.si('COMBINEDSKYMAP_READY', ext_id)
     ).delay()
 
 
 @app.task(autoretry_for=(ValueError,), retry_backoff=10,
+          queue='exttrig',
           retry_backoff_max=600)
 def get_skymap_filename(graceid):
     """Get the skymap fits filename.
@@ -68,31 +79,106 @@ def get_skymap_filename(graceid):
     """
     gracedb_log = gracedb.get_log(graceid)
     if 'S' in graceid:
+        # Try first to get a multiordered sky map
         for message in reversed(gracedb_log):
             filename = message['filename']
-            if filename.endswith('.multiorder.fits'):
+            if filename.endswith('.multiorder.fits') and \
+                    "combined-ext." not in filename:
+                return filename
+        # Try next to get a flattened sky map
+        for message in reversed(gracedb_log):
+            filename = message['filename']
+            if filename.endswith('.fits.gz') and \
+                    "combined-ext." not in filename:
                 return filename
     else:
         for message in reversed(gracedb_log):
             filename = message['filename']
             if (filename.endswith('.fits') or filename.endswith('.fit') or
-                    filename.endswith('.fits.gz')):
+                    filename.endswith('.fits.gz')) and \
+                    "combined-ext." not in filename:
                 return filename
     raise ValueError('No skymap available for {0} yet.'.format(graceid))
 
 
-@app.task(shared=False)
-def combine_skymaps(skymap1filebytes, skymap2filebytes):
+@app.task(shared=False, queue='exttrig')
+def _download_skymaps(se_filename, ext_filename, se_id, ext_id):
+    """Download both superevent and external sky map to be combined."""
+    se_skymap = gracedb.download(se_filename, se_id)
+    ext_skymap = gracedb.download(ext_filename, ext_id)
+    return se_skymap, ext_skymap
+
+
+def combine_skymaps_moc_flat(gw_sky, ext_sky, ext_header):
+    """This function combines a multiordered (MOC) GW sky map with a flattened
+    external one by reweighting the MOC sky map using the values of the
+    flattened one.
+
+    Header info is generally inherited from the GW sky map or recalculated
+    using the combined sky map values.
+    """
+    #  Find ra/dec of each GW pixel
+    level, ipix = ah.uniq_to_level_ipix(gw_sky["UNIQ"])
+    nsides = ah.level_to_nside(level)
+    areas = ah.nside_to_pixel_area(nsides)
+    ra_gw, dec_gw = ah.healpix_to_lonlat(ipix, nsides, order='nested')
+    #  Find corresponding external sky map indicies
+    ext_nside = ah.npix_to_nside(len(ext_sky))
+    ext_ind = ah.lonlat_to_healpix(
+        ra_gw, dec_gw, ext_nside,
+        order='nested' if ext_header['nest'] else 'ring')
+    #  Reweight GW prob density by external sky map probabilities
+    gw_sky['PROBDENSITY'] *= ext_sky[ext_ind]
+    gw_sky['PROBDENSITY'] /= \
+        np.sum(gw_sky['PROBDENSITY'] * areas).value
+    #  Modify GW sky map with new data
+    distmean, diststd = parameters_to_marginal_moments(
+        gw_sky['PROBDENSITY'] * areas.value,
+        gw_sky['DISTMU'], gw_sky['DISTSIGMA'])
+    gw_sky.meta['distmean'], gw_sky.meta['diststd'] = distmean, diststd
+    gw_sky.meta['instruments'].update(ext_header['instruments'])
+    gw_sky.meta['HISTORY'].extend([
+        '', 'The values were reweighted by using data from {}'.format(
+            list(ext_header['instruments'])[0])])
+    return gw_sky
+
+
+@app.task(shared=False, queue='exttrig')
+def combine_skymaps(skymapsbytes, gw_moc=True):
     """This task combines the two input skymaps, in this case the external
     trigger skymap and the LVC skymap and writes to a temporary output file. It
     then returns the contents of the file as a byte array.
+
+    There are separate methods in case the GW sky map is multiordered (we just
+    reweight using the external sky map) or flattened (use standard
+    ligo.skymap.combine method).
     """
-    with NamedTemporaryFile(mode='rb', suffix='.fits.gz') as combinedskymap, \
-            NamedTemporaryFile(content=skymap1filebytes) as skymap1file, \
-            NamedTemporaryFile(content=skymap2filebytes) as skymap2file, \
+    gw_skymap_bytes, ext_skymap_bytes = skymapsbytes
+    suffix = ".fits" if gw_moc else ".fits.gz"
+    with NamedTemporaryFile(mode='rb', suffix=suffix) as combinedskymap, \
+            NamedTemporaryFile(content=gw_skymap_bytes) as gw_skymap_file, \
+            NamedTemporaryFile(content=ext_skymap_bytes) as ext_skymap_file, \
             handling_system_exit():
-        ligo_skymap_combine.main([skymap1file.name,
-                                  skymap2file.name, combinedskymap.name])
+
+        # If GW sky map is multiordered, use reweighting method
+        if gw_moc:
+            #  FIXME: Use method that regrids the combined sky map e.g. mhealpy
+            #  once this method is quicker and preserves the header
+            #  Load sky maps
+            gw_skymap = fits.read_sky_map(gw_skymap_file.name, moc=True)
+            ext_skymap, ext_header = fits.read_sky_map(ext_skymap_file.name,
+                                                       moc=False)
+            #  Create and write combined sky map
+            combined_skymap = combine_skymaps_moc_flat(gw_skymap, ext_skymap,
+                                                       ext_header)
+            fits.write_sky_map(combinedskymap.name, combined_skymap, moc=True)
+        # If GW sky map is flattened, use older method
+        else:
+            ligo_skymap_combine.main([gw_skymap_file.name,
+                                      ext_skymap_file.name,
+                                      combinedskymap.name])
+        #  FIXME: Add method for MOC-MOC if there is a switch to MOC external
+        #  skymaps
         return combinedskymap.read()
 
 
@@ -107,7 +193,7 @@ def external_trigger(graceid):
     raise ValueError('No associated GRB EM event(s) for {0}.'.format(graceid))
 
 
-@app.task(shared=False)
+@app.task(shared=False, queue='exttrig')
 def external_trigger_heasarc(external_id):
     """Returns the HEASARC fits file link."""
     gracedb_log = gracedb.get_log(external_id)
@@ -125,6 +211,7 @@ def external_trigger_heasarc(external_id):
 
 
 @app.task(autoretry_for=(urllib.error.HTTPError,), retry_backoff=10,
+          queue='exttrig',
           retry_backoff_max=600)
 def get_external_skymap(link, search):
     """Download the Fermi sky map fits file and return the contents as a byte
@@ -152,6 +239,7 @@ def get_external_skymap(link, search):
 
 
 @app.task(autoretry_for=(urllib.error.HTTPError, urllib.error.URLError,),
+          queue='exttrig',
           retry_backoff=10, retry_backoff_max=1200)
 def get_upload_external_skymap(event, skymap_link=None):
     """If a Fermi sky map is not uploaded yet, tries to download one and upload
@@ -339,7 +427,7 @@ def write_to_fits(skymap, event, notice_type, notice_date):
             return file.read()
 
 
-@app.task(shared=False)
+@app.task(shared=False, queue='exttrig')
 def create_upload_external_skymap(event, notice_type, notice_date):
     """Create and upload external sky map using
     RA, dec, and error radius information.
