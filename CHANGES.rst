@@ -42,6 +42,9 @@ Changelog
     emfollow-playground server, creating mock coincidences with a frequency
     given by the ``joint_O3_replay_freq`` variable.
 
+-   Fix collation of INTEGRAL notices by getting the GCN ID from the IVORN
+    field.
+
 2.0.3 "Ugly Merman" (2023-02-16)
 --------------------------------
 

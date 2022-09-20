@@ -101,21 +101,33 @@ def handle_grb_gcn(payload):
     u = urlparse(root.attrib['ivorn'])
     stream_path = u.path
 
-    #  Get TrigID
-    try:
-        trig_id = root.find("./What/Param[@name='TrigID']").attrib['value']
-    except AttributeError:
-        trig_id = root.find("./What/Param[@name='Trans_Num']").attrib['value']
-    ext_group = 'Test' if root.attrib['role'] == 'test' else 'External'
-
-    notice_type = \
-        int(root.find("./What/Param[@name='Packet_Type']").attrib['value'])
-
     stream_obsv_dict = {'/SWIFT': 'Swift',
                         '/Fermi': 'Fermi',
                         '/INTEGRAL': 'INTEGRAL',
                         '/AGILE': 'AGILE'}
     event_observatory = stream_obsv_dict[stream_path]
+
+    #  Get TrigID
+    if event_observatory == 'INTEGRAL':
+        #  FIXME: revert all this if INTEGRAL fixes their GCN notices
+        #  If INTGRAL, get trigger ID from ivorn rather than the TrigID field
+        trig_id = u.fragment.split('_')[-1].split('-')[0]
+        #  Modify the TrigID field so GraceDB has the correct value
+        root.find("./What/Param[@name='TrigID']").attrib['value'] = \
+            str(trig_id).encode()
+        #  Apply changes to payload delivered to GraceDB
+        payload = etree.tostring(root, xml_declaration=True, encoding="UTF-8")
+    else:
+        try:
+            trig_id = \
+                root.find("./What/Param[@name='TrigID']").attrib['value']
+        except AttributeError:
+            trig_id = \
+                root.find("./What/Param[@name='Trans_Num']").attrib['value']
+    ext_group = 'Test' if root.attrib['role'] == 'test' else 'External'
+
+    notice_type = \
+        int(root.find("./What/Param[@name='Packet_Type']").attrib['value'])
 
     reliability = root.find("./What/Param[@name='Reliability']")
     if reliability is not None and int(reliability.attrib['value']) <= 4:
