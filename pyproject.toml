@@ -54,7 +54,7 @@ python = "^3.9,<3.11"
 adc-streaming = ">=2.3.0"  # https://github.com/astronomy-commons/adc-streaming/pull/62
 astropy = ">=4.3.1"  # https://github.com/astropy/astropy/issues/11879
 bilby = ">=2.1.0"
-bilby-pipe = ">=1.0.10"
+bilby_pipe = ">=1.0.10"
 celery = {version = ">=5.1", extras = ["redis"]}
 ciecplib = {version = "*", extras = ["kerberos"]}  # for renew-cert.sh
 click = ">=7"
@@ -85,7 +85,7 @@ lxml = "*"
 matplotlib = "<3.7"  # Matplotlib changed an axes behaviour which breaks some of our plotting scripts. When gwpy has a new release, we can unpin this.
 numba = ">=0.56"  # Poetry update chooses an old version of numba and its deps that break the python3.9 and 3.10 build tests if this is not specified; dependence on numba comes from rift. Version chosen because it adds python 3.10 support. This requirement can be dropped here if RIFT adds it https://git.ligo.org/rapidpe-rift/rift/-/issues/24
 numpy = "*"
-p-astro = ">=1.0.1"  # https://git.ligo.org/lscsoft/p-astro/-/merge_requests/40
+p_astro = ">=1.0.1"  # https://git.ligo.org/lscsoft/p-astro/-/merge_requests/40
 pesummary = "*"
 pygcn = ">=1.0.1"
 python-ligo-lw = "^1.8.3"
