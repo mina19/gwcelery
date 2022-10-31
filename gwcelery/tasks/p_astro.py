@@ -6,7 +6,10 @@ import io
 import json
 
 from celery.utils.log import get_task_logger
-from ligo import p_astro_computation as pastrocomp
+try:
+    from ligo.p_astro import computation as pastrocomp
+except ImportError:  # p_astro older than lscsoft/p_astro!42
+    from ligo import p_astro_computation as pastrocomp
 from matplotlib import pyplot as plt
 import numpy as np
 
