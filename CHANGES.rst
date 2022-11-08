@@ -84,6 +84,8 @@ Changelog
     ISO 8601. They were missing the ``T`` separating the date from the time
     and the final ``Z`` denoting the UTC time zone.
 
+-   Set pipeline preferred events during superevent clean up.
+
 2.0.1 "Alien Big Cat" (2022-10-26)
 ----------------------------------
 

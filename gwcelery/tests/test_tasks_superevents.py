@@ -25,6 +25,53 @@ def test_select_preferred_event():
     assert r['graceid'] == 'G3'
 
 
+def test_select_pipeline_preferred_event():
+    """Test selecting preferred event based on pipeline"""
+    sample_event = {
+        'instruments': 'H1,L1',
+        'offline': False,
+        'far': 6e-30,
+        'labels': ['SKYMAP_READY', 'EMBRIGHT_READY', 'PASTRO_READY'],
+        'extra_attributes': {
+            'CoincInspiral': {
+                'ifos': 'H1,L1',
+                'snr': 30,
+                'combined_far': 6e-30
+            },
+            'SingleInspiral': [{'ifo': 'H1'}, {'ifo': 'L1'}]
+        }
+    }
+    event_snr_combination = {
+        'G1': {'group': 'CBC', 'pipeline': 'gstlal', 'snr': 30},
+        'G2': {'group': 'CBC', 'pipeline': 'gstlal', 'snr': 20},
+        'G3': {'group': 'CBC', 'pipeline': 'pycbc', 'snr': 40},
+        'G4': {'group': 'CBC', 'pipeline': 'pycbc', 'snr': 10},
+        'G5': {'group': 'CBC', 'pipeline': 'spiir', 'snr': 15},
+        'G6': {'group': 'Burst', 'pipeline': 'cwb', 'far': 1e-15},
+        'G7': {'group': 'Burst', 'pipeline': 'cwb', 'far': 1e-30}
+    }
+    events = []
+    for event_id, content in event_snr_combination.items():
+        event = sample_event.copy()
+        event['graceid'] = event_id
+        event['pipeline'] = content['pipeline']
+        event['group'] = content['group']
+        snr = content.get('snr')
+        far = content.get('far')
+        if snr:
+            event['extra_attributes']['CoincInspiral']['snr'] = snr
+        if far:
+            event['far'] = far
+        events.append(event)
+    res = superevents.select_pipeline_preferred_event(events)
+    assert len(res) == 4
+    # expected pipeline preferred events
+    for pipeline, expected_event in {
+            'gstlal': 'G1', 'pycbc': 'G3',
+            'spiir': 'G5', 'cwb': 'G7'}.items():
+        assert res[pipeline]['graceid'] == expected_event
+
+
 @pytest.mark.parametrize(
     'superevent_labels,new_event_labels,preferred_event_labels,new_event_id',
     [[[],

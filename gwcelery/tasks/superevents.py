@@ -6,7 +6,7 @@ superevents.
 *   Primary logic to respond to low latency triggers contained in
     :meth:`process` function.
 """
-from itertools import filterfalse
+from itertools import filterfalse, groupby
 
 from celery.utils.log import get_task_logger
 from ligo.segments import segment, segmentlist
@@ -347,6 +347,32 @@ def get_instruments_in_ranking_statistic(event):
         attribs = event['extra_attributes']['SingleInspiral']
         return {single['ifo'] for single in attribs
                 if single.get('chisq') is not None}
+
+
+@app.task(shared=False)
+def select_pipeline_preferred_event(events):
+    """Group list of G events by pipeline, and apply :meth:`keyfunc`
+    to select the pipeline preferred events.
+
+    Parameters
+    ----------
+    events : list
+        list of event dictionaries
+
+    Returns
+    -------
+    dict
+        pipeline, graceid pairs
+    """
+    g_events = list(
+        filterfalse(lambda x: x['graceid'].startswith('E'), events))
+    g_events_by_pipeline = groupby(
+        sorted(g_events, key=lambda x: x['pipeline']),
+        key=lambda x: x['pipeline']
+    )
+
+    return dict(
+        (k, select_preferred_event(g)) for k, g in g_events_by_pipeline)
 
 
 @app.task(shared=False)

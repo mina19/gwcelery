@@ -123,6 +123,19 @@ def handle_superevent(alert):
                 |
                 earlywarning_preliminary_alert.s(alert)
             ).apply_async()
+
+            # set pipeline preferred events
+            # FIXME: Ideally this should combined with the previous canvas.
+            # However, incorporating that group prevents canvas from executing
+            # maybe related to https://github.com/celery/celery/issues/7851
+            (
+                gracedb.get_events.si(query)
+                |
+                superevents.select_pipeline_preferred_event.s()
+                |
+                _set_pipeline_preferred_events.s(superevent_id)
+            ).apply_async(countdown=app.conf['superevent_clean_up_timeout'])
+
         # launch initial/retraction alert on ADVOK/ADVNO
         elif label_name == 'ADVOK':
             initial_alert((None, None, None), alert)
@@ -337,6 +350,27 @@ def handle_posterior_samples(alert):
             'em-bright computed from "{}"'.format(info)
         )
     ).delay()
+
+
+@app.task(shared=False)
+def _set_pipeline_preferred_events(pipeline_event, superevent_id):
+    """Return group for setting pipeline preferred event using
+    :meth:`gracedb.add_pipeline_preferred_event`.
+
+    Parameters
+    ----------
+    pipeline_event: dict
+        {pipeline: event_dict} key value pairs, returned by
+        :meth:`superevents.select_pipeline_preferred_event`.
+
+    superevent_id: str
+        The superevent id
+    """
+    return group(
+        gracedb.add_pipeline_preferred_event(superevent_id,
+                                             event['graceid'])
+        for event in pipeline_event.values()
+    )
 
 
 @app.task(shared=False, ignore_result=True)

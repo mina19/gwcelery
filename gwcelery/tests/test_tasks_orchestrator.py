@@ -13,8 +13,8 @@ from . import data
 
 
 @pytest.mark.parametrize(  # noqa: F811
-    ('alert_type,label,group,pipeline,offline,far,instruments,superevent_id,' +
-     'superevent_labels'),
+    'alert_type,label,group,pipeline,offline,far,instruments,'
+    'superevent_id,superevent_labels',
     [['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
         ['H1'], 'S1234', ['EM_Selected']],
      ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
@@ -141,6 +141,15 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
     create_tag = Mock()
     select_preferred_event_task = Mock(return_value=get_event('G1234'))
     update_superevent_task = Mock()
+    select_pipeline_preferred_event_task = Mock()
+    select_pipeline_preferred_event_task.return_value = {
+        'pycbc': {'graceid': 'G1'},
+        'gstlal': {'graceid': 'G2'},
+        'mbta': {'graceid': 'G3'},
+        'spiir': {'graceid': 'G4'},
+        'cwb': {'graceid': 'G5'}
+    }
+    add_pipeline_preferred_event_task = Mock()
     omegascan = Mock()
     check_vectors = Mock(return_value=get_event('G1234'))
 
@@ -158,6 +167,10 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
     )
     monkeypatch.setattr('gwcelery.tasks.gracedb.create_tag._orig_run',
                         create_tag)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.add_pipeline_preferred_event._orig_run',
+        add_pipeline_preferred_event_task
+    )
     monkeypatch.setattr('gwcelery.tasks.gracedb.download._orig_run', download)
     monkeypatch.setattr('gwcelery.tasks.gracedb.expose._orig_run', expose)
     monkeypatch.setattr('gwcelery.tasks.gracedb.get_event._orig_run',
@@ -188,6 +201,10 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         'gwcelery.tasks.gracedb.update_superevent',
         update_superevent_task
     )
+    monkeypatch.setattr(
+        'gwcelery.tasks.superevents.select_pipeline_preferred_event.run',
+        select_pipeline_preferred_event_task
+    )
     monkeypatch.setattr('gwcelery.tasks.detchar.omegascan.run', omegascan)
     monkeypatch.setattr('gwcelery.tasks.detchar.check_vectors.run',
                         check_vectors)
@@ -205,6 +222,11 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         assert len(dqr_request_label) == 1  # DQR_REQUEST is applied once
         select_preferred_event_task.assert_called_once()
         update_superevent_task.assert_called_once()
+        select_pipeline_preferred_event_task.assert_called_once()
+        assert add_pipeline_preferred_event_task.call_count == len(
+            select_pipeline_preferred_event_task.return_value
+        )
+
     elif label == 'EM_Selected':
         annotate_fits.assert_called_once()
         _event_info = get_event('G1234')  # this gets the preferred event info

@@ -61,6 +61,12 @@ def _parse_versioned_filename(versioned_filename):
     return filename, file_version
 
 
+@task(ignore_result=True, shared=False)
+@catch_retryable_http_errors
+def add_pipeline_preferred_event(superevent_id, event_id):
+    client.superevents[superevent_id].pipeline_preferred_events.add(event_id)
+
+
 @task(shared=False)
 @catch_retryable_http_errors
 def create_event(filecontents, search, pipeline, group, labels=()):
@@ -265,6 +271,13 @@ def get_superevents(query, **kwargs):
 
     """
     return list(client.superevents.search(query=query, **kwargs))
+
+
+@task(ignore_result=True, shared=False)
+@catch_retryable_http_errors
+def remove_pipeline_preferred_event(superevent_id, event_id):
+    client.superevents[
+        superevent_id].pipeline_preferred_events.remove(event_id)
 
 
 @task(ignore_result=True, shared=False)
