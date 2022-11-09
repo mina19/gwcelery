@@ -4,6 +4,11 @@ Changelog
 2.0.2 (unreleased)
 ------------------
 
+-   Bump ligo.em-bright to 1.1.0.dev1 to add HasMassGap. 
+    Review page: https://git.ligo.org/emfollow/em-properties/em-bright/-/wikis/Mass-gap-review
+    
+-   Compute source properties uniformly across all CBC pipelines.
+
 -   Don't compute p-astro for MBTA because they now compute and upload their
     own.
 
@@ -15,9 +20,7 @@ Changelog
     speed of gravity by applying the SOG_READY label to the superevent.
 
 -   Add button to apply RAVEN alert labels to flask app. This will manually
-    trigger a RAVEN alert.
-
--   Plot the sky map overlap integral similarly to bayestar coherence.
+    trigger a RAVEN alert. 
 
 -   Update messages from RAVEN alert pipeline to be more informative.
 

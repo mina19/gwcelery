@@ -406,7 +406,7 @@ def test_handle_posterior_samples(monkeypatch, alert_type, filename):
 
 @patch('gwcelery.tasks.gracedb.download._orig_run', mock_download)
 @patch('gwcelery.tasks.bayestar.localize.run')
-@patch('gwcelery.tasks.em_bright.classifier_gstlal.run')
+@patch('gwcelery.tasks.em_bright.source_properties.run')
 def test_handle_cbc_event_new_event(mock_classifier, mock_localize):
     alert = read_json(data, 'lvalert_event_creation.json')
     orchestrator.handle_cbc_event(alert)
@@ -422,7 +422,7 @@ def test_handle_cbc_event_new_event(mock_classifier, mock_localize):
                       {'CoincInspiral': {'snr': 10.},
                        'SingleInspiral': [{'mass1': 10., 'mass2': 5.}]}})
 @patch('gwcelery.tasks.gracedb.download._orig_run', mock_download)
-@patch('gwcelery.tasks.em_bright.classifier_gstlal.run')
+@patch('gwcelery.tasks.em_bright.source_properties.run')
 @patch('gwcelery.tasks.bayestar.localize.run')
 def test_handle_cbc_event_ignored(mock_localize,
                                   mock_classifier,

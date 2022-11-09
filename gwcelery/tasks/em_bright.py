@@ -3,7 +3,7 @@ import io
 import json
 from matplotlib import pyplot as plt
 
-from ligo.em_bright import computeDiskMass, em_bright
+from ligo.em_bright import em_bright
 
 from celery.utils.log import get_task_logger
 
@@ -55,7 +55,7 @@ def plot(contents):
         :include-source:
 
         >>> from gwcelery.tasks import em_bright
-        >>> contents = '{"HasNS": 0.9137, "HasRemnant": 0.0}'
+        >>> contents = '{"HasNS": 0.9137, "HasRemnant": 0.0, "HasMassGap": 0.0}'  # noqa E501
         >>> em_bright.plot(contents)
     """
     # Explicitly use a non-interactive Matplotlib backend.
@@ -97,45 +97,34 @@ def em_bright_posterior_samples(posterior_file_content):
     Returns
     -------
     str
-        JSON formatted string storing ``HasNS`` and ``HasRemnant``
-        probabilities
+        JSON formatted string storing ``HasNS``, ``HasRemnant``,
+        and ``HasMassGap`` probabilities
 
     Examples
     --------
     >>> em_bright_posterior_samples(GraceDb().files('S190930s',
     ... 'Bilby.posterior_samples.hdf5').read())
-    {"HasNS": 0.014904901243599122, "HasRemnant": 0.0}
+    {"HasNS": 0.014904901243599122, "HasRemnant": 0.0, "HasMassGap": 0.0}
 
     """
     with NamedTemporaryFile(content=posterior_file_content) as samplefile:
         filename = samplefile.name
-        has_ns, has_remnant = em_bright.source_classification_pe(
+        has_ns, has_remnant, has_massgap = em_bright.source_classification_pe(
             filename, num_eos_draws=100, eos_seed=0
         )
     data = json.dumps({
         'HasNS': has_ns,
-        'HasRemnant': has_remnant
+        'HasRemnant': has_remnant,
+        'HasMassGap': has_massgap
     })
     return data
 
 
-def _em_bright(m1, m2, c1, c2, threshold=3.0):
-    """This is the place-holder function for the source classfication pipeline.
-    This placeholder code will only act upon the mass2 point estimate value and
-    classify the systems as whether they have a neutron or not.
-    """
-    disk_mass = computeDiskMass.computeDiskMass(m1, m2, c1, c2)
-    p_ns = 1.0 if m2 <= threshold else 0.0
-    p_emb = 1.0 if disk_mass > 0.0 or m1 < threshold else 0.0
-    return p_ns, p_emb
-
-
 @app.task(shared=False)
-def classifier_other(mass1, mass2, spin1z, spin2z, snr):
-    """Returns the boolean probability of having a NS component and the
-    probability of having non-zero disk mass. This method is used for pipelines
-    that do not provide the data products necessary for computation of the
-    source properties probabilities.
+def source_properties(mass1, mass2, spin1z, spin2z, snr):
+    """Returns the probability of having a NS component, the probability of
+    having non-zero disk mass, and the probability of any component being the
+    lower mass gap for the detected event.
 
     Parameters
     ----------
@@ -153,63 +142,21 @@ def classifier_other(mass1, mass2, spin1z, spin2z, snr):
     Returns
     -------
     str
-        JSON formatted string storing ``HasNS`` and ``HasRemnant``
-        probabilities
+        JSON formatted string storing ``HasNS``, ``HasRemnant``,
+        and `HasMassGap`` probabilities
 
     Examples
     --------
-    >>> em_bright.classifier_other(2.0, 1.0, 0.0, 0.0, 10.)
-    '{"HasNS": 1.0, "HasRemnant": 1.0}'
+    >>> em_bright.source_properties(2.0, 1.0, 0.0, 0.0, 10.)
+    '{"HasNS": 1.0, "HasRemnant": 1.0, "HasMassGap"}'
     """
-    p_ns, p_em = _em_bright(mass1, mass2, spin1z, spin2z)
-
-    data = json.dumps({
-        'HasNS': p_ns,
-        'HasRemnant': p_em
-    })
-    return data
-
-
-@app.task(shared=False)
-def classifier_gstlal(mass1, mass2, spin1z, spin2z, snr):
-    """Returns the probability of having a NS component and the probability of
-    having non-zero disk mass in the detected event. This method will be using
-    the data products obtained from the weekly supervised learning runs for
-    injections campaigns. The data products are in pickle formatted
-    RandomForestClassifier objects. The method predict_proba of these objects
-    provides us the probabilities of the coalesence being EM-Bright and
-    existence of neutron star in the binary.
-
-    Parameters
-    ----------
-    mass1 : float
-        Primary mass in solar masses
-    mass2 : float
-        Secondary mass in solar masses
-    spin1z : float
-         Dimensionless primary aligned spin component
-    spin2z : float
-         Dimensionless secondary aligned spin component
-    snr : float
-        Signal to noise ratio
-
-    Returns
-    -------
-    str
-        JSON formatted string storing ``HasNS`` and ``HasRemnant``
-        probabilities
-
-    Examples
-    --------
-    >>> em_bright.classifier_gstlal(2.0, 1.0, 0.0, 0.0, 10.)
-    '{"HasNS": 1.0, "HasRemnant": 1.0}'
-    """
-    p_ns, p_em = em_bright.source_classification(
+    p_ns, p_em, p_mg = em_bright.source_classification(
         mass1, mass2, spin1z, spin2z, snr
     )
 
     data = json.dumps({
         'HasNS': p_ns,
-        'HasRemnant': p_em
+        'HasRemnant': p_em,
+        'HasMassGap': p_mg
     })
     return data

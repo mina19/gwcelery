@@ -30,22 +30,23 @@ def test_handle_em_bright_json(mock_plot, mock_upload, mock_download):
     mock_upload.assert_called_once()
 
 
-def test_classify_gstlal():
-    res = json.loads(em_bright.classifier_gstlal(
+def test_classifier():
+    res = json.loads(em_bright.source_properties(
         1.355607, 1.279483, 0.0, 0.0, 15.6178))
     assert res['HasNS'] == pytest.approx(1.0, abs=1e-3)
     assert res['HasRemnant'] == pytest.approx(1.0, abs=1e-3)
+    assert res['HasMassGap'] == pytest.approx(0.0, abs=1e-3)
 
 
 @pytest.mark.parametrize(
         'posterior_samples,embright',
         [[[(1.2, 1.0, 0.0, 0.0, 100.0, 0.0, 0.0),
            (2.0, 0.5, 0.99, 0.99, 150.0, 0.0, 0.0)],
-          {'HasNS': 1.0, 'HasRemnant': 0.5}],
+          {'HasNS': 1.0, 'HasRemnant': 0.5, 'HasMassGap': 0.5}],
          [[(20., 12.0, 0.0, 0.0, 200.0, 0.0, 0.0),
            (22.0, 11.5, 0.80, 0.00, 250.0, 0.0, 0.0),
            (21.0, 10.0, 0.0, 0.0, 250, 0.0, 0.0)],
-          {'HasNS': 0.0, 'HasRemnant': 0.0}]])
+          {'HasNS': 0.0, 'HasRemnant': 0.0, 'HasMassGap': 0.0}]])
 def test_posterior_samples(posterior_samples, embright):
     with NamedTemporaryFile() as f:
         filename = f.name
@@ -62,14 +63,3 @@ def test_posterior_samples(posterior_samples, embright):
         content = open(filename, 'rb').read()
     r = json.loads(em_bright.em_bright_posterior_samples(content))
     assert r == embright
-
-
-@pytest.mark.parametrize(
-    'args,has_ns,has_remnant',
-    [[(1.355607, 1.279483, 0.0, 0.0, 15.6178), 1.0, 1.0],
-     [(40.0, 3.0001, 0.0, 0.0, 15), 0.0, 0.0],
-     [(40.0, 2.9999, 0.0, 0.0, 15), 1.0, 0.0]])
-def test_classify_other(args, has_ns, has_remnant):
-    res = json.loads(em_bright.classifier_other(*args))
-    assert res['HasNS'] == has_ns
-    assert res['HasRemnant'] == has_remnant
