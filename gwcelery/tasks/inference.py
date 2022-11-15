@@ -304,7 +304,7 @@ def _setup_dag_for_bilby(
     path_to_settings = os.path.join(rundir, 'settings.json')
     settings = {'summarypages_arguments': {'gracedb': preferred_event_id,
                                            'no_ligo_skymap': True}}
-    with open(path_to_json, 'w') as f:
+    with open(path_to_settings, 'w') as f:
         json.dump(settings, f, indent=2)
 
     path_to_webdir = os.path.join(
