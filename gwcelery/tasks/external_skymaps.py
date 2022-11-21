@@ -3,6 +3,7 @@ from astropy import units as u
 from astropy.coordinates import ICRS, SkyCoord
 import astropy_healpix as ah
 from astropy_healpix import HEALPix, pixel_resolution_to_nside
+from base64 import b64decode
 from celery import group
 #  import astropy.utils.data
 import numpy as np
@@ -286,6 +287,44 @@ def get_external_skymap(link, search):
     return urllib.request.urlopen(skymap_link, context=context).read()
 
 
+@app.task(shared=False)
+def read_upload_skymap_from_base64(event, skymap_str):
+    """Decode and upload 64base encoded sky maps from Kafka alerts"""
+
+    graceid = event['graceid']
+    ra = event['extra_attributes']['GRB']['ra']
+    dec = event['extra_attributes']['GRB']['dec']
+    skymap_filename = event['pipeline'].lower() + '_skymap.fits.gz'
+
+    # Decode base64 encoded string to bytes string
+    skymap_data = b64decode(skymap_str)
+
+    message = (
+        'Mollweide projection of <a href="/api/events/{graceid}/files/'
+        '{filename}">{filename}</a>').format(
+            graceid=graceid, filename=skymap_filename)
+
+    (
+        group(
+            gracedb.upload.si(skymap_data,
+                              skymap_filename,
+                              graceid,
+                              'Sky map uploaded from {}'.format(
+                                  event['pipeline']),
+                              ['sky_loc']),
+
+            skymaps.plot_allsky.si(skymap_data, ra=ra, dec=dec)
+            |
+            gracedb.upload.s(event['pipeline'].lower() + '_skymap.png',
+                             graceid,
+                             message,
+                             ['sky_loc'])
+        )
+        |
+        gracedb.create_label.si('EXT_SKYMAP_READY', graceid)
+    ).delay()
+
+
 @app.task(autoretry_for=(urllib.error.HTTPError, urllib.error.URLError,),
           retry_backoff=10, retry_backoff_max=1200)
 def get_upload_external_skymap(event, skymap_link=None):
@@ -305,7 +344,7 @@ def get_upload_external_skymap(event, skymap_link=None):
             |
             get_external_skymap.s(search)
         )
-    elif search in {'SubGRB', 'FromURL'}:
+    elif search in {'SubGRB', 'SubGRBTargeted', 'FromURL'}:
         external_skymap_canvas = get_external_skymap.si(skymap_link, search)
 
     skymap_filename = \

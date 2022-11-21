@@ -95,7 +95,7 @@ def test_handle_create_grb_event(mock_create_event,
         gcn_type_dict[pipeline], time_dict[pipeline])
 
 
-@patch('gwcelery.tasks.gracedb.get_events', return_value=[])
+@patch('gwcelery.tasks.gracedb.get_events.run', return_value=[])
 @patch('gwcelery.tasks.gracedb.create_event.run', return_value={
     'graceid': 'E1', 'gpstime': 1, 'instruments': '', 'pipeline': 'Fermi',
     'search': 'SubGRB',
@@ -139,7 +139,7 @@ def test_handle_create_subthreshold_grb_event(mock_get_upload_ext_skymap,
                          ['fermi_noise_gcn.xml',
                           'fermi_noise_gcn_2.xml'])
 @patch('gwcelery.tasks.external_skymaps.get_upload_external_skymap.run')
-@patch('gwcelery.tasks.gracedb.get_events', return_value=[])
+@patch('gwcelery.tasks.gracedb.get_events.run', return_value=[])
 @patch('gwcelery.tasks.gracedb.create_event.run', return_value={
     'graceid': 'E1', 'gpstime': 1, 'instruments': '', 'pipeline': 'Fermi',
     'search': 'GRB',
@@ -170,7 +170,7 @@ def test_handle_noise_fermi_event(mock_check_vectors,
 
 @patch('gwcelery.tasks.external_skymaps.create_external_skymap')
 @patch('gwcelery.tasks.external_skymaps.get_upload_external_skymap.run')
-@patch('gwcelery.tasks.gracedb.get_events', return_value=[])
+@patch('gwcelery.tasks.gracedb.get_events.run', return_value=[])
 @patch('gwcelery.tasks.gracedb.create_event.run', return_value={
     'graceid': 'E1', 'gpstime': 1, 'instruments': '', 'pipeline': 'Fermi',
     'search': 'GRB',
@@ -215,7 +215,7 @@ def test_handle_initial_fermi_event(mock_check_vectors,
     'extra_attributes': {'GRB': {'trigger_duration': 1, 'trigger_id': 123,
                                  'ra': 0., 'dec': 0., 'error_radius': 10.}},
     'links': {'self': 'https://gracedb.ligo.org/events/E356793/'}}])
-@patch('gwcelery.tasks.gracedb.get_events', return_value=[{
+@patch('gwcelery.tasks.gracedb.get_events.run', return_value=[{
     'graceid': 'E1', 'gpstime': 1, 'instruments': '', 'pipeline': 'Fermi',
     'search': 'GRB',
     'extra_attributes': {'GRB': {'trigger_duration': 1, 'trigger_id': 123,
@@ -574,7 +574,8 @@ def test_handle_create_snews_event(mock_create_event,
     mock_create_event.assert_called_once_with(filecontents=text,
                                               search='Supernova',
                                               pipeline='SNEWS',
-                                              group='External')
+                                              group='External',
+                                              labels=None)
     calls = [
         call(
             '"dqrjson"', 'gwcelerydetcharcheckvectors-E1.json', 'E1',
@@ -599,8 +600,12 @@ def test_handle_create_snews_event(mock_create_event,
 
 
 @patch('gwcelery.tasks.gracedb.replace_event.run')
-@patch('gwcelery.tasks.gracedb.get_events', return_value=[{'graceid': 'E1'}])
-def test_handle_replace_snews_event(mock_get_events, mock_replace_event):
+@patch('gwcelery.tasks.gracedb.remove_label.run')
+@patch('gwcelery.tasks.gracedb.get_events.run',
+       return_value=[{'graceid': 'E1', 'search': 'Supernova', 'gpstime': 100,
+                      'pipeline': 'SNEWS'}])
+def test_handle_replace_snews_event(mock_get_events, mock_remove_label,
+                                    mock_replace_event):
     text = resources.read_binary(data, 'snews_gcn.xml')
     external_triggers.handle_snews_gcn(payload=text)
     mock_replace_event.assert_called_once_with('E1', text)
@@ -647,10 +652,6 @@ def test_handle_subgrb_targeted_creation(mock_raven_coincidence_search,
 
     # Run function under test
     external_triggers.handle_grb_igwn_alert(alert)
-
-    # Check that sky map is uploaded
-    mock_create_upload_external_skymap.assert_called_once_with(
-        alert['object'], None, alert['object']['created'])
 
     # Check that the correct tasks were dispatched.
     mock_raven_coincidence_search.assert_has_calls([
@@ -738,6 +739,112 @@ def test_handle_superevent_burst_creation(mock_raven_coincidence_search,
     mock_raven_coincidence_search.assert_has_calls([
         call('S180616h', alert['object'], group='Burst', searches=['GRB'],
              se_searches=['Allsky'])])
+
+
+def _mock_get_events(query):
+    if "12345" in query:
+        return [{"graceid": "E12345", "search": "SubGRBTargeted"}]
+    else:
+        return {}
+
+
+@pytest.mark.parametrize('alert_type',
+                         ['initial', 'update', 'retraction'])
+@pytest.mark.parametrize('kafka_path',
+                         ['kafka_alert_fermi.json',
+                          'kafka_alert_swift.json',
+                          'kafka_alert_swift_noloc.json',
+                          'kafka_alert_swift_wskymap.json'])
+@patch('gwcelery.tasks.gracedb.create_event.run', return_value={
+    'graceid': 'E12345', 'gpstime': 100, 'pipeline': 'Fermi',
+    'extra_attributes': {'GRB': {'trigger_duration': 1, 'trigger_id': 123,
+                                 'ra': 10., 'dec': 20., 'error_radius': 10.}}})
+@patch('gwcelery.tasks.external_skymaps.create_upload_external_skymap.run')
+@patch('gwcelery.tasks.external_skymaps.get_upload_external_skymap.run')
+@patch('gwcelery.tasks.external_skymaps.read_upload_skymap_from_base64.run')
+@patch('gwcelery.tasks.gracedb.replace_event.run')
+@patch('gwcelery.tasks.gracedb.get_event.run',
+       return_value={'graceid': 'E12345'})
+@patch('gwcelery.tasks.gracedb.create_label.run')
+@patch('gwcelery.tasks.gracedb.get_events.run', side_effect=_mock_get_events)
+@patch('gwcelery.tasks.detchar.check_vectors.run')
+@patch('gwcelery.tasks.gracedb.upload.run')
+@patch('gwcelery.tasks.skymaps.plot_allsky.run')
+def test_handle_targeted_kafka_alert(mock_plot_allsky,
+                                     mock_gracedb_upload,
+                                     mock_check_vectors,
+                                     mock_get_events,
+                                     mock_create_label,
+                                     mock_get_event,
+                                     mock_replace_event,
+                                     mock_read_upload_skymap_from_base64,
+                                     mock_get_upload_external_skymap,
+                                     mock_create_upload_external_skymap,
+                                     mock_create_event,
+                                     alert_type, kafka_path):
+
+    alert = read_json(data, kafka_path)
+    alert["alert_type"] = alert_type
+    voevent_path = '{}_subgrbtargeted_template.xml'.format(
+        'fermi' if 'fermi' in kafka_path else 'swift')
+    no_loc = 'noloc' in kafka_path
+    replace_event = alert_type in ['update', 'retraction']
+    pipeline = 'Fermi' if 'fermi' in kafka_path else 'Swift'
+    # Update VOEvent with sky localization info or ID if needed
+    if no_loc or replace_event:
+        with resources.path(data, voevent_path) as p:
+            fname = str(p)
+        root = etree.parse(fname)
+        if no_loc:
+            # Set template to also be zeros if nothing in kafka alert
+            root.find(("./WhereWhen/ObsDataLocation/"
+                       "ObservationLocation/AstroCoords/Position2D/Value2/"
+                       "C1")).text = str(0.).encode()
+            root.find(("./WhereWhen/ObsDataLocation/"
+                       "ObservationLocation/AstroCoords/Position2D/Value2/"
+                       "C2")).text = str(0.).encode()
+            root.find(("./WhereWhen/ObsDataLocation/"
+                       "ObservationLocation/AstroCoords/Position2D/"
+                       "Error2Radius")).text = str(0.).encode()
+        if replace_event:
+            # Update ID so we can find a previous event and replace it
+            new_id = "12345"
+            root.find("./What/Param[@name='TrigID']").attrib['value'] = \
+                new_id.encode()
+            alert["id"] = [new_id]
+        text = etree.tostring(root, xml_declaration=True, encoding="UTF-8")
+        # Add back removed newline
+        text += b'\n'
+    # If no changes needed, read the file directly
+    else:
+        text = resources.read_binary(data, voevent_path)
+
+    # Send alert through handler
+    external_triggers.handle_targeted_kafka_alert(alert)
+
+    # Check either event was created or updated based on alert type
+    if replace_event:
+        mock_replace_event.assert_called_once_with("E12345", text)
+    else:
+        mock_create_event.assert_called_once_with(filecontents=text,
+                                                  search='SubGRBTargeted',
+                                                  pipeline=pipeline,
+                                                  group='External',
+                                                  labels=None)
+
+    # Ensure correct localization method used
+    if pipeline == 'Fermi' or 'wskymap' in kafka_path:
+        mock_read_upload_skymap_from_base64.assert_called()
+    elif 'noloc' in kafka_path:
+        mock_read_upload_skymap_from_base64.assert_not_called()
+        mock_create_upload_external_skymap.assert_not_called()
+    else:
+        mock_create_upload_external_skymap.assert_called_once()
+
+    if alert_type == "retraction":
+        mock_create_label.assert_called_once_with("NOT_GRB", "E12345")
+    else:
+        mock_create_label.assert_not_called()
 
 
 @pytest.mark.parametrize('path',

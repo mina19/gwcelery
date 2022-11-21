@@ -312,3 +312,24 @@ def test_plot_overlap_integral(mock_upload,
         mock_upload.assert_called_once()
     else:
         mock_upload.assert_not_called()
+
+
+@patch('gwcelery.tasks.gracedb.upload.run')
+@patch('gwcelery.tasks.skymaps.plot_allsky.run')
+@patch('gwcelery.tasks.gracedb.create_label.run')
+def test_read_upload_skymap_from_base64(mock_create_label, mock_plot_allsky,
+                                        mock_gracedb_upload):
+    skymapb64 = read_json(
+                    data, 'kafka_alert_fermi.json'
+                )['healpix_file']
+    event = {'graceid': 'E1234',
+             'pipeline': 'Fermi',
+             'extra_attributes': {
+                 'GRB': {
+                     'ra': 14.5,
+                     'dec': -40.1}}}
+    external_skymaps.read_upload_skymap_from_base64(event, skymapb64)
+
+    mock_gracedb_upload.assert_called()
+    mock_plot_allsky.assert_called_once()
+    mock_create_label.assert_called_with('EXT_SKYMAP_READY', event['graceid'])

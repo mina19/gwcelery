@@ -2,8 +2,10 @@ from lxml import etree
 from urllib.parse import urlparse
 from celery import group
 from celery.utils.log import get_logger
+from pathlib import Path
 
 from ..import app
+from . import alerts
 from . import detchar
 from . import gcn
 from . import gracedb
@@ -55,23 +57,14 @@ def handle_snews_gcn(payload):
         search = 'Supernova'
     query = 'group: External pipeline: {} grbevent.trigger_id = "{}"'.format(
         event_observatory, trig_id)
-    events = gracedb.get_events(query=query)
 
-    if events and ext_group == 'External':
-        # Only update event if real
-        assert len(events) == 1, 'Found more than one matching GraceDB entry'
-        event, = events
-        graceid = event['graceid']
-        canvas = gracedb.replace_event.s(graceid, payload)
-
-    else:
-        canvas = gracedb.create_event.s(filecontents=payload,
-                                        search=search,
-                                        group=ext_group,
-                                        pipeline=event_observatory)
-        canvas |= _launch_external_detchar.s()
-
-    canvas.delay()
+    (
+        gracedb.get_events.si(query=query)
+        |
+        _create_replace_external_event_and_skymap.s(
+            payload, search, event_observatory, ext_group=ext_group
+        )
+    ).delay()
 
 
 @gcn.handler(gcn.NoticeType.FERMI_GBM_ALERT,
@@ -162,9 +155,9 @@ def handle_grb_gcn(payload):
     #  Only send alerts if likely a GRB, is not a low-confidence early Fermi
     #  alert, and if not a Swift veto
     if not_likely_grb or initial_gbm_alert or swift_veto:
-        labels = ['NOT_GRB']
+        label = 'NOT_GRB'
     else:
-        labels = None
+        label = None
 
     ivorn = root.attrib['ivorn']
     if 'subthresh' in ivorn.lower():
@@ -174,56 +167,26 @@ def handle_grb_gcn(payload):
     else:
         search = 'GRB'
 
+    if search == 'SubGRB' and event_observatory == 'Fermi':
+        skymap_link = \
+            root.find("./What/Param[@name='HealPix_URL']").attrib['value']
+    else:
+        skymap_link = None
+
     query = 'group: External pipeline: {} grbevent.trigger_id = "{}"'.format(
         event_observatory, trig_id)
-    events = gracedb.get_events(query=query)
-
-    group_canvas = ()
-    if events and ext_group == 'External':
-        # Only update event if real
-        assert len(events) == 1, 'Found more than one matching GraceDB entry'
-        event, = events
-        graceid = event['graceid']
-        if labels:
-            canvas = gracedb.create_label.si(labels[0], graceid)
-        else:
-            canvas = gracedb.remove_label.si('NOT_GRB', graceid)
-
-        # Prevent SubGRBs from appending GRBs
-        if search == 'GRB':
-            # Replace event and pass already existing event dictionary
-            canvas |= gracedb.replace_event.si(graceid, payload)
-            canvas |= gracedb.get_event.si(graceid)
-        else:
-            return
-
-    else:
-        canvas = gracedb.create_event.s(filecontents=payload,
-                                        search=search,
-                                        group=ext_group,
-                                        pipeline=event_observatory,
-                                        labels=labels)
-        group_canvas += _launch_external_detchar.s(),
-
-    if search in {'GRB', 'MDC'}:
-        notice_date = root.find("./Who/Date").text
-        group_canvas += external_skymaps.create_upload_external_skymap.s(
-                      notice_type, notice_date),
-    if event_observatory == 'Fermi':
-        if search == 'SubGRB':
-            skymap_link = \
-                root.find("./What/Param[@name='HealPix_URL']").attrib['value']
-            group_canvas += \
-                external_skymaps.get_upload_external_skymap.s(skymap_link),
-        elif search == 'GRB':
-            skymap_link = None
-            group_canvas += \
-                external_skymaps.get_upload_external_skymap.s(skymap_link),
 
     (
-        canvas
+        gracedb.get_events.si(query=query)
         |
-        group(group_canvas)
+        _create_replace_external_event_and_skymap.s(
+            payload, search, event_observatory,
+            ext_group=ext_group, label=label,
+            notice_date=root.find("./Who/Date").text,
+            notice_type=notice_type,
+            skymap_link=skymap_link,
+            use_radec=search in {'GRB', 'MDC'}
+        )
     ).delay()
 
 
@@ -259,13 +222,6 @@ def handle_grb_igwn_alert(alert):
     # launch searches
     if alert['alert_type'] == 'new':
         if alert['object'].get('group') == 'External':
-            # Create and upload Swift sky map for the joint targeted
-            # sub-threshold search as agreed on in the MOU
-            if alert['object']['search'] == 'SubGRBTargeted' and \
-                    alert['object']['pipeline'] == 'Swift':
-                external_skymaps.create_upload_external_skymap(
-                    alert['object'], None, alert['object']['created'])
-
             # launch search with MDC events and exit
             if alert['object']['search'] == 'MDC':
                 raven.coincidence_search(graceid, alert['object'],
@@ -475,6 +431,40 @@ def handle_snews_igwn_alert(alert):
                                          pipelines=['SNEWS'])
 
 
+@alerts.handler('fermi',
+                'swift')
+def handle_targeted_kafka_alert(alert):
+    """Parse an alert sent via Kafka from a MOU partner in our joint
+    subthreshold targeted search.
+
+    Parameters
+    ----------
+    alert : dict
+        Kafka alert packet
+
+    """
+    # Convert alert to VOEvent format
+    # FIXME: This is required until native ingesting of kafka events in GraceDB
+    payload, pipeline, time, trig_id = _kafka_to_voevent(alert)
+
+    label = 'NOT_GRB' if alert['alert_type'] == "retraction" else None
+
+    # Look whether a previous event with the same ID exists
+    query = 'group: External pipeline: {} grbevent.trigger_id = "{}"'.format(
+        pipeline, trig_id)
+
+    (
+        gracedb.get_events.si(query=query)
+        |
+        _create_replace_external_event_and_skymap.s(
+            payload, 'SubGRBTargeted', pipeline,
+            label=label, notice_date=time,
+            skymap=alert.get('healpix_file'),
+            use_radec=('ra' in alert and 'dec' in alert)
+        )
+    ).delay()
+
+
 def _skymaps_are_ready(event, label, task):
     label_set = set(event['labels'])
     required_labels = REQUIRED_LABELS_BY_TASK[task]
@@ -548,3 +538,162 @@ def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid,
                           None if use_superevent
                           else superevent['preferred_event']))
     canvas.delay()
+
+
+@app.task(shared=False)
+def _create_replace_external_event_and_skymap(
+        events, payload, search, pipeline,
+        label=None, ext_group='External', notice_date=None, notice_type=None,
+        skymap=None, skymap_link=None, use_radec=False):
+    """Either create a new external event or replace an old one if applicable
+    Then either uploads a given sky map, try to download one given a link, or
+    create one given coordinates.
+
+    Parameters
+    ----------
+    events : list
+        List of external events sharing the same trigger ID
+    payload : str
+        VOEvent of event being considered
+    search : str
+        Search of external event
+    pipeline : str
+        Pipeline of external evevent
+    label : list
+        Label to be uploaded along with external event. If None, removes
+        'NOT_GRB' label from event
+    ext_group : str
+        Group of external event, 'External' or 'Test'
+    notice_date : str
+        Time and date of external event
+    notice_type : str
+        GCN Notice type of external event
+    skymap : str
+        Base64 encoded sky map
+    skymap_link : str
+        Link to external sky map to be downloaded
+    use_radec : bool
+        If true, try to create sky map using given coordinates
+
+    """
+    skymap_detchar_canvas = ()
+    # If previous event, try to append
+    if events and ext_group == 'External':
+        assert len(events) == 1, 'Found more than one matching GraceDB entry'
+        event, = events
+        graceid = event['graceid']
+        if label:
+            create_replace_canvas = gracedb.create_label.si(label, graceid)
+        else:
+            create_replace_canvas = gracedb.remove_label.si('NOT_GRB', graceid)
+
+        # Prevent SubGRBs from appending GRBs, also append if same search
+        if search == 'GRB' or search == event['search']:
+            # Replace event and pass already existing event dictionary
+            create_replace_canvas |= gracedb.replace_event.si(graceid, payload)
+            create_replace_canvas |= gracedb.get_event.si(graceid)
+        else:
+            # If not appending just exit
+            return
+
+    # If new event, create new entry in GraceDB and launch detchar
+    else:
+        create_replace_canvas = gracedb.create_event.si(
+            filecontents=payload,
+            search=search,
+            group=ext_group,
+            pipeline=pipeline,
+            labels=[label] if label else None)
+        skymap_detchar_canvas += _launch_external_detchar.s(),
+
+    # Use sky map if provided
+    if skymap:
+        skymap_detchar_canvas += \
+            external_skymaps.read_upload_skymap_from_base64.s(skymap),
+    else:
+        # Otherwise grab sky map from provided link
+        if skymap_link:
+            skymap_detchar_canvas += \
+                external_skymaps.get_upload_external_skymap.s(skymap_link),
+        # Otherwise if threshold Fermi try to grab sky map
+        elif pipeline == 'Fermi' and search == 'GRB':
+            skymap_detchar_canvas += \
+                external_skymaps.get_upload_external_skymap.s(None),
+        # Otherwise create sky map from given coordinates
+        if use_radec:
+            skymap_detchar_canvas += \
+                external_skymaps.create_upload_external_skymap.s(
+                    notice_type, notice_date),
+
+    (
+        create_replace_canvas
+        |
+        group(skymap_detchar_canvas)
+    ).delay()
+
+
+def _kafka_to_voevent(alert):
+    # Define basic values
+    pipeline = alert['mission']
+    trigger_time = alert['trigger_time']
+    alert_time = alert['alert_datetime']
+    far = alert['far']
+    integration_time = alert['rate_duration']
+    id = '_'.join(str(x) for x in alert['id'])
+
+    # sky localization may not be available
+    ra = alert.get('ra')
+    dec = alert.get('dec')
+    # Try to get dec first then ra, None if both misssing
+    error = alert.get('dec_uncertainty')
+    if error is None:
+        error = alert.get('ra_uncertainty')
+    # Argument should be list if not None
+    if isinstance(error, list):
+        error = error[0]
+    # if any missing sky map info, set to zeros so will be ignored later
+    if ra is None or dec is None or error is None:
+        ra, dec, error = 0., 0., 0.
+
+    # Load template
+    fname = str(Path(__file__).parent /
+                '../tests/data/{}_subgrbtargeted_template.xml'.format(
+                    pipeline.lower()))
+    root = etree.parse(fname)
+
+    # Update template values
+    # Change ivorn to indicate this is a subthreshold targeted event
+    root.xpath('.')[0].attrib['ivorn'] = \
+        'ivo://lvk.internal/{0}#targeted_subthreshold-{1}'.format(
+            pipeline.lower(), trigger_time).encode()
+
+    # Update ID
+    root.find("./What/Param[@name='TrigID']").attrib['value'] = \
+        id.encode()
+
+    # Change times to chosen time
+    root.find("./Who/Date").text = str(alert_time).encode()
+    root.find(("./WhereWhen/ObsDataLocation/"
+               "ObservationLocation/AstroCoords/Time/TimeInstant/"
+               "ISOTime")).text = str(trigger_time).encode()
+
+    root.find("./What/Param[@name='FAR']").attrib['value'] = \
+        str(far).encode()
+
+    root.find("./What/Param[@name='Integ_Time']").attrib['value'] = \
+        str(integration_time).encode()
+
+    # Sky position
+    root.find(("./WhereWhen/ObsDataLocation/"
+               "ObservationLocation/AstroCoords/Position2D/Value2/"
+               "C1")).text = str(ra).encode()
+    root.find(("./WhereWhen/ObsDataLocation/"
+               "ObservationLocation/AstroCoords/Position2D/Value2/"
+               "C2")).text = str(dec).encode()
+    root.find(("./WhereWhen/ObsDataLocation/"
+               "ObservationLocation/AstroCoords/Position2D/"
+               "Error2Radius")).text = str(error).encode()
+
+    return (etree.tostring(root, xml_declaration=True, encoding="UTF-8",
+                           pretty_print=True),
+            pipeline, trigger_time.replace('Z', ''), id)

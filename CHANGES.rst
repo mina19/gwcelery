@@ -9,6 +9,10 @@ Changelog
 
 -   Log failed omegascan exceptions to Sentry
 
+-   Add ingestion of Fermi and Swift subthreshold targeted events. Generalize
+    shared creation and replacement workflow used by various external trigger
+    listeners into a single function.
+
 2.1.2 "Ogopogo" (2023-06-09)
 ----------------------------
 

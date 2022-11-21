@@ -60,7 +60,7 @@ def test_handle_create_grb_event(monkeypatch,
                         mock_check_vectors)
     monkeypatch.setattr('gwcelery.tasks.gracedb.create_event.run',
                         mock_create_event)
-    monkeypatch.setattr('gwcelery.tasks.gracedb.get_events',
+    monkeypatch.setattr('gwcelery.tasks.gracedb.get_events.run',
                         mock_get_events)
     monkeypatch.setattr(app.conf, 'gracedb_host', host)
     if group == 'Test':
@@ -95,7 +95,7 @@ def test_handle_create_grb_event(monkeypatch,
     'graceid': 'M1', 'gpstime': 1, 'instruments': '', 'pipeline': 'SNEWS',
     'search': 'MDC',
     'links': {'self': 'https://gracedb.ligo.org/events/E356793/'}})
-@patch('gwcelery.tasks.gracedb.get_events', return_value=[])
+@patch('gwcelery.tasks.gracedb.get_events.run', return_value=[])
 def test_upload_snews_event(mock_get_events,
                             mock_create_event,
                             mock_check_vectors):
@@ -104,5 +104,6 @@ def test_upload_snews_event(mock_get_events,
         filecontents=event,
         search='MDC',
         pipeline='SNEWS',
-        group='External')
+        group='External',
+        labels=None)
     mock_check_vectors.assert_called_once()

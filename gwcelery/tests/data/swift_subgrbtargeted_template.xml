@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<voe:VOEvent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:voe="http://www.ivoa.net/xml/VOEvent/v2.0" xsi:schemaLocation="http://www.ivoa.net/xml/VOEvent/v2.0 http://www.ivoa.net/xml/VOEvent/VOEvent-v2.0.xsd" version="2.0" role="test" ivorn="ivo://lvk.internal/swift#targeted_subthreshold-2022-10-04T22:34:49Z">
+  <Who>
+    <Description>VOEvent created with voevent-parse, version 1.0.3. See https://github.com/timstaley/voevent-parse for details.</Description>
+    <AuthorIVORN>ivo://swift</AuthorIVORN>
+    <Date>2022-10-04T22:35:21Z</Date>
+    <Author>
+      <shortName>Swift/LVK-joint</shortName>
+      <contactEmail>aaron.tohu@gmail.com</contactEmail>
+      <contactName>Aaron Tohuvavohu</contactName>
+      <shortName>Swift/LVK-joint</shortName>
+    </Author>
+  </Who>
+  <What>
+    <Param ucd="arith.rate;stat.falsealarm" unit="Hz" value="5.39583726e-08" name="FAR" dataType="float"/>
+    <Param name="TrigID" value="694215995" ucd="meta.id"/>
+    <Param name="Integ_Time" value="1.024" unit="sec" ucd="time.interval"/>
+  </What>
+  <WhereWhen>
+    <ObsDataLocation>
+      <ObservatoryLocation id="GEOLUN"/>
+      <ObservationLocation>
+        <AstroCoordSystem id="UTC-FK5-GEO"/>
+        <AstroCoords coord_system_id="UTC-FK5-GEO">
+          <Time unit="s">
+            <TimeInstant>
+              <ISOTime>2022-10-04T22:34:49Z</ISOTime>
+            </TimeInstant>
+          </Time>
+          <Position2D unit="deg">
+            <Name1>RA</Name1>
+            <Name2>Dec</Name2>
+            <Value2>
+              <C1>14.5</C1>
+              <C2>-40.1</C2>
+            </Value2>
+            <Error2Radius>0.03</Error2Radius>
+          </Position2D>
+        </AstroCoords>
+      </ObservationLocation>
+    </ObsDataLocation>
+  </WhereWhen>
+  <How>
+    <Description>Swift Satellite, BAT Instrument</Description>
+    <Reference uri="http://gcn.gsfc.nasa.gov/swift.html" type="url"/>
+  </How>
+</voe:VOEvent>
