@@ -166,12 +166,15 @@ def plot(contents):
                     shared=False)
 def handle(alert):
     """LVAlert handler to plot and upload a visualization of every
-    ``p_astro.json`` that is added to a superevent.
+    ``*.p_astro.json`` file that is added to a superevent.
     """
     graceid = alert['uid']
-    filename = 'p_astro.json'
+    if alert['data'].get('filename') is None:
+        return
 
-    if alert['alert_type'] == 'log' and alert['data']['filename'] == filename:
+    if alert['alert_type'] == 'log' and \
+            alert['data']['filename'].endswith('p_astro.json'):
+        filename = alert['data']['filename']
         (
             gracedb.download.s(filename, graceid)
             |

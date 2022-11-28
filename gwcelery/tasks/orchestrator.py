@@ -238,7 +238,7 @@ def handle_cbc_event(alert):
                                           instruments)
                 |
                 gracedb.upload.s(
-                    'p_astro.json', graceid,
+                    f'{pipeline}.p_astro.json', graceid,
                     'p_astro computation complete', ['p_astro', 'public']
                 )
                 |
@@ -567,6 +567,13 @@ def earlywarning_preliminary_alert(event, alert, annotation_prefix='',
             'Valid skymap required for preliminary alert'
         )
 
+    if alert['object']['preferred_event_data']['group'] == 'CBC':
+        p_astro_filename = \
+            alert['object']['preferred_event_data']['pipeline'] + \
+            '.p_astro.json'
+    else:
+        p_astro_filename = None
+
     # Determine if the event should be made public.
     is_publishable = (superevents.should_publish(
                       event) and
@@ -619,13 +626,13 @@ def earlywarning_preliminary_alert(event, alert, annotation_prefix='',
             identity.s([None, None]),
 
             (
-                gracedb.download.si('p_astro.json', preferred_event_id)
+                gracedb.download.si(p_astro_filename, preferred_event_id)
                 |
                 group(
                     identity.s(),
 
                     gracedb.upload.s(
-                        annotation_prefix + 'p_astro.json',
+                        annotation_prefix + p_astro_filename,
                         superevent_id,
                         message='Source classification copied from {}'.format(
                             preferred_event_id),
