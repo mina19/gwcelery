@@ -55,7 +55,8 @@ def handle_snews_gcn(payload):
         event_observatory, trig_id)
     events = gracedb.get_events(query=query)
 
-    if events:
+    if events and ext_group == 'External':
+        # Only update event if real
         assert len(events) == 1, 'Found more than one matching GraceDB entry'
         event, = events
         graceid = event['graceid']
@@ -162,7 +163,8 @@ def handle_grb_gcn(payload):
     events = gracedb.get_events(query=query)
 
     group_canvas = ()
-    if events:
+    if events and ext_group == 'External':
+        # Only update event if real
         assert len(events) == 1, 'Found more than one matching GraceDB entry'
         event, = events
         graceid = event['graceid']

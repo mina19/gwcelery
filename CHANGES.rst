@@ -21,6 +21,8 @@ Changelog
 
 -   Fix bug where updated GRB events couldn't create sky maps.
 
+-   Filter out test GCNs from updating external events.
+
 -   Update SNEWS ingestion to use canvas structure. This also fixes a bug
     where SNEWS tests events were not being ingested properly.
 
