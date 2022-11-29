@@ -181,3 +181,11 @@ def upload_event():
         |
         _vet_event.s()
     ).apply_async()
+
+    # Return gpstime to create an external MDC event with similar time
+    coinc_xml = io.BytesIO(coinc)
+    xmldoc = utils.load_fileobj(coinc_xml, contenthandler=ContentHandler)
+    coinc_inspiral_table = lsctables.CoincInspiralTable.get_table(xmldoc)
+    for row in coinc_inspiral_table:
+        # The first value always returns the correct gpstime
+        return float(row.end)

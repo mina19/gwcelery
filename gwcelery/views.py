@@ -338,10 +338,7 @@ def send_mock_event():
 
 
 @gracedb.task(shared=False)
-def _create_upload_external_event(graceid):
-    superevent = gracedb.get_superevents('MDC event: {}'.format(graceid))[0]
-
-    gpstime = float(superevent['t_0'])
+def _create_upload_external_event(gpstime):
     new_time = first2years_external._offset_time(gpstime)
 
     ext_event = first2years_external.create_grb_event(new_time, 'Fermi')
