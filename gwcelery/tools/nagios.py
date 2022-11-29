@@ -83,6 +83,10 @@ def get_undelivered_message_urls(inspector):
     return undelievered_messages
 
 
+def get_celery_queue_length(app):
+    return app.backend.client.llen("celery")
+
+
 def check_status(app):
     connection = app.connection()
     try:
@@ -137,6 +141,12 @@ def check_status(app):
         ) from AssertionError(
                 'URLs with undelivered messages: ' + ', '.join(missing)
         )
+
+    celery_queue_length = get_celery_queue_length(app)
+    if celery_queue_length > 50:
+        raise NagiosCriticalError(
+            'Tasks are piled up in Celery queue') from AssertionError(
+                'Length of celery queue is {}'.format(celery_queue_length))
 
 
 @click.command(help=__doc__)

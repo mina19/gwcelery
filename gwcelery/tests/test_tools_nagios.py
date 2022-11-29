@@ -122,6 +122,26 @@ def test_nagios(capsys, monkeypatch, request, socket_enabled, starter,
     out, err = capsys.readouterr()
     assert 'CRITICAL: The VOEvent receiver has no active connections' in out
 
+    monkeypatch.setattr(
+        'celery.app.control.Inspect.stats', Mock(return_value={'foo': {
+            'voevent-broker-peers': ['127.0.0.1'],
+            'voevent-receiver-peers': ['127.0.0.1'],
+            'igwn-alert-topics': expected_igwn_alert_topics}}))
+
+    # tasks piled up in celery queue
+    monkeypatch.setattr(
+        'gwcelery.tools.nagios.get_celery_queue_length',
+        Mock(return_value=51))
+    with pytest.raises(SystemExit) as excinfo:
+        main(['gwcelery', 'nagios'])
+    assert excinfo.value.code == nagios.NagiosPluginStatus.CRITICAL
+    out, err = capsys.readouterr()
+    assert 'CRITICAL: Tasks are piled up in Celery queue' in out
+
+    monkeypatch.setattr(
+        'gwcelery.tools.nagios.get_celery_queue_length',
+        Mock(return_value=0))
+
     # Kafka broker, topic or broker are down
     monkeypatch.setattr(
         'celery.app.control.Inspect.stats',
