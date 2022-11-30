@@ -708,9 +708,12 @@ def parameter_estimation(far_event, superevent_id):
                  app.conf['preliminary_alert_trials_factor']['cbc'])
     canvas = inference.pre_pe_tasks(event, superevent_id)
     if far <= threshold:
-        canvas |= inference.start_pe.s(
-            preferred_event_id, superevent_id, 'bilby'
-        )
+        pe_pipelines = ['bilby']
+        if event['pe_pipeline'] == 'gstlal':
+            pe_pipelines += ['rapidpe']
+        canvas |= group(
+            inference.start_pe.s(preferred_event_id, superevent_id, p)
+            for p in pe_pipelines)
     else:
         canvas |= gracedb.upload.si(
             filecontents=None, filename=None,

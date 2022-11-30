@@ -225,7 +225,26 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host):
     upload.assert_called_once()
 
 
-@pytest.mark.parametrize('pipeline', ['lalinference', 'bilby'])
+def test_setup_dag_for_rapidpe(monkeypatch, tmp_path):
+    rundir = str(tmp_path)
+    outdir = os.path.join(rundir, '20221113_gstlal_20221111_G766481')
+    dag_filename = 'event_all_iterations.dag'
+    dag_content = 'rapidpe dag'
+
+    def _subprocess_run(cmd, **kwargs):
+        path_to_ini = cmd[1]
+        assert os.path.exists(path_to_ini)
+        os.mkdir(outdir)
+        with open(os.path.join(outdir, dag_filename), 'w') as f:
+            f.write(dag_content)
+
+    monkeypatch.setattr('subprocess.run', _subprocess_run)
+    path_to_dag = inference._setup_dag_for_rapidpe(rundir, 'G1234', 'S1234')
+    with open(path_to_dag, 'r') as f:
+        assert f.read() == dag_content
+
+
+@pytest.mark.parametrize('pipeline', ['lalinference', 'bilby', 'rapidpe'])
 def test_setup_dag_for_failure(monkeypatch, tmp_path, pipeline):
     upload = Mock()
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
@@ -242,12 +261,14 @@ def test_setup_dag_for_failure(monkeypatch, tmp_path, pipeline):
         elif pipeline == 'bilby':
             inference._setup_dag_for_bilby(
                 ({}, b'coinc'), rundir, 'G1234', 'S1234')
+        elif pipeline == 'rapidpe':
+            inference._setup_dag_for_rapidpe(rundir, 'G1234', 'S1234')
     assert not os.path.exists(rundir)
     upload.assert_called_once()
 
 
-@pytest.mark.parametrize('pipeline',
-                         ['lalinference', 'bilby', 'my_awesome_pipeline'])
+@pytest.mark.parametrize(
+    'pipeline', ['lalinference', 'bilby', 'rapidpe', 'my_awesome_pipeline'])
 def test_dag_prepare_task(monkeypatch, pipeline):
     gid, sid = 'G1234', 'S1234'
     coinc, psd, ini, event = b'coinc', b'psd', 'ini', {'gpstime': 1187008882}
@@ -272,12 +293,17 @@ def test_dag_prepare_task(monkeypatch, pipeline):
                 and p == gid and s == sid)
         return path_to_dag
 
+    def _setup_dag_for_rapidpe(r, p, s):
+        assert (r == rundir and p == gid and s == sid)
+        return path_to_dag
+
     def _subprocess_run(cmd, **kwargs):
         assert cmd == ['condor_submit_dag', '-no_submit', path_to_dag]
 
     mock_setup_dag_for_lalinference = \
         Mock(side_effect=_setup_dag_for_lalinference)
     mock_setup_dag_for_bilby = Mock(side_effect=_setup_dag_for_bilby)
+    mock_setup_dag_for_rapidpe = Mock(side_effect=_setup_dag_for_rapidpe)
     monkeypatch.setattr('gwcelery.tasks.gracedb.download.run', mock_download)
     monkeypatch.setattr('gwcelery.tasks.gracedb.get_event.run',
                         Mock(return_value=event))
@@ -286,13 +312,17 @@ def test_dag_prepare_task(monkeypatch, pipeline):
         mock_setup_dag_for_lalinference)
     monkeypatch.setattr('gwcelery.tasks.inference._setup_dag_for_bilby.run',
                         mock_setup_dag_for_bilby)
+    monkeypatch.setattr('gwcelery.tasks.inference._setup_dag_for_rapidpe.run',
+                        mock_setup_dag_for_rapidpe)
     monkeypatch.setattr('subprocess.run', _subprocess_run)
-    if pipeline in ['lalinference', 'bilby']:
+    if pipeline in ['lalinference', 'bilby', 'rapidpe']:
         inference.dag_prepare_task(rundir, sid, gid, pipeline, ini).delay()
         if pipeline == 'lalinference':
             mock_setup_dag_for_lalinference.assert_called_once()
         elif pipeline == 'bilby':
             mock_setup_dag_for_bilby.assert_called_once()
+        elif pipeline == 'rapidpe':
+            mock_setup_dag_for_rapidpe.assert_called_once()
     else:
         with pytest.raises(NotImplementedError):
             inference.dag_prepare_task(rundir, sid, gid, pipeline, ini).delay()
@@ -332,8 +362,8 @@ def test_upload_url(monkeypatch, tmp_path, pipeline):
             inference._upload_url(str(tmp_path), 'G1234', pipeline)
 
 
-@pytest.mark.parametrize('pipeline',
-                         ['lalinference', 'bilby', 'my_awesome_pipeline'])
+@pytest.mark.parametrize(
+    'pipeline', ['lalinference', 'bilby', 'rapidpe', 'my_awesome_pipeline'])
 def test_dag_finished(monkeypatch, tmp_path, pipeline):
     gid = 'G1234'
     rundir = str(tmp_path / 'rundir')
@@ -356,7 +386,7 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
     monkeypatch.setattr('gwcelery.tasks.gracedb.create_label.run',
                         create_label)
 
-    if pipeline in ['lalinference', 'bilby']:
+    if pipeline in ['lalinference', 'bilby', 'rapidpe']:
         if pipeline == 'lalinference':
             paths = [os.path.join(rundir,
                                   'lalinference_1187008756-1187008882.dag'),
@@ -366,7 +396,7 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
                      os.path.join(rundir, 'posterior_samples.hdf5'),
                      os.path.join(pe_results_path, 'extrinsic.png'),
                      os.path.join(pe_results_path, 'sourceFrame.png')]
-        else:
+        elif pipeline == 'bilby':
             input_sample = os.path.join(sampledir, "test_result.hdf5")
             with open(input_sample, 'wb') as f:
                 f.write(b'result')
@@ -374,6 +404,8 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
             paths = [os.path.join(sampledir, 'Bilby.posterior_samples.hdf5'),
                      os.path.join(resultdir, 'bilby_extrinsic_corner.png'),
                      os.path.join(resultdir, 'bilby_intrinsic_corner.png')]
+        else:
+            paths = []
         for path in paths:
             with open(path, 'wb') as f:
                 f.write(b'result')

@@ -1,4 +1,4 @@
-"""Source Parameter Estimation with LALInference and Bilby."""
+"""Source Parameter Estimation with LALInference, Bilby, and RapidPE."""
 from distutils.spawn import find_executable
 from distutils.dir_util import mkpath
 import glob
@@ -342,6 +342,75 @@ def _setup_dag_for_bilby(
 
 
 @app.task(shared=False)
+def _setup_dag_for_rapidpe(rundir, preferred_event_id, superevent_id):
+    """Create DAG for a rapidpe run and return the path to DAG.
+
+    Parameters
+    ----------
+    rundir : str
+        The path to a run directory where the DAG file exits
+    preferred_event_id : str
+        The GraceDB ID of a target preferred event
+    superevent_id : str
+        The GraceDB ID of a target superevent
+
+    Returns
+    -------
+    path_to_dag : str
+        The path to the .dag file
+
+    """
+    # dump SVD depth file
+    path_to_svd_file = os.path.join(rundir, 'svd_depth_methods.json')
+    with open(path_to_svd_file, 'w') as f:
+        json.dump(
+            [{'bounds': {}, 'fudge_factors': {'mchirp': 0.2, 'eta': 0.1},
+             'svd_depth': 1}],
+            f)
+
+    # dump ini file
+    ini_template = env.get_template('rapidpe.jinja2')
+    ini_contents = ini_template.render(
+        {'rundir': rundir,
+         'webdir': os.path.join(
+             app.conf['pe_results_path'], preferred_event_id, 'rapidpe'
+         ),
+         'gracedb_url': f'https://{app.conf["gracedb_host"]}/api',
+         'superevent_id': superevent_id,
+         'frame_data_types': app.conf['low_latency_frame_types'],
+         'svd_depth_json': os.path.abspath(path_to_svd_file)})
+    path_to_ini = os.path.join(rundir, 'rapidpe.ini')
+    with open(path_to_ini, 'w') as f:
+        f.write(ini_contents)
+
+    # set up dag
+    try:
+        subprocess.run(['rapidpe-rift-pipe', path_to_ini],
+                       capture_output=True, check=True)
+    except subprocess.CalledProcessError as e:
+        contents = b'args:\n' + json.dumps(e.args[1]).encode('utf-8') + \
+                   b'\n\nstdout:\n' + e.stdout + b'\n\nstderr:\n' + e.stderr
+        gracedb.upload.delay(
+            filecontents=contents, filename='rapidpe_dag.log',
+            graceid=superevent_id,
+            message='Failed to prepare DAG for Rapid PE', tags='pe'
+        )
+        shutil.rmtree(rundir)
+        raise
+    else:
+        group(upload_results_tasks(
+            rundir, 'rapidpe.ini', superevent_id,
+            'Automatically generated RapidPE-RIFT configuration file',
+            'pe', 'rapidpe.ini')).delay()
+
+    # return path to dag
+    dag, = glob.glob(os.path.join(rundir, "*/event_all_iterations.dag"))
+    os.chdir(os.path.dirname(dag))
+    dag = os.path.basename(dag)
+    return dag
+
+
+@app.task(shared=False)
 def _condor_no_submit(path_to_dag):
     """Run 'condor_submit_dag -no_submit' and return the path to .sub file."""
     subprocess.run(['condor_submit_dag', '-no_submit', path_to_dag],
@@ -385,6 +454,9 @@ def dag_prepare_task(rundir, superevent_id, preferred_event_id, pe_pipeline,
             gracedb.get_event.si(preferred_event_id),
             gracedb.download.si('coinc.xml', preferred_event_id)
         ) | _setup_dag_for_bilby.s(rundir, preferred_event_id, superevent_id)
+    elif pe_pipeline == 'rapidpe':
+        canvas = _setup_dag_for_rapidpe.s(
+            rundir, preferred_event_id, superevent_id)
     else:
         raise NotImplementedError(f'Unknown PE pipeline {pe_pipeline}.')
     canvas |= _condor_no_submit.s()
@@ -430,8 +502,8 @@ def job_error_notification(request, exc, traceback,
     rundir : str
         The run directory for PE
     pe_pipeline : str
-        The parameter estimation pipeline used
-        Either lalinference OR bilby
+        The parameter estimation pipeline used,
+        lalinference, bilby, or rapidpe.
 
     """
     if isinstance(exc, condor.JobAborted):
@@ -558,8 +630,8 @@ def dag_finished(rundir, preferred_event_id, superevent_id, pe_pipeline):
     superevent_id : str
         The GraceDB ID of a target superevent
     pe_pipeline : str
-        The parameter estimation pipeline used
-        Either lalinference OR bilby
+        The parameter estimation pipeline used,
+        lalinference, bilby, or rapidpe.
 
     Returns
     -------
@@ -567,6 +639,9 @@ def dag_finished(rundir, preferred_event_id, superevent_id, pe_pipeline):
         The work-flow for uploading PE results
 
     """
+    if pe_pipeline == 'rapidpe':
+        os.chdir(os.path.expanduser("~"))
+
     pe_results_path = os.path.join(
         app.conf['pe_results_path'], preferred_event_id, pe_pipeline
     )
@@ -605,6 +680,8 @@ def dag_finished(rundir, preferred_event_id, superevent_id, pe_pipeline):
              'Bilby corner plot for intrinsic parameters',
              'Bilby.intrinsic.png')
         ]
+    elif pe_pipeline == 'rapidpe':
+        uploads = []
     else:
         raise NotImplementedError(f'Unknown PE pipeline {pe_pipeline}.')
 
@@ -648,7 +725,7 @@ def start_pe(ini_contents, preferred_event_id, superevent_id, pe_pipeline):
         The GraceDB ID of a target superevent
     pe_pipeline : str
         The parameter estimation pipeline used
-        lalinference OR bilby
+        lalinference, bilby, or rapidpe.
 
     """
     gracedb.upload.delay(
