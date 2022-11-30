@@ -169,7 +169,7 @@ def handle(alert):
     ``*.p_astro.json`` file that is added to a superevent.
     """
     graceid = alert['uid']
-    filename = alert['data']['filename']
+    filename = alert['data'].get('filename')
     p_astro_filenames = {f'{pipeline}.p_astro.json' for pipeline in
                          ['gstlal', 'mbta', 'pycbc', 'spiir']}
 
