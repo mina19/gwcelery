@@ -169,12 +169,11 @@ def handle(alert):
     ``*.p_astro.json`` file that is added to a superevent.
     """
     graceid = alert['uid']
-    if alert['data'].get('filename') is None:
-        return
+    filename = alert['data']['filename']
+    p_astro_filenames = {f'{pipeline}.p_astro.json' for pipeline in
+                         ['gstlal', 'mbta', 'pycbc', 'spiir']}
 
-    if alert['alert_type'] == 'log' and \
-            alert['data']['filename'].endswith('p_astro.json'):
-        filename = alert['data']['filename']
+    if alert['alert_type'] == 'log' and filename in p_astro_filenames:
         (
             gracedb.download.s(filename, graceid)
             |
