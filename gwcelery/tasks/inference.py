@@ -64,12 +64,12 @@ class NotEnoughData(Exception):
     """
 
 
-@app.task(bind=True, autoretry_for=(NotEnoughData, ), default_retry_delay=1,
-          max_retries=86400, retry_backoff=True, shared=False)
+@app.task(bind=True, autoretry_for=(NotEnoughData, ), default_retry_delay=30,
+          max_retries=20, retry_backoff=True, shared=False)
 def query_data(self, trigtime):
     """Continues to query data until it is found with gwdatafind and return
-    frametypes for the data. If data is not found in 86400 seconds = 1 day,
-    raise NotEnoughData.
+    frametypes for the data. If data is not found in 10 minutes, raise
+    NotEnoughData.
     """
     end = trigtime + 2
     if _data_exists(end, app.conf['low_latency_frame_types']):
