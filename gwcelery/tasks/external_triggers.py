@@ -349,11 +349,11 @@ def handle_grb_igwn_alert(alert):
                 gracedb.create_label.si('SKYMAP_READY', ext_id)
                 for ext_id in alert['object']['em_events']
             ).delay()
-        if 'GCN_PRELIM_SENT' in alert['object']['labels']:
-            # if VOEvent is available, apply label to preferred external event
-            group(
-                gracedb.create_label.si('GCN_PRELIM_SENT', ext_id)
-                for ext_id in alert['object']['em_type']
+        if {'GCN_PRELIM_SENT', 'EM_COINC'}.issubset(alert['object']['labels']):
+            # if a VOEvent is available for a coincidence, apply label to
+            # preferred external event
+            gracedb.create_label.si(
+                'GCN_PRELIM_SENT', alert['object']['em_type']
             ).delay()
     elif alert['alert_type'] == 'label_removed' and \
             alert['object'].get('group') == 'External':
