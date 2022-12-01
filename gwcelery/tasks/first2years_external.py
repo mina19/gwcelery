@@ -80,6 +80,7 @@ def _is_joint_mdc(graceid):
 
 
 @igwn_alert.handler('mdc_superevent',
+                    queue='exttrig',
                     shared=False)
 def upload_external_event(alert):
     """Upload a random GRB event for a certain percentage of MDC superevents.
