@@ -109,7 +109,9 @@ def em_bright_posterior_samples(posterior_file_content):
     """
     with NamedTemporaryFile(content=posterior_file_content) as samplefile:
         filename = samplefile.name
-        has_ns, has_remnant = em_bright.source_classification_pe(filename)
+        has_ns, has_remnant = em_bright.source_classification_pe(
+            filename, num_eos_draws=100, eos_seed=0
+        )
     data = json.dumps({
         'HasNS': has_ns,
         'HasRemnant': has_remnant
