@@ -56,6 +56,12 @@ expose_to_public = False
 """Set to True if events meeting the public alert threshold really should be
 exposed to the public."""
 
+igwn_alert_server = None
+"""IGWN alert server: None == DEFAULT_SERVER"""
+
+igwn_alert_noauth = False
+"""IGWN alert server no-authetication"""
+
 igwn_alert_group = 'gracedb-playground'
 """IGWN alert group."""
 

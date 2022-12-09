@@ -15,8 +15,8 @@ the GraceDB service URLs, IGWN Alert groups, GCN hostnames, and frame file types
 channel names. For a list of all GWCelery-specific options, see the
 API documentation for the :mod:`gwcelery.conf` module.
 
-GWCelery provides four preset configurations, one for each GraceDB server
-instance (production, deployment, testing, or playground). The default
+GWCelery provides five preset configurations, one for each GraceDB server
+instance (production, deployment, testing, minikube or playground). The default
 configuration preset is for the playground server,
 ``gracedb-playground.ligo.org``. The recommended way to select a different
 preset is to set the :meth:`CELERY_CONFIG_MODULE

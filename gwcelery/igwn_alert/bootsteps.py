@@ -97,6 +97,8 @@ class Receiver(IGWNAlertBootStep):
         super().start(consumer)
 
         self._client = IGWNAlertClient(
+            server=consumer.app.conf['igwn_alert_server'],
+            noauth=consumer.app.conf['igwn_alert_noauth'],
             group=consumer.app.conf['igwn_alert_group'])
         self.thread = Thread(
             target=self._client.listen,
