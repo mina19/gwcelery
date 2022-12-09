@@ -62,7 +62,7 @@ confluent-kafka = "^1.9.2"
 dnspython = "*"  # silence "DNS: dnspython not found. Can not use SRV lookup." warning from SleekXMPP
 flask = ">=2.2"
 flask-caching = "*"
-gracedb-sdk = ">=0.1.5"
+gracedb-sdk = ">=0.2.0"  # https://git.ligo.org/emfollow/gracedb-sdk/-/merge_requests/7
 gwdatafind = ">=1.1.1"
 gwpy = ">=2.0.1"  # https://github.com/gwpy/gwpy/issues/1277
 healpy = "*"
@@ -77,7 +77,7 @@ ligo-gracedb = ">=2.7.5"  # https://git.ligo.org/lscsoft/gracedb-client/-/issues
 ligo-raven = "^2.0"
 ligo-segments = "*"
 "ligo.em-bright" = ">=1.0.4"  # https://git.ligo.org/emfollow/gwcelery/-/issues/475
-"ligo.skymap" = ">=0.4.0"
+"ligo.skymap" = ">=1.0.4"  # https://git.ligo.org/lscsoft/ligo.skymap/-/merge_requests/299
 lscsoft-glue = "*"
 lxml = "*"
 numpy = "*"
