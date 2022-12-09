@@ -427,7 +427,7 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
 
 @app.task(queue='exttrig',
           shared=False)
-def sog_paper_pipeline(superevent, ext_event):
+def sog_paper_pipeline(ext_event, superevent):
     """Determine whether an a speed of gravity measurment manuscript should be
     triggered for a given coincidence.
     This is denoted by applying the SOG_READY label to a superevent.

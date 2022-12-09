@@ -348,29 +348,38 @@ def test_handle_skymap_combine(mock_create_combined_skymap):
     mock_create_combined_skymap.assert_called_once_with('S1234', 'E1212')
 
 
+@pytest.mark.parametrize('labels',
+                         [["EM_COINC", "SKYMAP_READY", "RAVEN_ALERT", "ADVOK"],
+                          ["EM_COINC", "SKYMAP_READY", "ADVOK"]])
 @patch('gwcelery.tasks.gracedb.client')
-@patch('gwcelery.tasks.gracedb.get_superevent.run', return_value={
-    'superevent_id': 'S1234'})
+@patch('gwcelery.tasks.gracedb.get_event.run', return_value={
+    'graceid': 'E1234', 'pipeline': 'Fermi'})
+@patch('gwcelery.tasks.gracedb.create_label.run')
 @patch('gwcelery.tasks.raven.sog_paper_pipeline.run')
 def test_handle_sog_manuscript_pipeline(mock_sog_paper_pipeline,
+                                        mock_create_label,
                                         mock_get_superevent,
-                                        mock_gracedb):
-    alert = {"uid": "E1212",
+                                        mock_gracedb, labels):
+    alert = {"uid": "S1212",
              "alert_type": "label_added",
-             "data": {"name": "GCN_PRELIM_SENT"},
+             "data": {"name": "ADVOK"},
              "object": {
-                 "graceid": "E1212",
-                 "group": "External",
-                 "labels": ["EM_COINC", "EXT_SKYMAP_READY", "SKYMAP_READY",
-                            "RAVEN_ALERT", "GCN_PRELIM_SENT"],
-                 "superevent": "S1234"}
+                 "graceid": "S1212",
+                 "labels": labels,
+                 "superevent_id": "S1212",
+                 "space_coinc_far": 1e-9,
+                 "em_type": "E1234",
+                 "em_events": ["E1234"]}
              }
 
     # Create IGWN alert
     external_triggers.handle_grb_igwn_alert(alert)
 
-    mock_sog_paper_pipeline.assert_called_once_with(
-        {'superevent_id': 'S1234'}, alert['object'])
+    if 'RAVEN_ALERT' in labels:
+        mock_sog_paper_pipeline.assert_called_once_with(
+            {'graceid': 'E1234', 'pipeline': 'Fermi'}, alert['object'])
+    else:
+        mock_sog_paper_pipeline.assert_not_called()
 
 
 @patch('gwcelery.tasks.detchar.dqr_json', return_value='dqrjson')

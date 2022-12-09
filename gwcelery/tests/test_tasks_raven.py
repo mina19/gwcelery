@@ -500,7 +500,7 @@ def test_sog_paper_pipeline(mock_create_label,
     elif se_id == 'S2345':
         superevent['far'] = 1e-14
         superevent['space_coinc_far'] = 1e-8
-    raven.sog_paper_pipeline(superevent, ext_event)
+    raven.sog_paper_pipeline(ext_event, superevent)
 
     if expected_result:
         mock_create_label.assert_called_once_with(

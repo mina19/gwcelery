@@ -18,8 +18,7 @@ log = get_logger(__name__)
 REQUIRED_LABELS_BY_TASK = {
     'compare': {'SKYMAP_READY', 'EXT_SKYMAP_READY', 'EM_COINC'},
     'combine': {'SKYMAP_READY', 'EXT_SKYMAP_READY', 'RAVEN_ALERT'},
-    'SoG': {'SKYMAP_READY', 'EXT_SKYMAP_READY', 'RAVEN_ALERT',
-            'GCN_PRELIM_SENT'}
+    'SoG': {'SKYMAP_READY', 'RAVEN_ALERT', 'ADVOK'}
 }
 """These labels should be present on an external event to consider it to
 be ready for sky map comparison or for post-alert analsis, such as a
@@ -324,16 +323,6 @@ def handle_grb_igwn_alert(alert):
             superevent_id, ext_id = _get_superevent_ext_ids(
                 graceid, alert['object'], 'combine')
             external_skymaps.create_combined_skymap(superevent_id, ext_id)
-        if _skymaps_are_ready(alert['object'], alert['data']['name'],
-                              'SoG'):
-            # if a RAVEN alert has been sent, create SoG manuscript
-            superevent_id, ext_id = _get_superevent_ext_ids(
-                graceid, alert['object'], 'SoG')
-            (
-                gracedb.get_superevent.si(superevent_id)
-                |
-                raven.sog_paper_pipeline.s(alert['object'])
-            ).delay()
         elif 'EM_COINC' in alert['object']['labels']:
             # if not complete, check if GW sky map; apply label to external
             # event if GW sky map
@@ -350,11 +339,14 @@ def handle_grb_igwn_alert(alert):
                 gracedb.create_label.si('SKYMAP_READY', ext_id)
                 for ext_id in alert['object']['em_events']
             ).delay()
-        if {'GCN_PRELIM_SENT', 'EM_COINC'}.issubset(alert['object']['labels']):
-            # if a VOEvent is available for a coincidence, apply label to
-            # preferred external event
-            gracedb.create_label.si(
-                'GCN_PRELIM_SENT', alert['object']['em_type']
+        if _skymaps_are_ready(alert['object'], alert['data']['name'], 'SoG') \
+                and alert['object']['space_coinc_far'] is not None:
+            # if a superevent is vetted by ADVOK and a spatial joint FAR is
+            # available, check if SoG publishing conditions are met
+            (
+                gracedb.get_event.si(alert['object']['em_type'])
+                |
+                raven.sog_paper_pipeline.s(alert['object'])
             ).delay()
     elif alert['alert_type'] == 'label_removed' and \
             alert['object'].get('group') == 'External':
