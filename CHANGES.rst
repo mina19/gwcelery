@@ -38,6 +38,10 @@ Changelog
     to the superevent. The automated pipeline is launched and is blocked before sending
     if ``EM_SelectedConfident`` is found to be applied.
 
+-   Add O3 replay MDC testing with RAVEN pipeline. This will run on the 
+    emfollow-playground server, creating mock coincidences with a frequency
+    given by the ``joint_O3_replay_freq`` variable.
+
 2.0.3 "Ugly Merman" (2023-02-16)
 --------------------------------
 

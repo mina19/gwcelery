@@ -353,6 +353,11 @@ joint_mdc_freq = 2
 MDC superevent to test the RAVEN alert pipeline, i.e for every x
 MDC superevents an external MDC event is created."""
 
+joint_O3_replay_freq = 10
+"""Determines how often an external replay event will be created near an
+superevent to test the RAVEN alert pipeline, i.e for every x
+O3 replay superevents an external MDC event is created."""
+
 bilby_default_mode = 'fast_test'
 """Sampling mode of bilby"""
 

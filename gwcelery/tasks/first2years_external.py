@@ -13,20 +13,31 @@ from . import external_triggers
 from . import igwn_alert
 
 
-def create_grb_event(gpstime, pipeline):
+def create_grb_event(gpstime, pipeline, se_search):
+    """ Create a random GRB event for a certain percentage of MDC or O3-replay
+     superevents.
 
+    Parameters
+    ----------
+    gpstime : float
+        Event's gps time
+    pipeline : str
+        External trigger pipeline name
+    se_search : str
+        Search field for preferred event, 'MDC' or 'AllSky'
+    """
     new_date = str(Time(gpstime, format='gps', scale='utc').isot) + 'Z'
     new_TrigID = str(int(gpstime))
-
     fname = str(Path(__file__).parent /
                 '../tests/data/{}_grb_gcn.xml'.format(pipeline.lower()))
 
     root = etree.parse(fname)
-
-    # Change ivorn to indicate is an MDC event
+    # Change ivorn to indicate if this is an MDC event or O3 replay event
     root.xpath('.')[0].attrib['ivorn'] = \
-        'ivo://lvk.internal/{0}#MDC-test_event{1}'.format(
-            pipeline if pipeline != 'Swift' else 'SWIFT', new_date).encode()
+        'ivo://lvk.internal/{0}#{1}_event{2}'.format(
+            pipeline if pipeline != 'Swift' else 'SWIFT',
+            'MDC-test' if se_search == 'MDC' else 'O3-replay',
+            new_date).encode()
 
     # Change times to chosen time
     root.find("./Who/Date").text = str(new_date).encode()
@@ -56,55 +67,89 @@ def create_grb_event(gpstime, pipeline):
                           pretty_print=True)
 
 
-def _offset_time(gpstime):
-    # Reverse when searching around superevents
-    th_cbc, tl_cbc = app.conf['raven_coincidence_windows']['GRB_CBC']
-    return gpstime + random.uniform(-tl_cbc, -th_cbc)
+def _offset_time(gpstime, group):
+    """ This function checks coincident time windows for superevents if they
+    are of Burst or CBC group.
+
+       Parameters
+       ----------
+       gpstime : float
+           Event's gps time
+       group : str
+           Burst or CBC
+    """
+    if group == 'Burst':
+        th, tl = app.conf['raven_coincidence_windows']['GRB_Burst']
+    elif group == 'CBC':
+        th, tl = app.conf['raven_coincidence_windows']['GRB_CBC']
+    else:
+        raise AssertionError(
+            'Invalid group {}. Use only CBC or Burst.'.format(group))
+    return gpstime + random.uniform(-tl, -th)
 
 
-def _is_joint_mdc(graceid):
-    """Upload external event to every ten MDCs
+def _is_joint_mdc(graceid, se_search):
+    """Upload external events to the user-defined frequency of MDC or AllSky
+    superevents.
 
     Looks at the ending letters of a superevent (e.g. 'ac' from 'MS190124ac'),
     converts to a number, and checks if divisible by a number given in the
     configuration file.
 
-    For example, if the configuration number 'joint_mdc_freq' is 10,
+    For example, if the configuration number
+    :obj:`~gwcelery.conf.joint_mdc_freq` is 10,
     this means joint events with superevents ending with 'j', 't', 'ad', etc.
     """
     end_string = re.split(r'\d+', graceid)[-1].lower()
     val = 0
     for i in range(len(end_string)):
         val += (ord(end_string[i]) - 96) * 26 ** (len(end_string) - i - 1)
-    return val % int(app.conf['joint_mdc_freq']) == 0
+    return val % int(app.conf['joint_mdc_freq']) == 0 if se_search == 'MDC' \
+        else val % int(app.conf['joint_O3_replay_freq']) == 0
 
 
 @igwn_alert.handler('mdc_superevent',
+                    'superevent',
                     queue='exttrig',
                     shared=False)
 def upload_external_event(alert):
-    """Upload a random GRB event for a certain percentage of MDC superevents.
+    """Upload a random GRB event for a certain percentage of MDC
+    or O3-replay superevents.
 
-    Every n MDC superevents, upload a Fermi-like GRB candidate within the
-    standard CBC-GRB search window, where the frequency n is determined by
-    the configuration variable 'joint_mdc_freq'.
+    Notes
+    -----
+    Every n superevents, upload a GRB candidate within the
+    standard CBC-GRB or Burst-GRB search window, where the frequency n is
+    determined by the configuration variable
+    :obj:`~gwcelery.conf.joint_mdc_freq` or
+    :obj:`~gwcelery.conf.joint_O3_replay_freq`.
+
+    For O3 replay testing with RAVEN pipeline, only run on gracedb-playground.
     """
-
-    # Only create external MDC for the occasional MDC superevent
-    if not _is_joint_mdc(alert['uid']) or alert['alert_type'] != 'new':
+    if alert['alert_type'] != 'new':
         return
+    se_search = alert['object']['preferred_event_data']['search']
+    group = alert['object']['preferred_event_data']['group']
+    is_gracedb_playground = app.conf['gracedb_host'] \
+        == 'gracedb-playground.ligo.org'
+    joint_mdc_alert = se_search == 'MDC' and _is_joint_mdc(alert['uid'], 'MDC')
+    joint_allsky_alert = se_search == 'AllSky' and \
+        _is_joint_mdc(alert['uid'], 'AllSky') and is_gracedb_playground
+    if not (joint_mdc_alert or joint_allsky_alert):
+        return
+
     # Potentially upload 1, 2, or 3 GRB events
     num = 1 + np.random.choice(np.arange(3), p=[.6, .3, .1])
     events = []
     pipelines = []
     for i in range(num):
         gpstime = float(alert['object']['t_0'])
-        new_time = _offset_time(gpstime)
+        new_time = _offset_time(gpstime, group)
 
         # Choose external grb pipeline to simulate
         pipeline = np.random.choice(['Fermi', 'Swift', 'INTEGRAL', 'AGILE'],
                                     p=[.5, .3, .1, .1])
-        ext_event = create_grb_event(new_time, pipeline)
+        ext_event = create_grb_event(new_time, pipeline, se_search)
 
         # Upload as from GCN
         external_triggers.handle_grb_gcn(ext_event)
