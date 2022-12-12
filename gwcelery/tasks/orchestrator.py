@@ -119,21 +119,22 @@ def handle_superevent(alert):
                     countdown=app.conf['superevent_clean_up_timeout']
                 )
                 |
-                group(
-                    gracedb.get_events.si(query),
-                    gracedb.create_label.si('DQR_REQUEST', superevent_id)
-                )
-                |
-                get_first.s()
+                gracedb.get_events.si(query)
                 |
                 superevents.select_preferred_event.s()
                 |
                 _update_superevent_and_return_event_dict.s(superevent_id)
                 |
-                _leave_log_message_and_return_event_dict.s(
-                    superevent_id,
-                    "Superevent cleaned up."
+                group(
+                    _leave_log_message_and_return_event_dict.s(
+                        superevent_id,
+                        "Superevent cleaned up."
+                    ),
+
+                    gracedb.create_label.si('DQR_REQUEST', superevent_id)
                 )
+                |
+                get_first.s()
                 |
                 earlywarning_preliminary_alert.s(alert)
             ).apply_async()
