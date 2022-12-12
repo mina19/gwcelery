@@ -404,14 +404,33 @@ def test_handle_posterior_samples(monkeypatch, alert_type, filename):
         flatten.assert_called_once()
 
 
+@pytest.mark.parametrize("alert_search,alert_pipeline",
+                         [(search, pipeline)
+                          for search in ['earlywarning', 'mdc', 'allsky']
+                          for pipeline in ['gstlal', 'pycbc', 'mbta', 'spiir']
+                          ])
 @patch('gwcelery.tasks.gracedb.download._orig_run', mock_download)
+@patch('gwcelery.tasks.p_astro.compute_p_astro.run')
 @patch('gwcelery.tasks.bayestar.localize.run')
 @patch('gwcelery.tasks.em_bright.source_properties.run')
-def test_handle_cbc_event_new_event(mock_classifier, mock_localize):
+def test_handle_cbc_event_new_event(mock_classifier,
+                                    mock_localize, mock_p_astro,
+                                    alert_search, alert_pipeline):
     alert = read_json(data, 'lvalert_event_creation.json')
+    pipelines_external_psds = {'spiir'}
+    pipelines_stock_p_astro = {('spiir', 'allsky'), ('spiir', 'earlywarning'),
+                               ('pycbc', 'earlywarning'), ('gstlal', 'mdc')}
+    alert['object']['search'] = alert_search
+    alert['object']['pipeline'] = alert_pipeline
     orchestrator.handle_cbc_event(alert)
-    mock_classifier.assert_called_once()
-    mock_localize.assert_called_once()
+    if (alert_pipeline, alert_search) in pipelines_stock_p_astro:
+        mock_p_astro.assert_called_once()
+    else:
+        mock_p_astro.assert_not_called()
+    if alert_pipeline not in pipelines_external_psds:
+        mock_localize.assert_called_once()
+    else:
+        mock_localize.assert_not_called()
 
 
 @patch(

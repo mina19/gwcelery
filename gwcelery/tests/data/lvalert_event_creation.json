@@ -7,6 +7,7 @@
         "group": "CBC",
         "graceid": "M394156",
         "pipeline": "gstlal",
+	"search": "allsky",
         "gpstime": 1338924113.077977,
         "reporting_latency": 386.609921,
         "instruments": "H1,L1",

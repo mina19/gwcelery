@@ -4,7 +4,8 @@ Changelog
 2.0.3 (unreleased)
 ------------------
 
--   No changes yet.
+-   Don't compute p-astro for PyCBC/AllSky because it now computes
+    and uploads its own.
 
 2.0.2 "Flying Icarus" (2022-12-23)
 ----------------------------------
