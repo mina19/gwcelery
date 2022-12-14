@@ -195,3 +195,11 @@ def test_create_upload_skymap_filter(mock_upload):
     external_skymaps.create_upload_external_skymap(event, '111',
                                                    '2020-01-09T01:47:09')
     mock_upload.assert_not_called()
+
+
+@patch('gwcelery.tasks.gracedb.upload.run')
+def test_plot_overlap_integral(mock_upload):
+
+    coinc_far_dict = {'skymap_overlap': 1e2}
+    external_skymaps.plot_overlap_integral(coinc_far_dict, 'S1234', 'E1234')
+    mock_upload.assert_called_once()

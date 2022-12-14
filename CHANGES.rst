@@ -15,7 +15,9 @@ Changelog
     speed of gravity by applying the SOG_READY label to the superevent.
 
 -   Add button to apply RAVEN alert labels to flask app. This will manually
-    trigger a RAVEN alert. 
+    trigger a RAVEN alert.
+
+-   Plot the sky map overlap integral similarly to bayestar coherence.
 
 -   Update messages from RAVEN alert pipeline to be more informative.
 

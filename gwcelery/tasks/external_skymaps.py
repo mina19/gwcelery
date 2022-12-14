@@ -9,6 +9,7 @@ from ligo.skymap.io import fits
 from ligo.skymap.tool import ligo_skymap_combine
 import gcn
 import healpy as hp
+import io
 import lxml.etree
 import re
 import ssl
@@ -384,4 +385,48 @@ def create_upload_external_skymap(event, notice_type, notice_date):
                          ['sky_loc'])
         |
         gracedb.create_label.si('EXT_SKYMAP_READY', graceid)
+    ).delay()
+
+
+@app.task(shared=False)
+def plot_overlap_integral(coinc_far_dict, superevent_id, ext_id,
+                          var_label=r"\mathcal{I}_{\Omega}"):
+    """Plot and upload visualization of the sky map overlap integral computed
+    by ligo.search.overlap_integral.
+
+    Parameters
+    ----------
+    coinc_far_dict : dict
+        Dictionary containing coincidence false alarm rate results from
+        RAVEN
+    superevent_id : str
+        superevent GraceDB ID
+    ext_id: str
+        external event GraceDB ID
+    var_label : str
+        The variable symbol used in plotting
+
+    """
+    if coinc_far_dict['skymap_overlap'] is None:
+        return
+
+    log_overlap = np.log(coinc_far_dict['skymap_overlap'])
+    logI_string = np.format_float_positional(log_overlap, 1, trim='0',
+                                             sign=True)
+    # Create plot
+    fig, _ = skymaps.plot_bayes_factor(
+        log_overlap, values=(1, 3, 5), xlim=7, var_label=var_label,
+        title=(r'Sky Map Overlap between %s and %s [$\ln\,%s = %s$]' %
+               (superevent_id, ext_id, var_label, logI_string)))
+    # Convert to bytes
+    outfile = io.BytesIO()
+    fig.savefig(outfile, format='png')
+    # Upload file
+    gracedb.upload.si(
+        outfile.getvalue(),
+        'overlap_integral.png',
+        superevent_id,
+        message='Sky map overlap integral between {0} and {1}'.format(
+            superevent_id, ext_id),
+        tags=['ext_coinc']
     ).delay()

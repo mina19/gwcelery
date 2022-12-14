@@ -214,7 +214,9 @@ def raven_pipeline(raven_search_results, gracedb_id, alert_object, tl, th,
             group(gracedb.create_label.si('EM_COINC', superevent_id),
                   gracedb.create_label.si('EM_COINC', exttrig_id),
                   trigger_raven_alert.s(superevent, gracedb_id,
-                                        ext_event, gw_group))
+                                        ext_event, gw_group),
+                  external_skymaps.plot_overlap_integral.s(
+                      superevent_id, exttrig_id))
         )
         canvas.delay()
 

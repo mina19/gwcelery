@@ -178,7 +178,8 @@ def skymap_from_samples(samplefilecontents):
 def plot_bayes_factor(logb,
                       values=(1, 3, 5),
                       labels=('', 'strong', 'very strong'),
-                      xlim=7, title=None, palette='RdYlBu'):
+                      xlim=7, title=None, palette='RdYlBu',
+                      var_label="B"):
     """Visualize a Bayes factor as a `bullet graph`_.
 
     Make a bar chart of a log Bayes factor as compared to a set of subjective
@@ -201,6 +202,8 @@ def plot_bayes_factor(logb,
         Title for plot.
     palette : str
         Color palette.
+    var_label : str
+        The variable symbol used in plotting
 
     Returns
     -------
@@ -222,7 +225,7 @@ def plot_bayes_factor(logb,
         ax.set_ylim(-0.5, 0.5)
         ax.set_yticks([])
         ax.set_title(title)
-        ax.set_ylabel(r'$\ln\,B$', rotation=0,
+        ax.set_ylabel(r'$\ln\,{}$'.format(var_label), rotation=0,
                       rotation_mode='anchor',
                       ha='right', va='center')
 

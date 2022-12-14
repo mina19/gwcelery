@@ -162,7 +162,8 @@ def mock_get_labels(superevent_id):
 
 def mock_coinc_far(*args):
     return {'temporal_coinc_far': 1e-7,
-            'spatiotemporal_coinc_far': None}
+            'spatiotemporal_coinc_far': None,
+            'overlap_integral': None}
 
 
 @pytest.mark.parametrize(
@@ -187,7 +188,9 @@ def mock_coinc_far(*args):
        return_value=mock_coinc_far())
 @patch('gwcelery.tasks.gracedb.update_superevent')
 @patch('gwcelery.tasks.gracedb.create_label.run')
-def test_raven_pipeline(mock_create_label,
+@patch('gwcelery.tasks.external_skymaps.plot_overlap_integral.run')
+def test_raven_pipeline(mock_plot_overlap_integral,
+                        mock_create_label,
                         mock_update_superevent,
                         mock_calculate_coincidence_far,
                         mock_trigger_raven_alert,
@@ -202,6 +205,7 @@ def test_raven_pipeline(mock_create_label,
                     'labels': []}
     time_coinc_far = mock_coinc_far()['temporal_coinc_far']
     space_coinc_far = mock_coinc_far()['spatiotemporal_coinc_far']
+
     for result in raven_search_results:
         result['labels'] = []
     if 'S' not in graceid:
@@ -212,16 +216,19 @@ def test_raven_pipeline(mock_create_label,
         for result in raven_search_results:
             result['time_coinc_far'] = 1e-5
             result['space_coinc_far'] = None
+            result['overlap_integral'] = None
     else:
         alert_object['superevent_id'] = graceid
         alert_object['time_coinc_far'] = 1e-5
         alert_object['space_coinc_far'] = None
+        alert_object['overlap_integral'] = None
     raven.raven_pipeline(raven_search_results, graceid, alert_object, tl, th,
                          group)
 
     coinc_calls = []
     label_calls = []
     update_calls = []
+    plot_calls = []
     if not raven_search_results:
         mock_calculate_coincidence_far.assert_not_called()
         mock_create_label.assert_not_called()
@@ -235,6 +242,8 @@ def test_raven_pipeline(mock_create_label,
                 call(graceid, em_type=result['graceid'],
                      time_coinc_far=time_coinc_far,
                      space_coinc_far=space_coinc_far))
+            plot_calls.append(
+                call(mock_coinc_far(), graceid, result['graceid']))
     else:
         result = raven.preferred_superevent(raven_search_results)[0]
         label_calls.append(call('EM_COINC', result['superevent_id']))
@@ -245,6 +254,8 @@ def test_raven_pipeline(mock_create_label,
                  em_type=graceid,
                  time_coinc_far=time_coinc_far,
                  space_coinc_far=space_coinc_far))
+        plot_calls.append(
+            call(mock_coinc_far(), result['superevent_id'], graceid))
 
     alert_calls = []
     if 'S' in graceid:
@@ -261,6 +272,7 @@ def test_raven_pipeline(mock_create_label,
                                                     any_order=True)
     mock_update_superevent.assert_has_calls(update_calls, any_order=True)
     mock_create_label.assert_has_calls(label_calls, any_order=True)
+    mock_plot_overlap_integral.assert_has_calls(plot_calls, any_order=True)
 
 
 @pytest.mark.parametrize(
