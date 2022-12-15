@@ -2,7 +2,6 @@
 from distutils.spawn import find_executable
 from distutils.dir_util import mkpath
 import glob
-import itertools
 import json
 import os
 import shutil
@@ -21,39 +20,13 @@ from . import condor
 from . import gracedb
 
 
-ini_name = 'online_lalinference_pe.ini'
-
-executables = {'datafind': 'gw_data_find',
-               'mergeNSscript': 'lalinference_nest2pos',
-               'mergeMCMCscript': 'cbcBayesMCMC2pos',
-               'combinePTMCMCh5script': 'cbcBayesCombinePTMCMCh5s',
-               'resultspage': 'cbcBayesPostProc',
-               'segfind': 'ligolw_segment_query',
-               'ligolw_print': 'ligolw_print',
-               'coherencetest': 'lalinference_coherence_test',
-               'lalinferencenest': 'lalinference_nest',
-               'lalinferencemcmc': 'lalinference_mcmc',
-               'lalinferencebambi': 'lalinference_bambi',
-               'lalinferencedatadump': 'lalinference_datadump',
-               'ligo-skymap-from-samples': 'true',
-               'ligo-skymap-plot': 'true',
-               'processareas': 'process_areas',
-               'computeroqweights': 'lalinference_compute_roq_weights',
-               'mpiwrapper': 'lalinference_mpi_wrapper',
-               'gracedb': 'gracedb',
-               'ppanalysis': 'cbcBayesPPAnalysis',
-               'pos_to_sim_inspiral': 'cbcBayesPosToSimInspiral',
-               'bayeswave': 'BayesWave',
-               'bayeswavepost': 'BayesWavePost'}
-
-
-def _data_exists(end, frametype_dict):
-    """Check whether data at end time can be found with gwdatafind and return
-    true it it is found.
+def _data_exists(gpstime, frametype_dict):
+    """Check whether data at input GPS time can be found with gwdatafind and
+    return true if it is found.
     """
     return min(
         len(
-            find_urls(ifo[0], frametype_dict[ifo], end, end + 1)
+            find_urls(ifo[0], frametype_dict[ifo], gpstime, gpstime + 1)
         ) for ifo in frametype_dict.keys()
     ) > 0
 
@@ -90,7 +63,7 @@ def upload_no_frame_files(request, exc, traceback, superevent_id):
     request : Context (placeholder)
         Task request variables
     exc : Exception
-        Exception rased by condor.submit
+        Exception raised by query_data
     traceback : str (placeholder)
         Traceback message from a task
     superevent_id : str
@@ -143,24 +116,60 @@ def _find_appropriate_cal_env(trigtime, dir_name):
     return os.path.join(dir_name, appropriate_cal.decode('utf-8'))
 
 
-@app.task(shared=False)
-def prepare_ini(frametype_dict, event, superevent_id=None):
-    """Determine an appropriate PE settings for the target event and return ini
-    file content for LALInference pipeline
+def prepare_lalinference_ini(frametype_dict, event, superevent_id):
+    """Determine LALInference configurations and return ini file content
+
+    Parameters
+    ----------
+    frametype_dict : dict
+        Dictionary whose keys are ifos and values are frame types
+    event : dict
+        The json contents of a target G event retrieved from
+        gracedb.get_event(), whose mass and spin information are used to
+        determine analysis settings.
+    superevent_id : str
+        The GraceDB ID of a target superevent
+
+    Returns
+    -------
+    ini_contents : str
+
     """
     # Get template of .ini file
-    ini_template = env.get_template('online_pe.jinja2')
+    ini_template = env.get_template('lalinference.jinja2')
 
     # fill out the ini template and return the resultant content
     singleinspiraltable = event['extra_attributes']['SingleInspiral']
     trigtime = event['gpstime']
+    executables = {'datafind': 'gw_data_find',
+                   'mergeNSscript': 'lalinference_nest2pos',
+                   'mergeMCMCscript': 'cbcBayesMCMC2pos',
+                   'combinePTMCMCh5script': 'cbcBayesCombinePTMCMCh5s',
+                   'resultspage': 'cbcBayesPostProc',
+                   'segfind': 'ligolw_segment_query',
+                   'ligolw_print': 'ligolw_print',
+                   'coherencetest': 'lalinference_coherence_test',
+                   'lalinferencenest': 'lalinference_nest',
+                   'lalinferencemcmc': 'lalinference_mcmc',
+                   'lalinferencebambi': 'lalinference_bambi',
+                   'lalinferencedatadump': 'lalinference_datadump',
+                   'ligo-skymap-from-samples': 'true',
+                   'ligo-skymap-plot': 'true',
+                   'processareas': 'process_areas',
+                   'computeroqweights': 'lalinference_compute_roq_weights',
+                   'mpiwrapper': 'lalinference_mpi_wrapper',
+                   'gracedb': 'gracedb',
+                   'ppanalysis': 'cbcBayesPPAnalysis',
+                   'pos_to_sim_inspiral': 'cbcBayesPosToSimInspiral',
+                   'bayeswave': 'BayesWave',
+                   'bayeswavepost': 'BayesWavePost'}
     ini_settings = {
         'gracedb_host': app.conf['gracedb_host'],
         'types': frametype_dict,
         'channels': app.conf['strain_channel_names'],
         'state_vector_channels': app.conf['state_vector_channel_names'],
         'webdir': os.path.join(
-            app.conf['pe_results_path'], event['graceid'], 'lalinference'
+            app.conf['pe_results_path'], superevent_id, 'lalinference'
         ),
         'paths': [{'name': name, 'path': find_executable(executable)}
                   for name, executable in executables.items()],
@@ -181,42 +190,28 @@ def prepare_ini(frametype_dict, event, superevent_id=None):
                   for sngl in singleinspiraltable]),
         'mpirun': find_executable('mpirun')
     }
-    ini_rota = ini_template.render(ini_settings)
-    ini_settings.update({'use_of_ini': 'online'})
-    ini_online = ini_template.render(ini_settings)
-    # upload LALInference ini file to GraceDB
-    if superevent_id is not None:
-        gracedb.upload.delay(
-            ini_rota, filename=ini_name, graceid=superevent_id,
-            message=('Automatically generated LALInference configuration file'
-                     ' for this event.'),
-            tags='pe')
-
-    return ini_online
-
-
-def pre_pe_tasks(event, superevent_id):
-    """Return canvas of tasks executed before parameter estimation starts"""
-    return query_data.s(event['gpstime']).on_error(
-        upload_no_frame_files.s(superevent_id)
-    ) | prepare_ini.s(event, superevent_id)
+    return ini_template.render(ini_settings)
 
 
 @app.task(shared=False)
-def _setup_dag_for_lalinference(coinc_psd, ini_contents,
-                                rundir, superevent_id):
+def _setup_dag_for_lalinference(coinc_psd, rundir, event, superevent_id,
+                                frametype_dict):
     """Create DAG for a lalinference run and return the path to DAG.
 
     Parameters
     ----------
     coinc_psd : tuple of byte contents
-        Tuple of the byte contents of ``coinc.xml`` and ``psd.xml.gz``
-    ini_contents : str
-        The content of online_lalinference_pe.ini
+        Tuple of the byte contents of ``coinc.xml`` and ``psd.xml.gz``.
     rundir : str
-        The path to a run directory where the DAG file exits
+        The path to a run directory where the DAG file is created.
+    event : dict
+        The json contents of a target G event retrieved from
+        gracedb.get_event(), whose mass and spin information are used to
+        determine analysis settings.
     superevent_id : str
         The GraceDB ID of a target superevent
+    frametype_dict : dict
+        Dictionary whose keys are ifos and values are frame types
 
     Returns
     -------
@@ -232,57 +227,56 @@ def _setup_dag_for_lalinference(coinc_psd, ini_contents,
         f.write(coinc_contents)
 
     # write down psd.xml.gz
-    if psd_contents is not None:
-        path_to_psd = os.path.join(rundir, 'psd.xml.gz')
-        with open(path_to_psd, 'wb') as f:
-            f.write(psd_contents)
-        psd_arg = ['--psd', path_to_psd]
-    else:
-        psd_arg = []
+    path_to_psd = os.path.join(rundir, 'psd.xml.gz')
+    with open(path_to_psd, 'wb') as f:
+        f.write(psd_contents)
 
-    # write down .ini file in the run directory.
-    path_to_ini = os.path.join(rundir, ini_name)
+    # write down and upload ini file
+    ini_contents = prepare_lalinference_ini(
+        frametype_dict, event, superevent_id)
+    path_to_ini = os.path.join(rundir, 'online_lalinference_pe.ini')
     with open(path_to_ini, 'w') as f:
         f.write(ini_contents)
+    gracedb.upload.delay(
+        ini_contents, filename=os.path.basename(path_to_ini),
+        graceid=superevent_id,
+        message=('Automatically generated LALInference configuration file'
+                 ' for this event.'),
+        tags='pe')
 
     try:
         subprocess.run(
             ['lalinference_pipe', '--run-path', rundir,
-             '--coinc', path_to_coinc, path_to_ini] + psd_arg,
+             '--coinc', path_to_coinc, path_to_ini, '--psd', path_to_psd],
             capture_output=True, check=True)
     except subprocess.CalledProcessError as e:
         contents = b'args:\n' + json.dumps(e.args[1]).encode('utf-8') + \
                    b'\n\nstdout:\n' + e.stdout + b'\n\nstderr:\n' + e.stderr
         gracedb.upload.delay(
-            filecontents=contents, filename='pe_dag.log',
+            filecontents=contents, filename='lalinference_dag.log',
             graceid=superevent_id,
             message='Failed to prepare DAG for lalinference', tags='pe'
         )
         shutil.rmtree(rundir)
         raise
-    else:
-        # Remove the ini file so that people do not accidentally use this ini
-        # file and hence online-PE-only nodes.
-        os.remove(path_to_ini)
 
     return os.path.join(rundir, 'multidag.dag')
 
 
 @app.task(shared=False)
-def _setup_dag_for_bilby(
-    event_coinc, rundir, preferred_event_id, superevent_id
-):
+def _setup_dag_for_bilby(psd, rundir, event, superevent_id):
     """Create DAG for a bilby run and return the path to DAG.
 
     Parameters
     ----------
-    event_coinc : tuple
-        Tuple of the json contents retrieved from gracedb.get_event() and
-        the byte contents of coinc.xml
+    psd : bytes
+        The byte contents of coinc.xml or psd.xml.gz containing psd
     rundir : str
-        The path to a run directory where the DAG file exits
-    preferred_event_id : str
-        The GraceDB ID of a target preferred event
+        The path to a run directory where the DAG file is created
+    event : dict
+        The json contents of a target G event retrieved from
+        gracedb.get_event(), whose mass and spin information are used to
+        determine analysis settings.
     superevent_id : str
         The GraceDB ID of a target superevent
 
@@ -292,30 +286,28 @@ def _setup_dag_for_bilby(
         The path to the .dag file
 
     """
-    event, coinc = event_coinc
-
     path_to_json = os.path.join(rundir, 'event.json')
     with open(path_to_json, 'w') as f:
         json.dump(event, f, indent=2)
 
-    path_to_coinc = os.path.join(rundir, 'coinc.xml')
-    with open(path_to_coinc, 'wb') as f:
-        f.write(coinc)
+    path_to_psd = os.path.join(rundir, 'coinc.xml')
+    with open(path_to_psd, 'wb') as f:
+        f.write(psd)
 
     path_to_settings = os.path.join(rundir, 'settings.json')
-    settings = {'summarypages_arguments': {'gracedb': preferred_event_id,
+    settings = {'summarypages_arguments': {'gracedb': event['graceid'],
                                            'no_ligo_skymap': True},
                 'queue': 'Online_PE'}
     with open(path_to_settings, 'w') as f:
         json.dump(settings, f, indent=2)
 
     path_to_webdir = os.path.join(
-        app.conf['pe_results_path'], preferred_event_id, 'bilby'
+        app.conf['pe_results_path'], superevent_id, 'bilby'
     )
 
     setup_arg = ['bilby_pipe_gracedb', '--webdir', path_to_webdir,
                  '--outdir', rundir, '--json', path_to_json,
-                 '--psd-file', path_to_coinc, '--settings', path_to_settings]
+                 '--psd-file', path_to_psd, '--settings', path_to_settings]
 
     if not app.conf['gracedb_host'] == 'gracedb.ligo.org':
         setup_arg += ['--channel-dict', 'o3replay',
@@ -326,7 +318,7 @@ def _setup_dag_for_bilby(
         contents = b'args:\n' + json.dumps(e.args[1]).encode('utf-8') + \
                    b'\n\nstdout:\n' + e.stdout + b'\n\nstderr:\n' + e.stderr
         gracedb.upload.delay(
-            filecontents=contents, filename='pe_dag.log',
+            filecontents=contents, filename='bilby_dag.log',
             graceid=superevent_id,
             message='Failed to prepare DAG for bilby', tags='pe'
         )
@@ -334,27 +326,31 @@ def _setup_dag_for_bilby(
         raise
     else:
         # Uploads bilby ini file to GraceDB
-        group(upload_results_tasks(
-            rundir, 'bilby_config.ini', superevent_id,
-            'Automatically generated Bilby configuration file',
-            'pe', 'online_bilby_pe.ini')).delay()
+        with open(os.path.join(rundir, 'bilby_config.ini'), 'r') as f:
+            ini_contents = f.read()
+        gracedb.upload.delay(
+            ini_contents, filename='bilby_config.ini',
+            graceid=superevent_id,
+            message=('Automatically generated Bilby configuration file for '
+                     'this event.'),
+            tags='pe')
 
     path_to_dag, = glob.glob(os.path.join(rundir, 'submit/dag*.submit'))
     return path_to_dag
 
 
 @app.task(shared=False)
-def _setup_dag_for_rapidpe(rundir, preferred_event_id, superevent_id):
+def _setup_dag_for_rapidpe(rundir, superevent_id, frametype_dict):
     """Create DAG for a rapidpe run and return the path to DAG.
 
     Parameters
     ----------
     rundir : str
-        The path to a run directory where the DAG file exits
-    preferred_event_id : str
-        The GraceDB ID of a target preferred event
+        The path to a run directory where the DAG file is created
     superevent_id : str
         The GraceDB ID of a target superevent
+    frametype_dict : dict
+        Dictionary whose keys are ifos and values are frame types
 
     Returns
     -------
@@ -375,15 +371,21 @@ def _setup_dag_for_rapidpe(rundir, preferred_event_id, superevent_id):
     ini_contents = ini_template.render(
         {'rundir': rundir,
          'webdir': os.path.join(
-             app.conf['pe_results_path'], preferred_event_id, 'rapidpe'
+             app.conf['pe_results_path'], superevent_id, 'rapidpe'
          ),
          'gracedb_url': f'https://{app.conf["gracedb_host"]}/api',
          'superevent_id': superevent_id,
-         'frame_data_types': app.conf['low_latency_frame_types'],
+         'frame_data_types': frametype_dict,
          'svd_depth_json': os.path.abspath(path_to_svd_file)})
     path_to_ini = os.path.join(rundir, 'rapidpe.ini')
     with open(path_to_ini, 'w') as f:
         f.write(ini_contents)
+    gracedb.upload.delay(
+        ini_contents, filename=os.path.basename(path_to_ini),
+        graceid=superevent_id,
+        message=('Automatically generated RapidPE-RIFT configuration file'
+                 ' for this event.'),
+        tags='pe')
 
     # set up dag
     try:
@@ -399,11 +401,6 @@ def _setup_dag_for_rapidpe(rundir, preferred_event_id, superevent_id):
         )
         shutil.rmtree(rundir)
         raise
-    else:
-        group(upload_results_tasks(
-            rundir, 'rapidpe.ini', superevent_id,
-            'Automatically generated RapidPE-RIFT configuration file',
-            'pe', 'rapidpe.ini')).delay()
 
     # return path to dag
     dag, = glob.glob(os.path.join(rundir, "*/event_all_iterations.dag"))
@@ -420,25 +417,25 @@ def _condor_no_submit(path_to_dag):
     return '{}.condor.sub'.format(path_to_dag)
 
 
-@app.task(shared=False)
-def dag_prepare_task(rundir, superevent_id, preferred_event_id, pe_pipeline,
-                     ini_contents=None):
+def dag_prepare_task(rundir, event, superevent_id, pe_pipeline,
+                     frametype_dict=None):
     """Return a canvas of tasks to prepare DAG.
 
     Parameters
     ----------
     rundir : str
-        The path to a run directory where the DAG file exits
+        The path to a run directory where the DAG file is created
+    event : dict
+        The json contents of a target G event retrieved from
+        gracedb.get_event(), whose mass and spin information are used to
+        determine analysis settings.
     superevent_id : str
         The GraceDB ID of a target superevent
-    preferred_event_id : str
-        The GraceDB ID of a target preferred event
     pe_pipeline : str
-        The parameter estimation pipeline used
-        Either 'lalinference' OR 'bilby'
-    ini_contents : str
-        The content of online_lalinference_pe.ini
-        Required if pe_pipeline == 'lalinference'
+        The parameter estimation pipeline used,
+        lalinference, bilby, or rapidpe.
+    frametype_dict : dict
+        Dictionary whose keys are ifos and values are frame types
 
     Returns
     -------
@@ -448,17 +445,16 @@ def dag_prepare_task(rundir, superevent_id, preferred_event_id, pe_pipeline,
     """
     if pe_pipeline == 'lalinference':
         canvas = group(
-            gracedb.download.si('coinc.xml', preferred_event_id),
-            _download_psd.si(preferred_event_id)
-        ) | _setup_dag_for_lalinference.s(ini_contents, rundir, superevent_id)
+            gracedb.download.si('coinc.xml', event['graceid']),
+            _download_psd.si(event['graceid'])
+        ) | _setup_dag_for_lalinference.s(rundir, event, superevent_id,
+                                          frametype_dict)
     elif pe_pipeline == 'bilby':
-        canvas = group(
-            gracedb.get_event.si(preferred_event_id),
-            gracedb.download.si('coinc.xml', preferred_event_id)
-        ) | _setup_dag_for_bilby.s(rundir, preferred_event_id, superevent_id)
+        canvas = _download_psd.si(event['graceid']) | \
+            _setup_dag_for_bilby.s(rundir, event, superevent_id)
     elif pe_pipeline == 'rapidpe':
         canvas = _setup_dag_for_rapidpe.s(
-            rundir, preferred_event_id, superevent_id)
+            rundir, superevent_id, frametype_dict)
     else:
         raise NotImplementedError(f'Unknown PE pipeline {pe_pipeline}.')
     canvas |= _condor_no_submit.s()
@@ -496,7 +492,7 @@ def job_error_notification(request, exc, traceback,
     request : Context (placeholder)
         Task request variables
     exc : Exception
-        Exception rased by condor.submit
+        Exception raised by condor.submit
     traceback : str (placeholder)
         Traceback message from a task
     superevent_id : str
@@ -509,101 +505,36 @@ def job_error_notification(request, exc, traceback,
 
     """
     if isinstance(exc, condor.JobAborted):
-        gracedb.upload.delay(
+        canvas = gracedb.upload.si(
             filecontents=None, filename=None, graceid=superevent_id, tags='pe',
             message='The {} condor job was aborted.'.format(pe_pipeline)
         )
-    elif isinstance(exc, condor.JobFailed):
-        gracedb.upload.delay(
+    else:
+        canvas = gracedb.upload.si(
             filecontents=None, filename=None, graceid=superevent_id, tags='pe',
             message='The {} condor job failed.'.format(pe_pipeline)
         )
-    # Get paths to .log files, .err files, .out files
-    paths_to_log = _find_paths_from_name(rundir, '*.log')
-    paths_to_err = _find_paths_from_name(rundir, '*.err')
-    paths_to_out = _find_paths_from_name(rundir, '*.out')
-    # Upload .log and .err files
-    for path in itertools.chain(paths_to_log, paths_to_err, paths_to_out):
-        with open(path, 'rb') as f:
-            contents = f.read()
-        if contents:
-            # put .log suffix in log file names so that users can directly
-            # read the contents instead of downloading them when they click
-            # file names
-            gracedb.upload.delay(
-                filecontents=contents,
-                filename=os.path.basename(path) + '.log',
-                graceid=superevent_id,
-                message='A log file for {} condor job.'.format(pe_pipeline),
-                tags='pe'
-            )
 
+    # upload all the .log, .err, and .out files
+    for filename in ['*.log', '*.err', '*.out']:
+        tasks = []
+        for path in _find_paths_from_name(rundir, filename):
+            with open(path, 'rb') as f:
+                contents = f.read()
+            if contents:
+                # put .log suffix in log file names so that users can directly
+                # read the contents instead of downloading them when they click
+                # file names
+                tasks.append(gracedb.upload.si(
+                    filecontents=contents,
+                    filename=os.path.basename(path) + '.log',
+                    graceid=superevent_id,
+                    message=f'A log file for {pe_pipeline} condor job.',
+                    tags='pe'
+                ))
+        canvas |= group(tasks)
 
-@app.task(ignore_result=True, shared=False)
-def _upload_url(pe_results_path, graceid, pe_pipeline):
-    """Upload url of a page containing all of the plots."""
-    if pe_pipeline == 'lalinference':
-        path_to_posplots, = _find_paths_from_name(
-            pe_results_path, 'posplots.html'
-        )
-    elif pe_pipeline == 'bilby':
-        path_to_posplots, = _find_paths_from_name(
-            pe_results_path, 'home.html'
-        )
-    else:
-        raise NotImplementedError(f'Unknown PE pipeline {pe_pipeline}.')
-
-    baseurl = urllib.parse.urljoin(
-                  app.conf['pe_results_url'],
-                  os.path.relpath(
-                      path_to_posplots,
-                      app.conf['pe_results_path']
-                  )
-              )
-    gracedb.upload.delay(
-        filecontents=None, filename=None, graceid=graceid,
-        message=('Online {} parameter estimation finished.'
-                 '<a href={}>results</a>').format(pe_pipeline, baseurl),
-        tags='pe'
-    )
-
-
-def upload_results_tasks(pe_results_path, filename, graceid, message, tag,
-                         uploaded_filename=None):
-    """Return tasks to get the contents of PE result files and upload them to
-    GraceDB.
-
-    Parameters
-    ----------
-    pe_results_path : string
-        Directory under which the target file located.
-    filename : string
-        Name of the target file
-    graceid : string
-        GraceDB ID
-    message : string
-        Message uploaded to GraceDB
-    tag : str
-        Name of tag to add the GraceDB log
-    uploaded_filename : str
-        Name of the uploaded file. If not supplied, it is the same as the
-        original file name.
-
-    Returns
-    -------
-    tasks : list of celery tasks
-
-    """
-    tasks = []
-    for path in _find_paths_from_name(pe_results_path, filename):
-        if uploaded_filename is None:
-            _uploaded_filename = os.path.basename(path)
-        else:
-            _uploaded_filename = uploaded_filename
-        with open(path, 'rb') as f:
-            tasks.append(gracedb.upload.si(f.read(), _uploaded_filename,
-                                           graceid, message, tag))
-    return tasks
+    canvas.delay()
 
 
 @app.task(ignore_result=True, shared=False)
@@ -619,84 +550,169 @@ def clean_up(rundir):
     shutil.rmtree(rundir)
 
 
+def _upload_tasks_lalinference(rundir, superevent_id):
+    """Return canvas of tasks to upload LALInference results
+
+    Parameters
+    ----------
+    rundir : str
+        The path to a run directory
+    superevent_id : str
+        The GraceDB ID of a target superevent
+
+    Returns
+    -------
+    tasks : canvas
+        The work-flow for uploading LALInference results
+
+    """
+    pe_results_path = os.path.join(
+        app.conf['pe_results_path'], superevent_id, 'lalinference'
+    )
+
+    # posterior samples
+    path, = glob.glob(
+        os.path.join(rundir, '**', 'posterior*.hdf5'), recursive=True)
+    with open(path, 'rb') as f:
+        canvas = gracedb.upload.si(
+            f.read(), 'LALInference.posterior_samples.hdf5',
+            superevent_id, 'LALInference posterior samples', 'pe')
+
+    # plots
+    tasks = []
+    for filename, message in [
+        ('extrinsic.png', 'LALInference corner plot for extrinsic parameters'),
+        ('intrinsic.png', 'LALInference corner plot for intrinsic parameters')
+    ]:
+        # Here it is not required that only a single png file exists, so that
+        # posterior samples are uploaded whatever. This applies for the other
+        # files.
+        for path in _find_paths_from_name(pe_results_path, filename):
+            with open(path, 'rb') as f:
+                tasks.append(gracedb.upload.si(
+                    f.read(), f'LALInference.{filename}', superevent_id,
+                    message, 'pe'
+                ))
+    canvas |= group(tasks)
+
+    # psd
+    tasks = []
+    for path in _find_paths_from_name(rundir, 'glitch_median_PSD_forLI_*.dat'):
+        with open(path, 'r') as f:
+            tasks.append(gracedb.upload.si(
+                f.read(), os.path.basename(path), superevent_id,
+                'Bayeswave PSD used for LALInference PE', 'pe'
+            ))
+    canvas |= group(tasks)
+
+    # dag
+    tasks = []
+    for path in _find_paths_from_name(rundir, 'lalinference*.dag'):
+        with open(path, 'r') as f:
+            tasks.append(gracedb.upload.si(
+                f.read(), os.path.basename(path), superevent_id,
+                'LALInference DAG', 'pe'
+            ))
+    canvas |= group(tasks)
+
+    # link to results page
+    tasks = []
+    for path in _find_paths_from_name(pe_results_path, 'posplots.html'):
+        baseurl = urllib.parse.urljoin(
+            app.conf['pe_results_url'],
+            os.path.relpath(path, app.conf['pe_results_path'])
+        )
+        tasks.append(gracedb.upload.si(
+            None, None, superevent_id,
+            'Online lalinference parameter estimation finished. '
+            f'<a href={baseurl}>results</a>'
+        ))
+    canvas |= group(tasks)
+
+    return canvas
+
+
+def _upload_tasks_bilby(rundir, superevent_id):
+    """Return canvas of tasks to upload Bilby results
+
+    Parameters
+    ----------
+    rundir : str
+        The path to a run directory
+    superevent_id : str
+        The GraceDB ID of a target superevent
+
+    Returns
+    -------
+    tasks : canvas
+        The work-flow for uploading Bilby results
+
+    """
+    # convert bilby sample file into one compatible with ligo-skymap
+    samples_dir = os.path.join(rundir, 'final_result')
+    samples_filename = 'Bilby.posterior_samples.hdf5'
+    out_samples = os.path.join(samples_dir, samples_filename)
+    in_samples, = glob.glob(os.path.join(samples_dir, '*result.hdf5'))
+    subprocess.run(
+        ['bilby_pipe_to_ligo_skymap_samples', in_samples, '--out', out_samples]
+    )
+
+    with open(out_samples, 'rb') as f:
+        canvas = gracedb.upload.si(
+            f.read(), samples_filename,
+            superevent_id, 'Bilby posterior samples', 'pe')
+
+    # plots
+    tasks = []
+    resultdir = os.path.join(rundir, 'result')
+    for parameter_type in ['extrinsic', 'intrinsic']:
+        # Here it is not required that only a single png file exists, so that
+        # posterior samples are uploaded whatever.
+        for path in glob.iglob(
+            os.path.join(resultdir, f'*_{parameter_type}_corner.png')
+        ):
+            with open(path, 'rb') as f:
+                tasks.append(gracedb.upload.si(
+                    f.read(), f'Bilby.{parameter_type}.png', superevent_id,
+                    f'Bilby corner plot for {parameter_type} parameters', 'pe'
+                ))
+    canvas |= group(tasks)
+
+    return canvas
+
+
 @app.task(ignore_result=True, shared=False)
-def dag_finished(rundir, preferred_event_id, superevent_id, pe_pipeline):
+def dag_finished(rundir, superevent_id, pe_pipeline):
     """Upload PE results and clean up run directory
 
     Parameters
     ----------
     rundir : str
         The path to a run directory where the DAG file exits
-    preferred_event_id : str
-        The GraceDB ID of a target preferred event
     superevent_id : str
         The GraceDB ID of a target superevent
     pe_pipeline : str
         The parameter estimation pipeline used,
         lalinference, bilby, or rapidpe.
 
-    Returns
-    -------
-    tasks : canvas
-        The work-flow for uploading PE results
-
     """
     if pe_pipeline == 'rapidpe':
         os.chdir(os.path.expanduser("~"))
 
-    pe_results_path = os.path.join(
-        app.conf['pe_results_path'], preferred_event_id, pe_pipeline
-    )
-
     if pe_pipeline == 'lalinference':
-        uploads = [
-            (rundir, 'glitch_median_PSD_forLI_*.dat',
-             'Bayeswave PSD used for LALInference PE', None),
-            (rundir, 'lalinference*.dag', 'LALInference DAG', None),
-            (rundir, 'posterior*.hdf5',
-             'LALInference posterior samples',
-             'LALInference.posterior_samples.hdf5'),
-            (pe_results_path, 'extrinsic.png',
-             'LALInference corner plot for extrinsic parameters',
-             'LALInference.extrinsic.png'),
-            (pe_results_path, 'sourceFrame.png',
-             'LALInference corner plot for source frame parameters',
-             'LALInference.intrinsic.png')
-        ]
+        canvas = _upload_tasks_lalinference(rundir, superevent_id)
     elif pe_pipeline == 'bilby':
-        resultdir = os.path.join(rundir, 'result')
-        sampledir = os.path.join(rundir, 'final_result')
-        sample_filename = 'Bilby.posterior_samples.hdf5'
-        input_sample, = glob.glob(os.path.join(sampledir, '*result.hdf5'))
-        subprocess.run(
-            ['bilby_pipe_to_ligo_skymap_samples', input_sample,
-             '--out', os.path.join(sampledir, sample_filename)])
-        uploads = [
-            (sampledir, sample_filename,
-             'Bilby posterior samples',
-             sample_filename),
-            (resultdir, '*_extrinsic_corner.png',
-             'Bilby corner plot for extrinsic parameters',
-             'Bilby.extrinsic.png'),
-            (resultdir, '*_intrinsic_corner.png',
-             'Bilby corner plot for intrinsic parameters',
-             'Bilby.intrinsic.png')
-        ]
+        canvas = _upload_tasks_bilby(rundir, superevent_id)
     elif pe_pipeline == 'rapidpe':
-        uploads = []
+        # TODO: upload rapidpe posterior samples
+        canvas = gracedb.upload.si(
+            None, None, superevent_id,
+            'Online RapidPE-RIFT parameter estimation finished.', 'pe')
     else:
         raise NotImplementedError(f'Unknown PE pipeline {pe_pipeline}.')
 
-    upload_tasks = []
-    for dir, name1, comment, name2 in uploads:
-        upload_tasks += upload_results_tasks(
-            dir, name1, superevent_id, comment, 'pe', name2)
-
-    chain = group(upload_tasks) | clean_up.si(rundir)
-    if pe_pipeline == 'lalinference':
-        chain = \
-            _upload_url.si(pe_results_path, superevent_id, pe_pipeline) | chain
-    chain.delay()
+    canvas = canvas | clean_up.si(rundir)
+    canvas.delay()
 
     if pe_pipeline == 'bilby':
         gracedb.create_label.delay('PE_READY', superevent_id)
@@ -704,36 +720,39 @@ def dag_finished(rundir, preferred_event_id, superevent_id, pe_pipeline):
 
 @gracedb.task(shared=False)
 def _download_psd(gid):
-    """Download ``psd.xml.gz`` and return its content. If that file does not
-    exist, return None.
+    """Download psd and return its byte contents. This task first tries to
+    download ``psd.xml.gz``, and if it does not exist, this task downloads
+    ``coinc.xml``, assuming it contains psd instead.
     """
     try:
         return gracedb.download("psd.xml.gz", gid)
     except HTTPError:
-        return None
+        return gracedb.download("coinc.xml", gid)
 
 
 @app.task(ignore_result=True, shared=False)
-def start_pe(ini_contents, preferred_event_id, superevent_id, pe_pipeline):
+def start_pe(frametype_dict, event, superevent_id, pe_pipeline):
     """Run Parameter Estimation on a given event.
 
     Parameters
     ----------
-    ini_contents : str
-        The content of online_lalinference_pe.ini
-    preferred_event_id : str
-        The GraceDB ID of a target preferred event
+    frametype_dict : dict
+        Dictionary whose keys are ifos and values are frame types
+    event : dict
+        The json contents of a target G event retrieved from
+        gracedb.get_event(), whose mass and spin information are used to
+        determine analysis settings.
     superevent_id : str
         The GraceDB ID of a target superevent
     pe_pipeline : str
-        The parameter estimation pipeline used
+        The parameter estimation pipeline used,
         lalinference, bilby, or rapidpe.
 
     """
     gracedb.upload.delay(
         filecontents=None, filename=None, graceid=superevent_id,
         message=('Starting {} online parameter estimation '
-                 'for {}').format(pe_pipeline, preferred_event_id),
+                 'for {}').format(pe_pipeline, event['graceid']),
         tags='pe'
     )
 
@@ -750,8 +769,7 @@ def start_pe(ini_contents, preferred_event_id, superevent_id, pe_pipeline):
 
     canvas = (
         dag_prepare_task(
-            rundir, superevent_id, preferred_event_id,
-            pe_pipeline, ini_contents
+            rundir, event, superevent_id, pe_pipeline, frametype_dict
         )
         |
         condor.submit.s().on_error(
@@ -759,7 +777,7 @@ def start_pe(ini_contents, preferred_event_id, superevent_id, pe_pipeline):
         )
         |
         dag_finished.si(
-            rundir, preferred_event_id, superevent_id, pe_pipeline
+            rundir, superevent_id, pe_pipeline
         )
     )
     canvas.delay()

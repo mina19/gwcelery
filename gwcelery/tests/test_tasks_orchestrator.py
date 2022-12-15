@@ -479,3 +479,46 @@ def test_only_mdc_alerts_switch(mock_alert, mock_upload, mock_download,
             'preliminary'
         ).get()
         mock_alert.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    'far,event',
+    [[1, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'AllSky'}],
+     [1e-30, {'gpstime': 1187008882, 'group': 'Burst', 'search': 'AllSky'}],
+     [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'MDC'}],
+     [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
+              'search': 'AllSky', 'pipeline': 'gstlal'}],
+     [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
+              'search': 'AllSky', 'pipeline': 'pycbc'}]]
+)
+def test_parameter_estimation(monkeypatch, far, event):
+    superevent_id = 'S1234'
+    frametype_dict = {'H1': 'H1_llhoft', 'L1': 'L1_llhoft', 'V1': 'V1_llhoft'}
+    mock_upload = Mock()
+    mock_query_data = Mock(return_value=frametype_dict)
+    mock_start_pe = Mock()
+    monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', mock_upload)
+    monkeypatch.setattr(
+        'gwcelery.tasks.inference.query_data.run', mock_query_data)
+    monkeypatch.setattr('gwcelery.tasks.inference.start_pe.run', mock_start_pe)
+
+    orchestrator.parameter_estimation.delay(
+        far_event=(far, event), superevent_id=superevent_id)
+
+    threshold = (app.conf['preliminary_alert_far_threshold']['cbc'] /
+                 app.conf['preliminary_alert_trials_factor']['cbc'])
+    if (
+        far <= threshold and event['group'] == 'CBC' and
+        event['search'] != 'MDC'
+    ):
+        mock_query_data.assert_called_once()
+        mock_start_pe.assert_any_call(
+            frametype_dict, event, superevent_id, 'bilby')
+        if event['pipeline'] == 'gstlal':
+            mock_start_pe.assert_any_call(
+                frametype_dict, event, superevent_id, 'rapidpe')
+            assert mock_start_pe.call_count == 2
+        else:
+            assert mock_start_pe.call_count == 1
+    else:
+        mock_upload.assert_called_once()

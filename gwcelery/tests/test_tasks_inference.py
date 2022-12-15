@@ -2,6 +2,7 @@ import configparser
 import os
 import subprocess
 
+import json
 import pytest
 from requests.exceptions import HTTPError
 from unittest.mock import Mock
@@ -74,8 +75,8 @@ def test_find_appropriate_cal_env(tmp_path):
 
 
 @pytest.mark.parametrize(
-    'mc,q,sid,answers',
-    [[1., 1., None,
+    'mc,q,answers',
+    [[1., 1.,
       [('analysis', 'engine', 'lalinferencenest'),
        ('analysis', 'nparallel', '4'),
        ('analysis', 'roq', 'True'),
@@ -87,31 +88,28 @@ def test_find_appropriate_cal_env(tmp_path):
        ('condor', 'bayeswave_request_memory', '16000'),
        ('condor', 'bayeswavepost_request_memory', '16000'),
        ('bayeswave', 'bw_srate', '4096')]],
-     [10., 1., None,
+     [10., 1.,
       [('condor', 'bayeswave_request_memory', '1000'),
        ('condor', 'bayeswavepost_request_memory', '4000')]],
-     [10., 1., 'S1234', []],
-     [1., 1. / 10., None,
+     [1., 1. / 10.,
       [('analysis', 'engine', 'lalinferencenest'),
        ('analysis', 'nparallel', '4'),
        ('analysis', 'roq', 'True'),
        ('paths', 'roq_b_matrix_directory',
         '/home/cbc/ROQ_data/SEOBNRv4ROQ/'),
        ('engine', 'approx', 'SEOBNRv4_ROMpseudoFourPN')]],
-     [1., 1. / 20., None,
+     [1., 1. / 20.,
       [('analysis', 'engine', 'lalinferencemcmc'),
        ('analysis', 'nparallel', '10'),
        ('analysis', 'roq', 'False'),
        ('engine', 'approx', 'SEOBNRv4_ROMpseudoFourPN'),
        ('engine', 'neff', '300')]]]
 )
-def test_prepare_ini(monkeypatch, mc, q, sid, answers):
-    upload = Mock()
+def test_prepare_lalinference_ini(monkeypatch, mc, q, answers):
 
     def mock_calenv(trigtime, path):
         return 'path_to_calenv'
 
-    monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
     monkeypatch.setattr(
         'gwcelery.tasks.inference._find_appropriate_cal_env',
         mock_calenv)
@@ -127,79 +125,64 @@ def test_prepare_ini(monkeypatch, mc, q, sid, answers):
     }
     config = configparser.ConfigParser()
     config.read_string(
-        inference.prepare_ini(app.conf['low_latency_frame_types'], event, sid))
+        inference.prepare_lalinference_ini(
+            app.conf['low_latency_frame_types'], event, 'S1234'))
     for section, key, answer in answers:
         assert config[section][key] == answer
 
-    if sid is not None:
-        upload.assert_called_once()
 
-
-def test_pre_pe_tasks(monkeypatch):
-    event, sid = {'gpstime': 1187008882}, 'S1234'
-    frametype_dict = app.conf['low_latency_frame_types']
-
-    def mock_query_data(gpstime):
-        return frametype_dict
-
-    def mock_prepare_ini(f, e, s):
-        assert f == frametype_dict
-        assert e == event
-        assert s == sid
-
-    query_data = Mock(side_effect=mock_query_data)
-    prepare_ini = Mock(side_effect=mock_prepare_ini)
-    monkeypatch.setattr('gwcelery.tasks.inference.query_data.run', query_data)
-    monkeypatch.setattr('gwcelery.tasks.inference.prepare_ini.run',
-                        prepare_ini)
-
-    inference.pre_pe_tasks(event, sid).delay()
-    query_data.assert_called_once()
-    prepare_ini.assert_called_once()
-
-
-@pytest.mark.parametrize('psd', [b'psd', None])
-def test_setup_dag_for_lalinference_(monkeypatch, tmp_path, psd):
-    ini, coinc = 'ini', b'coinc'
+def test_setup_dag_for_lalinference(monkeypatch, tmp_path):
+    coinc, psd = b'coinc', b'psd'
     rundir = str(tmp_path)
+    ini = 'ini'
     dag = 'lalinference dag'
 
     def _subprocess_run(cmd, **kwargs):
-        assert cmd[0] == 'lalinference_pipe'
-        del cmd[0]
-        assert '--run-path' in cmd and '--coinc' in cmd
-        idx = cmd.index('--run-path')
-        assert cmd[idx + 1] == rundir
-        del cmd[idx:idx + 2]
-        idx = cmd.index('--coinc')
-        path_to_coinc = cmd[idx + 1]
+        assert cmd[2] == rundir
+
+        path_to_coinc = cmd[4]
+        assert os.path.exists(path_to_coinc)
         with open(path_to_coinc, 'rb') as f:
             assert f.read() == coinc
-        del cmd[idx:idx + 2]
-        if psd is not None:
-            assert '--psd' in cmd
-            idx = cmd.index('--psd')
-            path_to_psd = cmd[idx + 1]
-            with open(path_to_psd, 'rb') as f:
-                assert f.read() == psd
-            del cmd[idx:idx + 2]
-        path_to_ini, = cmd
+
+        path_to_ini = cmd[5]
+        assert os.path.exists(path_to_ini)
+        with open(path_to_ini, 'r') as f:
+            assert f.read() == ini
+
+        path_to_psd = cmd[7]
+        assert os.path.exists(path_to_psd)
+        with open(path_to_psd, 'rb') as f:
+            assert f.read() == psd
+
         with open(os.path.join(rundir, 'multidag.dag'), 'w') as f:
             f.write(dag)
 
+    upload = Mock()
     monkeypatch.setattr('subprocess.run', _subprocess_run)
+    monkeypatch.setattr(
+        'gwcelery.tasks.inference.prepare_lalinference_ini',
+        Mock(return_value=ini))
+    monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
+
     path_to_dag = inference._setup_dag_for_lalinference(
-        (coinc, psd), ini, rundir, 'S1234')
+        (coinc, psd), rundir, {}, 'S1234', {})
+
+    assert os.path.exists(path_to_dag)
     with open(path_to_dag, 'r') as f:
         assert f.read() == dag
+    upload.assert_called_once()
 
 
 @pytest.mark.parametrize(
     'host', ['gracedb-playground.ligo.org', 'gracedb.ligo.org'])
 def test_setup_dag_for_bilby(monkeypatch, tmp_path, host):
-    event_coinc, rundir = ({}, b'coinc'), str(tmp_path)
-    pid, sid = 'G1234', 'S1234'
+    psd = b'psd'
+    rundir = str(tmp_path)
+    event = {'gpstime': 1187008882, 'graceid': 'G1234'}
+    sid = 'S1234'
     monkeypatch.setitem(app.conf, 'gracedb_host', host)
+    ini = 'bilby configuration ini file'
     dag = 'bilby dag'
 
     def _subprocess_run(cmd, **kwargs):
@@ -208,18 +191,48 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host):
             assert not is_quick_conf
         else:
             assert is_quick_conf
+
+        assert cmd[2] == os.path.join(
+            app.conf['pe_results_path'], sid, 'bilby')
+
+        assert cmd[4] == rundir
+
+        path_to_json = cmd[6]
+        assert os.path.exists(path_to_json)
+        with open(path_to_json, 'r') as f:
+            assert event == json.load(f)
+
+        path_to_psd = cmd[8]
+        assert os.path.exists(path_to_psd)
+        with open(path_to_psd, 'rb') as f:
+            assert f.read() == psd
+
+        path_to_settings = cmd[10]
+        assert os.path.exists(path_to_settings)
+        with open(path_to_settings, 'r') as f:
+            assert json.load(f) == {
+                'summarypages_arguments': {'gracedb': event['graceid'],
+                                           'no_ligo_skymap': True},
+                'queue': 'Online_PE'
+            }
+
         with open(os.path.join(rundir, 'bilby_config.ini'), 'w') as f:
-            f.write('bilby configuration ini file')
+            f.write(ini)
         dir = os.path.join(rundir, 'submit')
         os.mkdir(dir)
         with open(os.path.join(dir, 'dag_bilby.submit'), 'w') as f:
             f.write(dag)
 
-    upload = Mock()
+    def _upload(filecontents, filename, graceid, message, tags):
+        assert filecontents == ini
+
+    upload = Mock(side_effect=_upload)
     monkeypatch.setattr('subprocess.run', _subprocess_run)
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
 
-    path_to_dag = inference._setup_dag_for_bilby(event_coinc, rundir, pid, sid)
+    path_to_dag = inference._setup_dag_for_bilby(psd, rundir, event, sid)
+
+    assert os.path.exists(path_to_dag)
     with open(path_to_dag, 'r') as f:
         assert f.read() == dag
     upload.assert_called_once()
@@ -238,10 +251,14 @@ def test_setup_dag_for_rapidpe(monkeypatch, tmp_path):
         with open(os.path.join(outdir, dag_filename), 'w') as f:
             f.write(dag_content)
 
+    upload = Mock()
     monkeypatch.setattr('subprocess.run', _subprocess_run)
-    path_to_dag = inference._setup_dag_for_rapidpe(rundir, 'G1234', 'S1234')
+    monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
+
+    path_to_dag = inference._setup_dag_for_rapidpe(rundir, 'S1234', {})
     with open(path_to_dag, 'r') as f:
         assert f.read() == dag_content
+    upload.assert_called_once()
 
 
 @pytest.mark.parametrize('pipeline', ['lalinference', 'bilby', 'rapidpe'])
@@ -251,28 +268,43 @@ def test_setup_dag_for_failure(monkeypatch, tmp_path, pipeline):
     monkeypatch.setattr('subprocess.run',
                         Mock(side_effect=subprocess.CalledProcessError(
                             1, ['cmd'], output=b'out', stderr=b'err')))
+    monkeypatch.setattr(
+        'gwcelery.tasks.inference._find_appropriate_cal_env',
+        Mock(return_value='./cal_file.txt'))
 
     rundir = str(tmp_path)
-
+    event = {
+        'gpstime': 1187008882,
+        'graceid': 'G1234',
+        'extra_attributes': {'SingleInspiral':
+                             [{'mass1': 1.4, 'mass2': 1.4, 'mchirp': 1.2}]}
+    }
     with pytest.raises(subprocess.CalledProcessError):
         if pipeline == 'lalinference':
             inference._setup_dag_for_lalinference(
-                (b'coinc', b'psd'), 'ini', rundir, 'S1234')
+                (b'coinc', b'psd'), rundir, event, 'S1234', {})
         elif pipeline == 'bilby':
             inference._setup_dag_for_bilby(
-                ({}, b'coinc'), rundir, 'G1234', 'S1234')
+                (b'psd'), rundir, event, 'S1234')
         elif pipeline == 'rapidpe':
-            inference._setup_dag_for_rapidpe(rundir, 'G1234', 'S1234')
+            inference._setup_dag_for_rapidpe(rundir, 'S1234', {})
     assert not os.path.exists(rundir)
-    upload.assert_called_once()
+    if pipeline == 'bilby':
+        assert upload.call_count == 1
+    else:
+        # For pipelines except for bilby, an ini file is uploaded before dag
+        # generation, and hence the call count is 2.
+        assert upload.call_count == 2
 
 
 @pytest.mark.parametrize(
     'pipeline', ['lalinference', 'bilby', 'rapidpe', 'my_awesome_pipeline'])
 def test_dag_prepare_task(monkeypatch, pipeline):
-    gid, sid = 'G1234', 'S1234'
-    coinc, psd, ini, event = b'coinc', b'psd', 'ini', {'gpstime': 1187008882}
+    sid = 'S1234'
+    coinc, psd = b'coinc', b'psd'
+    event = {'gpstime': 1187008882, 'graceid': 'G1234'}
     rundir = 'rundir'
+    frametype_dict = {'H1': 'H1_llhoft', 'L1': 'L1_llhoft'}
     path_to_dag = os.path.join(rundir, 'parameter_estimation.dag')
 
     def mock_download(filename, gid):
@@ -281,20 +313,18 @@ def test_dag_prepare_task(monkeypatch, pipeline):
         elif filename == 'psd.xml.gz':
             return psd
 
-    def _setup_dag_for_lalinference(c_p, i, r, s):
+    def _setup_dag_for_lalinference(c_p, r, e, s, f):
         c, p = c_p
-        assert (c == coinc and p == psd and i == ini
-                and r == rundir and s == sid)
+        assert (c == coinc and p == psd and r == rundir
+                and e == event and s == sid and f == frametype_dict)
         return path_to_dag
 
-    def _setup_dag_for_bilby(e_c, r, p, s):
-        e, c = e_c
-        assert (e == event and c == coinc and r == rundir
-                and p == gid and s == sid)
+    def _setup_dag_for_bilby(p, r, e, s):
+        assert p == psd and r == rundir and e == event and s == sid
         return path_to_dag
 
-    def _setup_dag_for_rapidpe(r, p, s):
-        assert (r == rundir and p == gid and s == sid)
+    def _setup_dag_for_rapidpe(r, s, f):
+        assert r == rundir and s == sid and f == frametype_dict
         return path_to_dag
 
     def _subprocess_run(cmd, **kwargs):
@@ -316,7 +346,8 @@ def test_dag_prepare_task(monkeypatch, pipeline):
                         mock_setup_dag_for_rapidpe)
     monkeypatch.setattr('subprocess.run', _subprocess_run)
     if pipeline in ['lalinference', 'bilby', 'rapidpe']:
-        inference.dag_prepare_task(rundir, sid, gid, pipeline, ini).delay()
+        inference.dag_prepare_task(
+            rundir, event, sid, pipeline, frametype_dict).delay()
         if pipeline == 'lalinference':
             mock_setup_dag_for_lalinference.assert_called_once()
         elif pipeline == 'bilby':
@@ -325,7 +356,8 @@ def test_dag_prepare_task(monkeypatch, pipeline):
             mock_setup_dag_for_rapidpe.assert_called_once()
     else:
         with pytest.raises(NotImplementedError):
-            inference.dag_prepare_task(rundir, sid, gid, pipeline, ini).delay()
+            inference.dag_prepare_task(
+                rundir, event, sid, pipeline, frametype_dict).delay()
 
 
 @pytest.mark.parametrize('exc', [condor.JobAborted(1, 'test'),
@@ -343,46 +375,24 @@ def test_job_error_notification(monkeypatch, tmp_path, exc):
     assert upload.call_count == len(filenames) + 1
 
 
-@pytest.mark.parametrize('pipeline',
-                         ['lalinference', 'bilby', 'my_awesome_pipeline'])
-def test_upload_url(monkeypatch, tmp_path, pipeline):
-    upload = Mock()
-    monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
-    if pipeline in ['lalinference', 'bilby']:
-        if pipeline == 'lalinference':
-            path = str(tmp_path / 'posplots.html')
-        else:
-            path = str(tmp_path / 'home.html')
-        with open(path, 'w') as f:
-            f.write('test')
-        inference._upload_url(str(tmp_path), 'G1234', pipeline)
-        upload.assert_called_once()
-    else:
-        with pytest.raises(NotImplementedError):
-            inference._upload_url(str(tmp_path), 'G1234', pipeline)
-
-
 @pytest.mark.parametrize(
     'pipeline', ['lalinference', 'bilby', 'rapidpe', 'my_awesome_pipeline'])
 def test_dag_finished(monkeypatch, tmp_path, pipeline):
-    gid = 'G1234'
+    sid = 'S1234'
     rundir = str(tmp_path / 'rundir')
     resultdir = str(tmp_path / 'rundir/result')
     sampledir = str(tmp_path / 'rundir/final_result')
     pe_results_path = str(tmp_path / 'public_html/online_pe')
     monkeypatch.setitem(app.conf, 'pe_results_path', pe_results_path)
-    pe_results_path = os.path.join(pe_results_path, gid, pipeline)
+    pe_results_path = os.path.join(pe_results_path, sid, pipeline)
     os.makedirs(rundir)
     os.makedirs(resultdir)
     os.makedirs(sampledir)
     os.makedirs(pe_results_path)
 
     upload = Mock()
-    _upload_url = Mock()
     create_label = Mock()
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
-    monkeypatch.setattr('gwcelery.tasks.inference._upload_url.run',
-                        _upload_url)
     monkeypatch.setattr('gwcelery.tasks.gracedb.create_label.run',
                         create_label)
 
@@ -395,12 +405,19 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
                      os.path.join(rundir, 'glitch_median_PSD_forLI_V1.dat'),
                      os.path.join(rundir, 'posterior_samples.hdf5'),
                      os.path.join(pe_results_path, 'extrinsic.png'),
-                     os.path.join(pe_results_path, 'sourceFrame.png')]
+                     os.path.join(pe_results_path, 'intrinsic.png'),
+                     os.path.join(pe_results_path, 'posplots.html')]
         elif pipeline == 'bilby':
             input_sample = os.path.join(sampledir, "test_result.hdf5")
             with open(input_sample, 'wb') as f:
                 f.write(b'result')
-            monkeypatch.setattr('subprocess.run', Mock())
+
+            def _subprocess_run(cmd):
+                assert os.path.exists(cmd[1])
+
+            monkeypatch.setattr(
+                'subprocess.run', Mock(side_effect=_subprocess_run))
+
             paths = [os.path.join(sampledir, 'Bilby.posterior_samples.hdf5'),
                      os.path.join(resultdir, 'bilby_extrinsic_corner.png'),
                      os.path.join(resultdir, 'bilby_intrinsic_corner.png')]
@@ -410,26 +427,37 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
             with open(path, 'wb') as f:
                 f.write(b'result')
 
-        inference.dag_finished(rundir, gid, 'S1234', pipeline)
-        assert upload.call_count == len(paths)
-        if pipeline == 'lalinference':
-            _upload_url.assert_called_once()
+        inference.dag_finished(rundir, sid, pipeline)
+
+        if pipeline == 'rapidpe':
+            upload.assert_called_once()
         else:
-            _upload_url.assert_not_called()
+            assert upload.call_count == len(paths)
+
         if pipeline == 'bilby':
             create_label.assert_called_once()
         else:
             create_label.assert_not_called()
+
         assert not os.path.exists(rundir)
     else:
         with pytest.raises(NotImplementedError):
-            inference.dag_finished(rundir, gid, 'S1234', pipeline)
+            inference.dag_finished(rundir, sid, pipeline)
 
 
 def test_download_psd_failure(monkeypatch):
-    monkeypatch.setattr('gwcelery.tasks.gracedb.download',
-                        Mock(side_effect=HTTPError))
-    assert inference._download_psd('G1234') is None
+    """Test if _download_psd tries to download coinc.xml when it fails to
+    download psd.xml.gz"""
+    coinc_contents = b'coinc'
+
+    def mock_download(filename, gid):
+        if filename == 'coinc.xml':
+            return coinc_contents
+        else:
+            raise HTTPError
+
+    monkeypatch.setattr('gwcelery.tasks.gracedb.download', mock_download)
+    assert inference._download_psd('G1234') == coinc_contents
 
 
 def test_start_pe(monkeypatch, tmp_path):
@@ -455,7 +483,7 @@ def test_start_pe(monkeypatch, tmp_path):
     monkeypatch.setattr('gwcelery.tasks.inference.dag_finished.run',
                         dag_finished)
 
-    inference.start_pe('ini', 'G1234', 'S1234', 'lalinference')
+    inference.start_pe({}, {'graceid': 'G1234'}, 'S1234', 'lalinference')
     dag_prepare_task.assert_called_once()
     condor_submit.assert_called_once()
     dag_finished.assert_called_once()

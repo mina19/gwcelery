@@ -55,10 +55,6 @@ explanation on jinja is here http://jinja.pocoo.org . #}
     {% set accounting_group = 'ligo.prod.o3.cbc.pe.lalinference' %}
 {% endif %}
 
-{% if use_of_ini == 'online' %}
-    {% set queue = 'queue = Online_CBC_PE_Daily' %}
-{% endif %}
-
 
 [analysis]
 ifos={{ ifos | safe }}
@@ -125,7 +121,9 @@ accounting_group={{ accounting_group  }}
 # Remove the following line when you start a run manually based on this ini
 # file.
 accounting_group_user=soichiro.morisaki
-{{ queue }}
+
+# Comment out the line below unless your run is of urgency.
+queue = Online_PE
 
 bayeswave_request_memory={{ bayeswave_request_memory }}
 bayeswavepost_request_memory={{ bayeswave_post_request_memory }}

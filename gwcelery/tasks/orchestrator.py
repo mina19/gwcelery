@@ -694,36 +694,50 @@ def _get_lowest_far(superevent_id):
 
 @app.task(ignore_result=True, shared=False)
 def parameter_estimation(far_event, superevent_id):
-    """Parameter Estimation with Bilby. This consists of the following steps:
-
-    1.   Start Parameter Estimation if FAR is smaller than the PE threshold.
-    2.   Upload of ini file during Parameter Estimation
+    """Parameter Estimation with Bilby and RapidPE-RIFT. Parameter estimation
+    runs are triggered for CBC triggers which pass the FAR threshold and are
+    not mock uploads. For those which do not pass these criteria, this task
+    uploads messages explaining why parameter estimation is not started.
     """
     far, event = far_event
-    # TODO: parameter estimation is disabled for mock uploads as it is
-    # currently broken for them.
-    if event['group'] != 'CBC' or event['search'] == 'MDC':
-        return
-    preferred_event_id = event['graceid']
     threshold = (app.conf['preliminary_alert_far_threshold']['cbc'] /
                  app.conf['preliminary_alert_trials_factor']['cbc'])
-    canvas = inference.pre_pe_tasks(event, superevent_id)
-    if far <= threshold:
+    if far > threshold:
+        gracedb.upload.delay(
+            filecontents=None, filename=None,
+            graceid=superevent_id,
+            message='Parameter estimation will not start since FAR is larger '
+                    'than the PE threshold, {}  Hz.'.format(threshold),
+            tags='pe'
+        )
+    elif event['group'] != 'CBC':
+        gracedb.upload.delay(
+            filecontents=None, filename=None,
+            graceid=superevent_id,
+            message='Parameter estimation will not start since this is not '
+                    'CBC but {}.'.format(event['group']),
+            tags='pe'
+        )
+    elif event['search'] == 'MDC':
+        gracedb.upload.delay(
+            filecontents=None, filename=None,
+            graceid=superevent_id,
+            message='Parameter estimation will not start since parameter '
+                    'estimation is disabled for mock uploads.',
+            tags='pe'
+        )
+    else:
+        canvas = inference.query_data.s(event['gpstime']).on_error(
+            inference.upload_no_frame_files.s(superevent_id)
+        )
         pe_pipelines = ['bilby']
+        # Currently rapidpe works only for gstlal triggers
         if event['pipeline'] == 'gstlal':
             pe_pipelines += ['rapidpe']
         canvas |= group(
-            inference.start_pe.s(preferred_event_id, superevent_id, p)
+            inference.start_pe.s(event, superevent_id, p)
             for p in pe_pipelines)
-    else:
-        canvas |= gracedb.upload.si(
-            filecontents=None, filename=None,
-            graceid=superevent_id,
-            message='FAR is larger than the PE threshold, {}  Hz. '
-                    'Parameter Estimation will not start.'.format(threshold),
-            tags='pe'
-        )
-    canvas.apply_async()
+        canvas.apply_async()
 
 
 @gracedb.task(shared=False)
