@@ -570,10 +570,8 @@ def earlywarning_preliminary_alert(event, alert, annotation_prefix='',
             'Valid skymap required for preliminary alert'
         )
 
-    if alert['object']['preferred_event_data']['group'] == 'CBC':
-        p_astro_filename = \
-            alert['object']['preferred_event_data']['pipeline'] + \
-            '.p_astro.json'
+    if event['group'] == 'CBC':
+        p_astro_filename = event['pipeline'].lower() + '.p_astro.json'
     else:
         p_astro_filename = None
 
