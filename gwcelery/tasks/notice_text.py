@@ -194,7 +194,7 @@ def validate_text_notice(message):
             match = {**_vo_match_notice(notice, params_vo, trigger_time_vo),
                      **_vo_match_comments(notice, params_vo)}
         else:
-            match = []
+            match = {}
             error = f'Email notice {filename} has unknown notice type'
 
         mismatched = ' '.join(key for key, value in match.items() if not value)
