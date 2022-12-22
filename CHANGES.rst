@@ -15,6 +15,8 @@ Changelog
 -   Don't try to download psd.xml.gz in online PE, as it is no longer uploaded
     by any search pipelines.
 
+-   Allow SoG pipeline to be tested with MDC events.
+
 2.0.2 "Flying Icarus" (2022-12-23)
 ----------------------------------
 

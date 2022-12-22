@@ -486,6 +486,7 @@ def test_trigger_raven_alert(mock_create_label, mock_update_superevent,
     [['S2468', 'E5', True],
      ['S2468', 'E1', True],
      ['S2468', 'E2', False],
+     ['S2468', 'M5', True],
      ['S2345', 'E1', False],
      ['S2345', 'E2', False]])
 @patch('gwcelery.tasks.gracedb.create_label.run')

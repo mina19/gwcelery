@@ -455,7 +455,7 @@ def sog_paper_pipeline(ext_event, superevent):
     #  Check publishing conditions
     pass_gw_far_threshold = gw_far <= gw_far_threshold
     pass_joint_far_threshold = coinc_far <= joint_far_threshold
-    is_grb = ext_event['search'] == 'GRB'
+    is_grb = ext_event['search'] in ['GRB', 'MDC']
     is_mou_partner = ext_event['pipeline'] in ['Fermi', 'Swift']
     is_cbc = superevent['preferred_event_data']['group'] == 'CBC'
 
