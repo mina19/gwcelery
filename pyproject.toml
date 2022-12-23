@@ -86,9 +86,9 @@ p-astro = ">=1.0.1"  # https://git.ligo.org/lscsoft/p-astro/-/merge_requests/40
 pesummary = "*"
 pygcn = ">=1.0.1"
 python-ligo-lw = "^1.8.3"
-rapid-pe = "0.0.2"
-rapidpe-rift-pipe = "0.0.6.dev20221113"
-RIFT = "0.0.15.7"
+rapid-pe = ">=0.0.2"
+rapidpe-rift-pipe = ">=0.0.6"
+RIFT = ">=0.0.15.7"
 safe-netrc = "*"
 sentry-sdk = {version = "*", extras = ["flask", "tornado"]}
 service-identity = "*"  # We don't actually use this package, but it silences some annoying warnings from twistd.
