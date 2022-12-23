@@ -4,6 +4,12 @@ Changelog
 2.0.2 (unreleased)
 ------------------
 
+-   Change web directory for PE outputs. Use Online PE nodes for bilby. Do not upload lalinference ini files.
+
+-   Add RIFT analysis only for gstlal triggers.
+
+-   Use the exttring worker for RAVEN tasks.
+
 -   Bump ligo.em-bright to 1.1.0.dev1 to add HasMassGap. 
     Review page: https://git.ligo.org/emfollow/em-properties/em-bright/-/wikis/Mass-gap-review
     
@@ -17,7 +23,7 @@ Changelog
     uploaded the event.
 
 -   Indicate a joint CBC-GRB event should be used for a measurement of the
-    speed of gravity by applying the SOG_READY label to the superevent.
+    speed of gravity by applying the SOG_READY label to the superevent. This pipeline is launched is the right conditions are met after ADVOK label. 
 
 -   Add button to apply RAVEN alert labels to flask app. This will manually
     trigger a RAVEN alert. 
