@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.0.2 (unreleased)
-------------------
+2.0.2 "Flying Icarus" (2022-12-23)
+----------------------------------
 
 -   Change web directory for PE outputs. Use Online PE nodes for bilby. Do not upload lalinference ini files.
 
