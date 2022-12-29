@@ -144,18 +144,12 @@ between an external SNEWS alert and the superevent."""
 sog_paper_far_threshold = {'gw': 1 / (1000 * 365 * 86400),
                            'joint': 1 / (10000 * 365 * 86400)}
 """False alarm rate thresholds for producing a manuscript of speed of gravity
-measrument in low-latency."""
+measurement in low-latency."""
 
 superevent_clean_up_timeout = 270.
 """The orchestrator will wait this many seconds from the time of the
 application of the GCN_PRELIM_SENT label to revise the preferred
 event out of the accumulated events."""
-
-subthreshold_annotation_timeout = 300.
-"""The orchestrator will wait this many seconds from the time of the
-creation of a new superevent to the time that subthreshold superevents
-are annotated. It is expected that the timeout is long enough such
-that there are no more G events being added to the superevent."""
 
 pe_timeout = 345.0
 """The orchestrator will wait this many seconds from the time of the

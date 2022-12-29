@@ -89,21 +89,6 @@ def handle_superevent(alert):
                 earlywarning_preliminary_alert.s(alert)
             ).apply_async()
 
-        elif label_name == superevents.READY_LABEL:
-            (
-                _get_preferred_event.si(superevent_id).set(
-                    countdown=app.conf['subthreshold_annotation_timeout']
-                )
-                |
-                gracedb.get_event.s()
-                |
-                earlywarning_preliminary_alert.s(
-                    alert,
-                    annotation_prefix='subthreshold.',
-                    initiate_voevent=False
-                )
-            ).apply_async()
-
         # launch second preliminary on GCN_PRELIM_SENT
         elif label_name == 'GCN_PRELIM_SENT':
             query = f'superevent: {superevent_id} group: CBC Burst'
