@@ -175,22 +175,22 @@ def test_setup_dag_for_lalinference(monkeypatch, tmp_path):
 
 
 @pytest.mark.parametrize(
-    'host', ['gracedb-playground.ligo.org', 'gracedb.ligo.org'])
-def test_setup_dag_for_bilby(monkeypatch, tmp_path, host):
+    'mode', ['production', 'fast_bns', 'fast_test'])
+def test_setup_dag_for_bilby(monkeypatch, tmp_path, mode):
     psd = b'psd'
     rundir = str(tmp_path)
     event = {'gpstime': 1187008882, 'graceid': 'G1234'}
     sid = 'S1234'
-    monkeypatch.setitem(app.conf, 'gracedb_host', host)
     ini = 'bilby configuration ini file'
     dag = 'bilby dag'
 
     def _subprocess_run(cmd, **kwargs):
-        is_quick_conf = 'o3replay' in cmd and 'FastTest' in cmd
-        if host == 'gracedb.ligo.org':
-            assert not is_quick_conf
-        else:
-            assert is_quick_conf
+        if mode == 'fast_test':
+            assert 'o3replay' in cmd and 'FastTest' in cmd
+
+        if mode == 'fast_bns':
+            assert '--cbc-likelihood-mode' in cmd and \
+                'lowspin_phenomd_narrowmc_roq' in cmd
 
         assert cmd[2] == os.path.join(
             app.conf['pe_results_path'], sid, 'bilby')
@@ -209,12 +209,20 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host):
 
         path_to_settings = cmd[10]
         assert os.path.exists(path_to_settings)
+        ans = {
+            'summarypages_arguments': {'gracedb': event['graceid'],
+                                       'no_ligo_skymap': True},
+            'queue': 'Online_PE'
+        }
+        if mode == 'fast_bns':
+            ans.update(
+                {'sampler_kwargs': {'nact': 3, 'nlive': 500, 'npool': 24},
+                 'n_parallel': 2,
+                 'request_cpus': 24,
+                 'request_memory_generation': 8.0}
+            )
         with open(path_to_settings, 'r') as f:
-            assert json.load(f) == {
-                'summarypages_arguments': {'gracedb': event['graceid'],
-                                           'no_ligo_skymap': True},
-                'queue': 'Online_PE'
-            }
+            assert json.load(f) == ans
 
         with open(os.path.join(rundir, 'bilby_config.ini'), 'w') as f:
             f.write(ini)
@@ -230,7 +238,7 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host):
     monkeypatch.setattr('subprocess.run', _subprocess_run)
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
 
-    path_to_dag = inference._setup_dag_for_bilby(psd, rundir, event, sid)
+    path_to_dag = inference._setup_dag_for_bilby(psd, rundir, event, sid, mode)
 
     assert os.path.exists(path_to_dag)
     with open(path_to_dag, 'r') as f:
@@ -285,7 +293,7 @@ def test_setup_dag_for_failure(monkeypatch, tmp_path, pipeline):
                 (b'coinc', b'psd'), rundir, event, 'S1234', {})
         elif pipeline == 'bilby':
             inference._setup_dag_for_bilby(
-                (b'psd'), rundir, event, 'S1234')
+                (b'psd'), rundir, event, 'S1234', 'production')
         elif pipeline == 'rapidpe':
             inference._setup_dag_for_rapidpe(rundir, 'S1234', {})
     assert not os.path.exists(rundir)
@@ -306,6 +314,7 @@ def test_dag_prepare_task(monkeypatch, pipeline):
     rundir = 'rundir'
     frametype_dict = {'H1': 'H1_llhoft', 'L1': 'L1_llhoft'}
     path_to_dag = os.path.join(rundir, 'parameter_estimation.dag')
+    kwargs = {'bilby_mode': 'production'}
 
     def mock_download(filename, gid):
         if filename == 'coinc.xml':
@@ -319,8 +328,9 @@ def test_dag_prepare_task(monkeypatch, pipeline):
                 and e == event and s == sid and f == frametype_dict)
         return path_to_dag
 
-    def _setup_dag_for_bilby(p, r, e, s):
-        assert p == psd and r == rundir and e == event and s == sid
+    def _setup_dag_for_bilby(p, r, e, s, m):
+        assert p == psd and r == rundir and e == event and s == sid and \
+            m == kwargs['bilby_mode']
         return path_to_dag
 
     def _setup_dag_for_rapidpe(r, s, f):
@@ -347,7 +357,7 @@ def test_dag_prepare_task(monkeypatch, pipeline):
     monkeypatch.setattr('subprocess.run', _subprocess_run)
     if pipeline in ['lalinference', 'bilby', 'rapidpe']:
         inference.dag_prepare_task(
-            rundir, event, sid, pipeline, frametype_dict).delay()
+            rundir, event, sid, pipeline, frametype_dict, **kwargs).delay()
         if pipeline == 'lalinference':
             mock_setup_dag_for_lalinference.assert_called_once()
         elif pipeline == 'bilby':
@@ -361,7 +371,8 @@ def test_dag_prepare_task(monkeypatch, pipeline):
 
 
 @pytest.mark.parametrize('exc', [condor.JobAborted(1, 'test'),
-                                 condor.JobFailed(1, 'test')])
+                                 condor.JobFailed(1, 'test'),
+                                 condor.JobRunning({'Cluster': 1234})])
 def test_job_error_notification(monkeypatch, tmp_path, exc):
     filenames = ['pe.log', 'pe.err', 'pe.out']
     for filename in filenames:
@@ -369,6 +380,7 @@ def test_job_error_notification(monkeypatch, tmp_path, exc):
             f.write('test')
     upload = Mock()
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
+    monkeypatch.setattr('subprocess.run', Mock())
 
     inference.job_error_notification(
         None, exc, 'test', 'S1234', str(tmp_path), 'lalinference')
@@ -397,6 +409,7 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
                         create_label)
 
     if pipeline in ['lalinference', 'bilby', 'rapidpe']:
+        kwargs = {}
         if pipeline == 'lalinference':
             paths = [os.path.join(rundir,
                                   'lalinference_1187008756-1187008882.dag'),
@@ -418,7 +431,9 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
             monkeypatch.setattr(
                 'subprocess.run', Mock(side_effect=_subprocess_run))
 
-            paths = [os.path.join(sampledir, 'Bilby.posterior_samples.hdf5'),
+            kwargs['bilby_mode'] = 'production'
+            paths = [os.path.join(sampledir,
+                                  'Bilby.production.posterior_samples.hdf5'),
                      os.path.join(resultdir, 'bilby_extrinsic_corner.png'),
                      os.path.join(resultdir, 'bilby_intrinsic_corner.png')]
         else:
@@ -427,7 +442,8 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
             with open(path, 'wb') as f:
                 f.write(b'result')
 
-        inference.dag_finished(rundir, sid, pipeline)
+        inference.dag_finished(
+            rundir, sid, pipeline, bilby_mode='production')
 
         if pipeline == 'rapidpe':
             upload.assert_called_once()
@@ -487,3 +503,47 @@ def test_start_pe(monkeypatch, tmp_path):
     dag_prepare_task.assert_called_once()
     condor_submit.assert_called_once()
     dag_finished.assert_called_once()
+
+
+def test_start_pe_multiple_bilby(monkeypatch, tmp_path):
+    path_to_sub = 'pe.dag.condor.sub'
+
+    def mock_dag_prepare_task(
+        rundir, event, superevent_id, pe_pipeline, frametype_dict=None,
+        **kwargs
+    ):
+        assert 'bilby_mode' in kwargs
+
+        @app.task
+        def mock_task():
+            return path_to_sub
+
+        return mock_task.s()
+
+    def mock_condor_submit(path):
+        assert path == path_to_sub
+
+    def mock_dag_finished(rundir, superevent_id, pe_pipeline, **kwargs):
+        assert 'bilby_mode' in kwargs
+
+    dag_prepare_task = Mock(side_effect=mock_dag_prepare_task)
+    condor_submit = Mock(side_effect=mock_condor_submit)
+    dag_finished = Mock(side_effect=mock_dag_finished)
+
+    monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', Mock())
+    monkeypatch.setattr('distutils.dir_util.mkpath',
+                        Mock(return_value=str(tmp_path)))
+    monkeypatch.setattr('gwcelery.tasks.inference.dag_prepare_task',
+                        dag_prepare_task)
+    monkeypatch.setattr('gwcelery.tasks.condor.submit.run', condor_submit)
+    monkeypatch.setattr('gwcelery.tasks.inference.dag_finished.run',
+                        dag_finished)
+
+    event = {
+        'graceid': 'G1234',
+        'extra_attributes': {'CoincInspiral': {'mchirp': 1}}
+    }
+    inference.start_pe({}, event, 'S1234', 'bilby')
+    assert dag_prepare_task.call_count == 2
+    assert condor_submit.call_count == 2
+    assert dag_finished.call_count == 2

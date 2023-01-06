@@ -54,7 +54,7 @@ include = [
 python = "^3.8,<3.11"
 adc-streaming = ">=2.2.0"  # https://github.com/astronomy-commons/adc-streaming/pull/58
 astropy = ">=4.3.1"  # https://github.com/astropy/astropy/issues/11879
-bilby-pipe = ">=1.0.7"
+bilby-pipe = { git = "https://git.ligo.org/lscsoft/bilby_pipe", branch = "master" }
 celery = {version = ">=5.1", extras = ["redis"]}
 click = ">=7"
 comet = "*"
@@ -89,6 +89,7 @@ python-ligo-lw = "^1.8.3"
 rapid-pe = ">=0.0.2"
 rapidpe-rift-pipe = ">=0.0.6"
 RIFT = ">=0.0.15.7"
+scipy = "<1.10"  # https://github.com/astropy/astropy/issues/14230
 safe-netrc = "*"
 sentry-sdk = {version = "*", extras = ["flask", "tornado"]}
 service-identity = "*"  # We don't actually use this package, but it silences some annoying warnings from twistd.
@@ -98,7 +99,7 @@ zstandard = "*"  # for task compression
 
 # For docs
 pep517 = {version="*", optional=true}
-sphinx = {version=">=4.0", optional=true}
+sphinx = {version=">=4.0, <=5.3.0", optional=true}  # https://git.ligo.org/andrew.toivonen/gwcelery/-/jobs/2447152
 
 # For tests
 fastavro = {version = "^1.6.1", optional = true}

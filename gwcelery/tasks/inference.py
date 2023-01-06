@@ -264,7 +264,7 @@ def _setup_dag_for_lalinference(coinc_psd, rundir, event, superevent_id,
 
 
 @app.task(shared=False)
-def _setup_dag_for_bilby(psd, rundir, event, superevent_id):
+def _setup_dag_for_bilby(psd, rundir, event, superevent_id, mode):
     """Create DAG for a bilby run and return the path to DAG.
 
     Parameters
@@ -279,6 +279,8 @@ def _setup_dag_for_bilby(psd, rundir, event, superevent_id):
         determine analysis settings.
     superevent_id : str
         The GraceDB ID of a target superevent
+    mode : str
+        Analysis mode
 
     Returns
     -------
@@ -294,24 +296,33 @@ def _setup_dag_for_bilby(psd, rundir, event, superevent_id):
     with open(path_to_psd, 'wb') as f:
         f.write(psd)
 
-    path_to_settings = os.path.join(rundir, 'settings.json')
-    settings = {'summarypages_arguments': {'gracedb': event['graceid'],
-                                           'no_ligo_skymap': True},
-                'queue': 'Online_PE'}
-    with open(path_to_settings, 'w') as f:
-        json.dump(settings, f, indent=2)
-
     path_to_webdir = os.path.join(
         app.conf['pe_results_path'], superevent_id, 'bilby'
     )
 
+    path_to_settings = os.path.join(rundir, 'settings.json')
     setup_arg = ['bilby_pipe_gracedb', '--webdir', path_to_webdir,
                  '--outdir', rundir, '--json', path_to_json,
                  '--psd-file', path_to_psd, '--settings', path_to_settings]
+    settings = {'summarypages_arguments': {'gracedb': event['graceid'],
+                                           'no_ligo_skymap': True},
+                'queue': 'Online_PE'}
 
-    if not app.conf['gracedb_host'] == 'gracedb.ligo.org':
+    if mode == 'fast_bns':
+        setup_arg += ['--cbc-likelihood-mode', 'lowspin_phenomd_narrowmc_roq']
+        settings.update(
+            {'sampler_kwargs': {'nact': 3, 'nlive': 500, 'npool': 24},
+             'n_parallel': 2,
+             'request_cpus': 24,
+             'request_memory_generation': 8.0}
+        )
+    elif mode == 'fast_test':
         setup_arg += ['--channel-dict', 'o3replay',
                       '--sampler-kwargs', 'FastTest']
+
+    with open(path_to_settings, 'w') as f:
+        json.dump(settings, f, indent=2)
+
     try:
         subprocess.run(setup_arg, capture_output=True, check=True)
     except subprocess.CalledProcessError as e:
@@ -320,7 +331,7 @@ def _setup_dag_for_bilby(psd, rundir, event, superevent_id):
         gracedb.upload.delay(
             filecontents=contents, filename='bilby_dag.log',
             graceid=superevent_id,
-            message='Failed to prepare DAG for bilby', tags='pe'
+            message=f'Failed to prepare DAG for {mode} bilby', tags='pe'
         )
         shutil.rmtree(rundir)
         raise
@@ -329,10 +340,10 @@ def _setup_dag_for_bilby(psd, rundir, event, superevent_id):
         with open(os.path.join(rundir, 'bilby_config.ini'), 'r') as f:
             ini_contents = f.read()
         gracedb.upload.delay(
-            ini_contents, filename='bilby_config.ini',
+            ini_contents, filename=f'bilby_{mode}_config.ini',
             graceid=superevent_id,
-            message=('Automatically generated Bilby configuration file for '
-                     'this event.'),
+            message=(f'Automatically generated {mode} Bilby configuration file'
+                     ' for this event.'),
             tags='pe')
 
     path_to_dag, = glob.glob(os.path.join(rundir, 'submit/dag*.submit'))
@@ -418,7 +429,7 @@ def _condor_no_submit(path_to_dag):
 
 
 def dag_prepare_task(rundir, event, superevent_id, pe_pipeline,
-                     frametype_dict=None):
+                     frametype_dict=None, **kwargs):
     """Return a canvas of tasks to prepare DAG.
 
     Parameters
@@ -451,7 +462,8 @@ def dag_prepare_task(rundir, event, superevent_id, pe_pipeline,
                                           frametype_dict)
     elif pe_pipeline == 'bilby':
         canvas = _download_psd.si(event['graceid']) | \
-            _setup_dag_for_bilby.s(rundir, event, superevent_id)
+            _setup_dag_for_bilby.s(
+                rundir, event, superevent_id, kwargs['bilby_mode'])
     elif pe_pipeline == 'rapidpe':
         canvas = _setup_dag_for_rapidpe.s(
             rundir, superevent_id, frametype_dict)
@@ -484,7 +496,7 @@ def _find_paths_from_name(directory, name):
 
 @app.task(ignore_result=True, shared=False)
 def job_error_notification(request, exc, traceback,
-                           superevent_id, rundir, pe_pipeline):
+                           superevent_id, rundir, analysis):
     """Upload notification when condor.submit terminates unexpectedly.
 
     Parameters
@@ -499,20 +511,26 @@ def job_error_notification(request, exc, traceback,
         The GraceDB ID of a target superevent
     rundir : str
         The run directory for PE
-    pe_pipeline : str
-        The parameter estimation pipeline used,
-        lalinference, bilby, or rapidpe.
+    analysis : str
+        Analysis name used as a label in uploaded messages
 
     """
-    if isinstance(exc, condor.JobAborted):
+    if isinstance(exc, condor.JobRunning):
+        subprocess.run(['condor_rm', str(exc.args[0]['Cluster'])])
         canvas = gracedb.upload.si(
             filecontents=None, filename=None, graceid=superevent_id, tags='pe',
-            message='The {} condor job was aborted.'.format(pe_pipeline)
+            message=f'The {analysis} condor job was aborted by gwcelery, '
+                    'due to its long run time.'
+        )
+    elif isinstance(exc, condor.JobAborted):
+        canvas = gracedb.upload.si(
+            filecontents=None, filename=None, graceid=superevent_id, tags='pe',
+            message=f'The {analysis} condor job was aborted.'
         )
     else:
         canvas = gracedb.upload.si(
             filecontents=None, filename=None, graceid=superevent_id, tags='pe',
-            message='The {} condor job failed.'.format(pe_pipeline)
+            message=f'The {analysis} condor job failed.'
         )
 
     # upload all the .log, .err, and .out files
@@ -529,7 +547,7 @@ def job_error_notification(request, exc, traceback,
                     filecontents=contents,
                     filename=os.path.basename(path) + '.log',
                     graceid=superevent_id,
-                    message=f'A log file for {pe_pipeline} condor job.',
+                    message=f'A log file for {analysis} condor job.',
                     tags='pe'
                 ))
         canvas |= group(tasks)
@@ -632,7 +650,7 @@ def _upload_tasks_lalinference(rundir, superevent_id):
     return canvas
 
 
-def _upload_tasks_bilby(rundir, superevent_id):
+def _upload_tasks_bilby(rundir, superevent_id, mode):
     """Return canvas of tasks to upload Bilby results
 
     Parameters
@@ -641,6 +659,8 @@ def _upload_tasks_bilby(rundir, superevent_id):
         The path to a run directory
     superevent_id : str
         The GraceDB ID of a target superevent
+    mode : str
+        Analysis mode
 
     Returns
     -------
@@ -650,7 +670,7 @@ def _upload_tasks_bilby(rundir, superevent_id):
     """
     # convert bilby sample file into one compatible with ligo-skymap
     samples_dir = os.path.join(rundir, 'final_result')
-    samples_filename = 'Bilby.posterior_samples.hdf5'
+    samples_filename = f'Bilby.{mode}.posterior_samples.hdf5'
     out_samples = os.path.join(samples_dir, samples_filename)
     in_samples, = glob.glob(os.path.join(samples_dir, '*result.hdf5'))
     subprocess.run(
@@ -660,7 +680,7 @@ def _upload_tasks_bilby(rundir, superevent_id):
     with open(out_samples, 'rb') as f:
         canvas = gracedb.upload.si(
             f.read(), samples_filename,
-            superevent_id, 'Bilby posterior samples', 'pe')
+            superevent_id, f'{mode} Bilby posterior samples', 'pe')
 
     # plots
     tasks = []
@@ -673,8 +693,10 @@ def _upload_tasks_bilby(rundir, superevent_id):
         ):
             with open(path, 'rb') as f:
                 tasks.append(gracedb.upload.si(
-                    f.read(), f'Bilby.{parameter_type}.png', superevent_id,
-                    f'Bilby corner plot for {parameter_type} parameters', 'pe'
+                    f.read(), f'Bilby.{mode}.{parameter_type}.png',
+                    superevent_id,
+                    f'{mode} Bilby corner plot for {parameter_type} '
+                    'parameters', 'pe'
                 ))
     canvas |= group(tasks)
 
@@ -682,7 +704,7 @@ def _upload_tasks_bilby(rundir, superevent_id):
 
 
 @app.task(ignore_result=True, shared=False)
-def dag_finished(rundir, superevent_id, pe_pipeline):
+def dag_finished(rundir, superevent_id, pe_pipeline, **kwargs):
     """Upload PE results and clean up run directory
 
     Parameters
@@ -702,7 +724,8 @@ def dag_finished(rundir, superevent_id, pe_pipeline):
     if pe_pipeline == 'lalinference':
         canvas = _upload_tasks_lalinference(rundir, superevent_id)
     elif pe_pipeline == 'bilby':
-        canvas = _upload_tasks_bilby(rundir, superevent_id)
+        canvas = _upload_tasks_bilby(
+            rundir, superevent_id, kwargs['bilby_mode'])
     elif pe_pipeline == 'rapidpe':
         # TODO: upload rapidpe posterior samples
         canvas = gracedb.upload.si(
@@ -749,35 +772,49 @@ def start_pe(frametype_dict, event, superevent_id, pe_pipeline):
         lalinference, bilby, or rapidpe.
 
     """
-    gracedb.upload.delay(
-        filecontents=None, filename=None, graceid=superevent_id,
-        message=('Starting {} online parameter estimation '
-                 'for {}').format(pe_pipeline, event['graceid']),
-        tags='pe'
-    )
-
-    # make a run directory
+    # make an event directory
     pipeline_dir = os.path.expanduser('~/.cache/{}'.format(pe_pipeline))
     mkpath(pipeline_dir)
-    rundir = tempfile.mkdtemp(
+    event_dir = tempfile.mkdtemp(
         dir=pipeline_dir, prefix='{}_'.format(superevent_id)
     )
 
-    # give permissions to read the files under the run directory so that PE
-    # ROTA people can check the status of parameter estimation.
-    os.chmod(rundir, 0o755)
+    if pe_pipeline == 'bilby':
+        modes = [app.conf['bilby_default_mode']]
+        # add quick-bns mode if chirp mass is lower than that of 3Msun-3Msun
+        if event['extra_attributes']['CoincInspiral']['mchirp'] < 2.62:
+            modes += ['quick-bns']
+        rundirs = [os.path.join(event_dir, m) for m in modes]
+        kwargs_list = [{'bilby_mode': m} for m in modes]
+        analyses = [f'{m} bilby' for m in modes]
+    else:
+        rundirs = [event_dir]
+        kwargs_list = [{}]
+        analyses = [pe_pipeline]
 
-    canvas = (
-        dag_prepare_task(
-            rundir, event, superevent_id, pe_pipeline, frametype_dict
+    for rundir, kwargs, analysis in zip(rundirs, kwargs_list, analyses):
+        mkpath(rundir)
+
+        # give permissions to read the files under the run directory so that PE
+        # ROTA can check the status of parameter estimation.
+        os.chmod(rundir, 0o755)
+
+        gracedb.upload.delay(
+            filecontents=None, filename=None, graceid=superevent_id,
+            message=(f'Starting {analysis} parameter estimation '
+                     f'for {event["graceid"]}'),
+            tags='pe'
         )
-        |
-        condor.submit.s().on_error(
-            job_error_notification.s(superevent_id, rundir, pe_pipeline)
-        )
-        |
-        dag_finished.si(
-            rundir, superevent_id, pe_pipeline
-        )
-    )
-    canvas.delay()
+
+        (
+            dag_prepare_task(
+                rundir, event, superevent_id, pe_pipeline, frametype_dict,
+                **kwargs
+            )
+            |
+            condor.submit.s().on_error(
+                job_error_notification.s(superevent_id, rundir, analysis)
+            )
+            |
+            dag_finished.si(rundir, superevent_id, pe_pipeline, **kwargs)
+        ).delay()

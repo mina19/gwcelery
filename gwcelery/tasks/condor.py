@@ -113,9 +113,10 @@ class JobFailed(subprocess.CalledProcessError):
     """Raised if an HTCondor job fails."""
 
 
-@app.task(bind=True, autoretry_for=(JobRunning,), default_retry_delay=1,
-          ignore_result=True, max_retries=None, retry_backoff=True,
-          shared=False)
+@app.task(
+    bind=True, autoretry_for=(JobRunning,), ignore_result=True, shared=False,
+    **app.conf['condor_retry_kwargs']
+)
 def submit(self, submit_file, log=None):
     """Submit a job using HTCondor.
 
