@@ -305,6 +305,45 @@ def handle_cbc_event(alert):
         ).apply_async(priority=priority)
 
 
+@igwn_alert.handler('burst_olib',
+                    'burst_cwb',
+                    'burst_mly',
+                    shared=False)
+def handle_burst_event(alert):
+    """Perform annotations for burst events that depend on pipeline-specific
+    """  # noqa: E501
+    graceid = alert['uid']
+    pipeline = alert['object']['pipeline'].lower()
+    priority = 0 if superevents.should_publish(alert['object']) else 1
+
+    if alert['alert_type'] != 'log':
+        return
+
+    filename = alert['data']['filename']
+
+    # Pipeline is uploading a flat resultion skymap file
+    # Converting to a multiirder ones with proper name.
+    # FIXME: Remove block when CWB starts to upload skymaps
+    # in multiorder format
+    if filename.endswith('fits.gz'):
+        flatten_msg = (
+            'Multi-resolution fits file created from '
+            '<a href="/api/events/{graceid}/files/'
+            '{filename}">{filename}</a>').format(
+            graceid=graceid, filename=filename)
+        tags = ['sky_loc', 'lvem', 'public']
+        (
+            gracedb.download.si(filename, graceid)
+            |
+            skymaps.unflatten.s(f'{pipeline}.multiorder.fits')
+            |
+            gracedb.upload.s(
+                    f'{pipeline}.multiorder.fits', graceid, flatten_msg, tags)
+            |
+            gracedb.create_label.si('SKYMAP_READY', graceid)
+        ).apply_async(priority=priority)
+
+
 @igwn_alert.handler('superevent',
                     'mdc_superevent',
                     shared=False)
@@ -570,10 +609,8 @@ def earlywarning_preliminary_alert(event, alert, annotation_prefix='',
 
     if alert['object']['preferred_event_data']['group'] == 'CBC':
         skymap_filename = 'bayestar.multiorder.fits'
-    elif alert['object']['preferred_event_data']['pipeline'] == 'CWB':
-        skymap_filename = 'cWB.fits.gz'
-    elif alert['object']['preferred_event_data']['pipeline'] == 'oLIB':
-        skymap_filename = 'oLIB.fits.gz'
+    elif alert['object']['preferred_event_data']['group'] == 'Burst':
+        skymap_filename = event['pipeline'].lower() + '.multiorder.fits'
     else:
         raise NotImplementedError(
             'Valid skymap required for preliminary alert'

@@ -8,6 +8,7 @@ from astropy import table
 from celery import group
 from celery.exceptions import Ignore
 from ligo.skymap.tool import ligo_skymap_flatten
+from ligo.skymap.tool import ligo_skymap_unflatten
 from ligo.skymap.tool import ligo_skymap_from_samples
 from ligo.skymap.tool import ligo_skymap_plot
 from ligo.skymap.tool import ligo_skymap_plot_volume
@@ -160,6 +161,20 @@ def flatten(filecontents, filename):
             handling_system_exit():
         outfilename = os.path.join(tmpdir, filename)
         ligo_skymap_flatten.main([infile.name, outfilename])
+        return open(outfilename, 'rb').read()
+
+
+@app.task(shared=False)
+def unflatten(filecontents, filename):
+    """Convert a HEALPix FITS file to multi-resolution UNIQ indexing from
+    the more common IMPLICIT indexing using the command-line tool
+    :doc:`ligo-skymap-unflatten <ligo.skymap:tool/ligo_skymap_unflatten>`.
+    """
+    with NamedTemporaryFile(content=filecontents) as infile, \
+            tempfile.TemporaryDirectory() as tmpdir, \
+            handling_system_exit():
+        outfilename = os.path.join(tmpdir, filename)
+        ligo_skymap_unflatten.main([infile.name, outfilename])
         return open(outfilename, 'rb').read()
 
 

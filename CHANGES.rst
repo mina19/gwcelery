@@ -4,6 +4,8 @@ Changelog
 2.0.3 (unreleased)
 ------------------
 
+-   Allow alerts (using multi-order skymaps) for burst events.
+
 -   Don't compute p-astro for PyCBC/AllSky because it now computes
     and uploads its own.
 
