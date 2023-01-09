@@ -4,7 +4,6 @@ import subprocess
 
 import json
 import pytest
-from requests.exceptions import HTTPError
 from unittest.mock import Mock
 
 from .. import app
@@ -132,7 +131,7 @@ def test_prepare_lalinference_ini(monkeypatch, mc, q, answers):
 
 
 def test_setup_dag_for_lalinference(monkeypatch, tmp_path):
-    coinc, psd = b'coinc', b'psd'
+    coinc = b'coinc'
     rundir = str(tmp_path)
     ini = 'ini'
     dag = 'lalinference dag'
@@ -153,7 +152,7 @@ def test_setup_dag_for_lalinference(monkeypatch, tmp_path):
         path_to_psd = cmd[7]
         assert os.path.exists(path_to_psd)
         with open(path_to_psd, 'rb') as f:
-            assert f.read() == psd
+            assert f.read() == coinc
 
         with open(os.path.join(rundir, 'multidag.dag'), 'w') as f:
             f.write(dag)
@@ -166,7 +165,7 @@ def test_setup_dag_for_lalinference(monkeypatch, tmp_path):
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
 
     path_to_dag = inference._setup_dag_for_lalinference(
-        (coinc, psd), rundir, {}, 'S1234', {})
+        coinc, rundir, {}, 'S1234', {})
 
     assert os.path.exists(path_to_dag)
     with open(path_to_dag, 'r') as f:
@@ -290,7 +289,7 @@ def test_setup_dag_for_failure(monkeypatch, tmp_path, pipeline):
     with pytest.raises(subprocess.CalledProcessError):
         if pipeline == 'lalinference':
             inference._setup_dag_for_lalinference(
-                (b'coinc', b'psd'), rundir, event, 'S1234', {})
+                b'coinc', rundir, event, 'S1234', {})
         elif pipeline == 'bilby':
             inference._setup_dag_for_bilby(
                 (b'psd'), rundir, event, 'S1234', 'production')
@@ -309,7 +308,7 @@ def test_setup_dag_for_failure(monkeypatch, tmp_path, pipeline):
     'pipeline', ['lalinference', 'bilby', 'rapidpe', 'my_awesome_pipeline'])
 def test_dag_prepare_task(monkeypatch, pipeline):
     sid = 'S1234'
-    coinc, psd = b'coinc', b'psd'
+    coinc = b'coinc'
     event = {'gpstime': 1187008882, 'graceid': 'G1234'}
     rundir = 'rundir'
     frametype_dict = {'H1': 'H1_llhoft', 'L1': 'L1_llhoft'}
@@ -319,17 +318,14 @@ def test_dag_prepare_task(monkeypatch, pipeline):
     def mock_download(filename, gid):
         if filename == 'coinc.xml':
             return coinc
-        elif filename == 'psd.xml.gz':
-            return psd
 
-    def _setup_dag_for_lalinference(c_p, r, e, s, f):
-        c, p = c_p
-        assert (c == coinc and p == psd and r == rundir
-                and e == event and s == sid and f == frametype_dict)
+    def _setup_dag_for_lalinference(c, r, e, s, f):
+        assert (c == coinc and r == rundir and e == event and s == sid and
+                f == frametype_dict)
         return path_to_dag
 
-    def _setup_dag_for_bilby(p, r, e, s, m):
-        assert p == psd and r == rundir and e == event and s == sid and \
+    def _setup_dag_for_bilby(c, r, e, s, m):
+        assert c == coinc and r == rundir and e == event and s == sid and \
             m == kwargs['bilby_mode']
         return path_to_dag
 
@@ -459,21 +455,6 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
     else:
         with pytest.raises(NotImplementedError):
             inference.dag_finished(rundir, sid, pipeline)
-
-
-def test_download_psd_failure(monkeypatch):
-    """Test if _download_psd tries to download coinc.xml when it fails to
-    download psd.xml.gz"""
-    coinc_contents = b'coinc'
-
-    def mock_download(filename, gid):
-        if filename == 'coinc.xml':
-            return coinc_contents
-        else:
-            raise HTTPError
-
-    monkeypatch.setattr('gwcelery.tasks.gracedb.download', mock_download)
-    assert inference._download_psd('G1234') == coinc_contents
 
 
 def test_start_pe(monkeypatch, tmp_path):

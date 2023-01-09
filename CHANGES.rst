@@ -7,6 +7,9 @@ Changelog
 -   Don't compute p-astro for PyCBC/AllSky because it now computes
     and uploads its own.
 
+-   Don't try to download psd.xml.gz in online PE, as it is no longer uploaded
+    by any search pipelines.
+
 2.0.2 "Flying Icarus" (2022-12-23)
 ----------------------------------
 
