@@ -21,6 +21,10 @@ Changelog
     including a GraceDB poll of the superevent state before updating joint
     FAR.
 
+-   Make igwn alert listener retry all non-fatal errors. This
+    should be revisited once https://github.com/astronomy-commons/adc-streaming/issues/54
+    is resolved.
+
 2.0.2 "Flying Icarus" (2022-12-23)
 ----------------------------------
 

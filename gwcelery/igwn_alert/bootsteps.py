@@ -20,7 +20,7 @@ log = get_logger(__name__)
 class IGWNAlertClient(client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.running = False  # FIXME: needed to handle timeouts; remove when issue #441 is fixed  # noqa: E501
+        self.running = False
 
     def listen(self, callback, topics):
         """
@@ -58,12 +58,17 @@ class IGWNAlertClient(client):
                         else:
                             callback(topic=metadata.topic.split('.')[1],
                                      payload=payload)
+            # FIXME: revisit when https://git.ligo.org/computing/igwn-alert/client/-/issues/19  # noqa: E501
+            # is addressed
             except KafkaException as err:
-                if '_TIMED_OUT' in err.name:
-                    log.exception("Timeout from kafka")
-                else:
+                if err.fatal:
+                    # stop running and close before raising error
+                    self.running = False
+                    self.stream_obj.close()
                     raise
-            self.stream_obj.close()
+                else:
+                    log.warning(
+                        "non-fatal error from kafka: {}".format(err.name))
 
 
 class IGWNAlertBootStep(bootsteps.ConsumerStep):
