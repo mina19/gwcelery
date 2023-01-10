@@ -5,7 +5,6 @@ import urllib.parse
 
 from celery.exceptions import Ignore
 from ligo.lw.utils import load_fileobj
-from ligo.lw.utils.ligolw_add import merge_ligolws
 from ligo.skymap import bayestar as _bayestar
 from ligo.skymap.io import events
 from ligo.skymap.io import fits
@@ -24,9 +23,8 @@ def localize(coinc_psd, graceid, filename='bayestar.fits.gz',
 
     Parameters
     ----------
-    coinc_psd : tuple
-        Tuple consisting of the byte contents of the input event's
-        ``coinc.xml`` and ``psd.xml.gz`` files.
+    coinc_psd : byte
+        contents of the input event's ``coinc.xml`` file that includes PSD.
     graceid : str
         The GraceDB ID, used for FITS metadata and recording log messages
         to GraceDB.
@@ -58,12 +56,9 @@ def localize(coinc_psd, graceid, filename='bayestar.fits.gz',
         # A little bit of Cylon humor
         log.info('by your command...')
 
-        # Combine coinc.xml and psd.xml.gz into one XML document
-        doc = None
-        for filecontents in coinc_psd:
-            doc = load_fileobj(io.BytesIO(filecontents), xmldoc=doc,
-                               contenthandler=events.ligolw.ContentHandler)
-        merge_ligolws(doc)
+        # Read the coinc.xml into a document
+        doc = load_fileobj(io.BytesIO(coinc_psd),
+                           contenthandler=events.ligolw.ContentHandler)
 
         # Parse event
         event_source = events.ligolw.open(doc, psd_file=doc, coinc_def=None)

@@ -4,6 +4,8 @@ Changelog
 2.0.3 (unreleased)
 ------------------
 
+-   BAYESTAR now uses the PSDs included in the ``coinc.xml`` file for all pipelines.
+
 -   Allow alerts (using multi-order skymaps) for burst events.
 
 -   Don't compute p-astro for PyCBC/AllSky because it now computes

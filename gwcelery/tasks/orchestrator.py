@@ -202,11 +202,6 @@ def handle_cbc_event(alert):
     search = alert['object']['search'].lower()
     priority = 0 if superevents.should_publish(alert['object']) else 1
 
-    # Pipelines that upload PSDs in a separate file.
-    # FIXME: remove this once all pipelines include the PSDs in the initial
-    # upload.
-    pipelines_external_psds = {'spiir'}
-
     # Pipelines that use the GWCelery p-astro method
     # - spiir (all searches)
     # - pycbc for EarlyWarning search
@@ -257,42 +252,9 @@ def handle_cbc_event(alert):
                 gracedb.create_label.si('PASTRO_READY', graceid)
             ).apply_async(priority=priority)
 
-        # Start BAYESTAR for pipelines that embed PSDs in the initial upload.
-        if pipeline not in pipelines_external_psds:
-            (
-                group(
-                    gracedb.download.s('coinc.xml', graceid)
-                )
-                |
-                bayestar.localize.s(graceid)
-                |
-                gracedb.upload.s(
-                    'bayestar.multiorder.fits', graceid,
-                    'sky localization complete', ['sky_loc', 'public']
-                )
-                |
-                gracedb.create_label.si('SKYMAP_READY', graceid)
-            ).apply_async(priority=priority)
-
-    if alert['alert_type'] != 'log':
-        return
-
-    filename = alert['data']['filename']
-
-    # Start BAYESTAR for pipelines that do *not* include the PSD in the initial
-    # upload, but instead upload a separate file, psd.xml.gz.
-    # For those pipelines, BAYESTAR must download coinc.xml *and* psd.xml.gz.
-    #
-    # FIXME: The separate psd.xml.gz upload adds an extra couple seconds of
-    # latency due to the additional GraceDB transactions and ping times.
-    # If other pipelines were able to add the PSD to the initial upload,
-    # then we could cut down on the alert latency by a couple seconds.
-    if (pipeline in pipelines_external_psds and filename == 'psd.xml.gz'):
+        # Start BAYESTAR for all CBC pipelines.
         (
-            group(
-                gracedb.download.s('coinc.xml', graceid),
-                gracedb.download.s('psd.xml.gz', graceid)
-            )
+            gracedb.download.s('coinc.xml', graceid)
             |
             bayestar.localize.s(graceid)
             |
