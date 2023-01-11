@@ -406,7 +406,7 @@ def _setup_dag_for_rapidpe(rundir, superevent_id, frametype_dict):
         raise
 
     # return path to dag
-    dag, = glob.glob(os.path.join(rundir, "*/event_all_iterations.dag"))
+    dag = os.path.join(rundir, "event_all_iterations.dag")
     os.chdir(os.path.dirname(dag))
     dag = os.path.basename(dag)
     return dag

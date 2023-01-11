@@ -247,15 +247,13 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, mode):
 
 def test_setup_dag_for_rapidpe(monkeypatch, tmp_path):
     rundir = str(tmp_path)
-    outdir = os.path.join(rundir, '20221113_gstlal_20221111_G766481')
     dag_filename = 'event_all_iterations.dag'
     dag_content = 'rapidpe dag'
 
     def _subprocess_run(cmd, **kwargs):
         path_to_ini = cmd[1]
         assert os.path.exists(path_to_ini)
-        os.mkdir(outdir)
-        with open(os.path.join(outdir, dag_filename), 'w') as f:
+        with open(os.path.join(rundir, dag_filename), 'w') as f:
             f.write(dag_content)
 
     upload = Mock()
