@@ -3,6 +3,7 @@ Changelog
 
 2.0.3 (unreleased)
 ------------------
+-   Updated ligo.em-bright to version 1.1.0
 
 -   BAYESTAR now uses the PSDs included in the ``coinc.xml`` file for all pipelines.
 

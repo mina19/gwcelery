@@ -76,7 +76,7 @@ ligo-followup-advocate = ">=1.1.6"
 ligo-gracedb = ">=2.7.5"  # https://git.ligo.org/lscsoft/gracedb-client/-/issues/28
 ligo-raven = "^2.0"
 ligo-segments = "*"
-"ligo.em-bright" = "==1.1.0.dev1"  # https://git.ligo.org/emfollow/em-properties/em-bright/-/merge_requests/41
+"ligo.em-bright" = "==1.1.0"  # https://git.ligo.org/emfollow/em-properties/em-bright/-/merge_requests/45
 "ligo.skymap" = ">=1.0.4"  # https://git.ligo.org/lscsoft/ligo.skymap/-/merge_requests/299
 lscsoft-glue = "*"
 lxml = "*"
