@@ -5,7 +5,6 @@ from unittest.mock import call, Mock, patch
 import pytest
 
 from .. import app
-from ..tasks import inference
 from ..tasks import orchestrator
 from ..tasks import superevents
 from ..util import read_json
@@ -15,42 +14,33 @@ from . import data
 
 @pytest.mark.parametrize(  # noqa: F811
     'alert_type,label,group,pipeline,offline,far,instruments',
-    [['label_added', 'ADVREQ', 'CBC', 'gstlal', False, 1.e-9,
+    [['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
         ['H1']],
-     ['label_added', 'ADVREQ', 'CBC', 'gstlal', False, 1.e-9,
+     ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
          ['H1', 'L1']],
-     ['label_added', 'ADVREQ', 'CBC', 'gstlal', False, 1.e-9,
+     ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
          ['H1', 'L1', 'V1']],
-     ['label_added', 'ADVREQ', 'Burst', 'CWB', False, 1.e-9,
+     ['label_added', 'EM_Selected', 'Burst', 'CWB', False, 1.e-9,
          ['H1', 'L1', 'V1']],
-     ['label_added', 'ADVREQ', 'Burst', 'oLIB', False, 1.e-9,
+     ['label_added', 'EM_Selected', 'Burst', 'oLIB', False, 1.e-9,
          ['H1', 'L1', 'V1']],
      ['label_added', 'GCN_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-9,
          ['H1', 'L1', 'V1']],
      ['new', '', 'CBC', 'gstlal', False, 1.e-9, ['H1', 'L1']]])
-@pytest.mark.xfail(reason='https://github.com/celery/celery/issues/4405')
 def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                            alert_type, label, group, pipeline,
                            offline, far, instruments):
     """Test a superevent is dispatched to the correct annotation task based on
     its preferred event's search group.
     """
-    alert = {
-        'alert_type': alert_type,
-        'uid': 'S1234',
-        'object': {
-            'superevent_id': 'S1234',
-            't_start': 1214714160,
-            't_0': 1214714162,
-            't_end': 1214714164,
-            'preferred_event': 'G1234'
-        },
-        'data': {'name': label}
-    }
-
     def get_superevent(superevent_id):
         assert superevent_id == 'S1234'
-        return {'preferred_event': 'G1234', 'gw_events': ['G1234']}
+        return {
+            'preferred_event': 'G1234',
+            'gw_events': ['G1234'],
+            'preferred_event_data': get_event('G1234'),
+            'category': "Production"
+        }
 
     def get_event(graceid):
         assert graceid == 'G1234'
@@ -63,8 +53,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             'far': far,
             'gpstime': 1234,
             'extra_attributes': {},
-            'labels': ['ADVREQ', 'PASTRO_READY', 'EMBRIGHT_READY',
-                       'SKYMAP_READY']
+            'labels': ['PASTRO_READY', 'EMBRIGHT_READY', 'SKYMAP_READY']
         }
         if pipeline == 'gstlal':
             # Simulate subthreshold triggers for gstlal. Subthreshold triggers
@@ -89,44 +78,75 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                 return str(p)
         elif filename == 'S1234-1-Preliminary.xml':
             return b'fake VOEvent file contents'
-        elif filename == 'p_astro.json':
+        elif group == 'CBC' and filename == f'{pipeline}.p_astro.json':
             return json.dumps(
                 dict(BNS=0.94, NSBH=0.03, BBH=0.02, Terrestrial=0.01))
-        elif filename == inference.ini_name:
-            return 'test'
         else:
             raise ValueError
 
+    alert = {
+        'alert_type': alert_type,
+        'uid': 'S1234',
+        'object': {
+            'superevent_id': 'S1234',
+            't_start': 1214714160,
+            't_0': 1214714162,
+            't_end': 1214714164,
+            'preferred_event': 'G1234',
+            'preferred_event_data': get_event('G1234'),
+            'category': "Production",
+            'labels': ['EM_Selected']
+        }
+    }
+    if alert['alert_type'] == 'new':
+        # new alert -> event info in data
+        alert['data'] = alert['object']
+        alert['labels'] = []
+    else:
+        alert['data'] = {'name': label}
+
     create_initial_circular = Mock()
     expose = Mock()
-    plot_volume = Mock()
-    plot_allsky = Mock()
+    annotate_fits = Mock(return_value=None)
+    proceed_if_no_advocate_action = Mock(
+        return_value=(
+            ('skymap', 'skymap-filename'),
+            ('em-bright', 'em-bright-filename'),
+            ('p-astro', 'p-astro-filename'))
+    )
     gcn_send = Mock()
     alerts_send = Mock()
     query_data = Mock()
-    prepare_ini = Mock()
+    setup_dag = Mock()
     start_pe = Mock()
     create_voevent = Mock(return_value='S1234-1-Preliminary.xml')
     create_label = Mock()
     create_tag = Mock()
-    # FIXME break up preliminary alert pipeline when removing xfail
-    preliminary_alert_pipeline = Mock()
-    select_preferred_event_task = Mock()
+    select_preferred_event_task = Mock(return_value=get_event('G1234'))
+    update_superevent_task = Mock()
     omegascan = Mock()
-    check_vectors = Mock()
+    check_vectors = Mock(return_value=get_event('G1234'))
 
     monkeypatch.setattr('gwcelery.tasks.gcn.send.run', gcn_send)
     monkeypatch.setattr('gwcelery.tasks.alerts.send.run',
                         alerts_send)
-    monkeypatch.setattr('gwcelery.tasks.skymaps.plot_allsky.run', plot_allsky)
-    monkeypatch.setattr('gwcelery.tasks.skymaps.plot_volume.run', plot_volume)
+    # FIXME: should test skymaps.annotate_fits instead
+    monkeypatch.setattr(
+        'gwcelery.tasks.orchestrator._annotate_fits_and_return_input.run',
+        annotate_fits
+    )
+    monkeypatch.setattr(
+        'gwcelery.tasks.orchestrator._proceed_if_no_advocate_action.run',
+        proceed_if_no_advocate_action
+    )
     monkeypatch.setattr('gwcelery.tasks.gracedb.create_tag._orig_run',
                         create_tag)
     monkeypatch.setattr('gwcelery.tasks.gracedb.download._orig_run', download)
     monkeypatch.setattr('gwcelery.tasks.gracedb.expose._orig_run', expose)
     monkeypatch.setattr('gwcelery.tasks.gracedb.get_event._orig_run',
                         get_event)
-    monkeypatch.setattr('gwcelery.tasks.gracedb.create_voevent._orig_run',
+    # FIXME: should test gracedb.create_voevent instead
+    monkeypatch.setattr('gwcelery.tasks.orchestrator._create_voevent.run',
                         create_voevent)
     monkeypatch.setattr('gwcelery.tasks.gracedb.get_superevent._orig_run',
                         get_superevent)
@@ -134,19 +154,19 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                         create_initial_circular)
     monkeypatch.setattr('gwcelery.tasks.inference.query_data.run',
                         query_data)
-    monkeypatch.setattr('gwcelery.tasks.inference.prepare_ini.run',
-                        prepare_ini)
+    monkeypatch.setattr('gwcelery.tasks.inference._setup_dag_for_bilby.run',
+                        setup_dag)
     monkeypatch.setattr('gwcelery.tasks.inference.start_pe.run',
                         start_pe)
     monkeypatch.setattr('gwcelery.tasks.gracedb.create_label._orig_run',
                         create_label)
     monkeypatch.setattr(
-        'gwcelery.tasks.orchestrator.earlywarning_preliminary_alert.run',
-        preliminary_alert_pipeline
-    )
-    monkeypatch.setattr(
         'gwcelery.tasks.superevents.select_preferred_event.run',
         select_preferred_event_task
+    )
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.update_superevent',
+        update_superevent_task
     )
     monkeypatch.setattr('gwcelery.tasks.detchar.omegascan.run', omegascan)
     monkeypatch.setattr('gwcelery.tasks.detchar.check_vectors.run',
@@ -156,34 +176,52 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
     orchestrator.handle_superevent(alert)
 
     if label == 'GCN_PRELIM_SENT':
-        create_label.assert_call_once_with('DQR_REQUEST', 'S1234')
+        dqr_request_label = list(
+            filter(
+                lambda x: x.args == ('DQR_REQUEST', 'S1234'),
+                create_label.call_args_list
+            )
+        )
+        assert len(dqr_request_label) == 1  # DQR_REQUEST is applied once
         select_preferred_event_task.assert_called_once()
-        preliminary_alert_pipeline.assert_called_once()
-    elif alert_type == 'label_added':
-        plot_allsky.assert_called_once()
-        plot_volume.assert_called_once()
-
+        update_superevent_task.assert_called_once()
+    elif label == 'EM_Selected':
+        annotate_fits.assert_called_once()
         _event_info = get_event('G1234')  # this gets the preferred event info
         assert superevents.should_publish(_event_info)
         expose.assert_called_once_with('S1234')
-        create_tag.assert_called_once_with(
-            'S1234-1-Preliminary.xml', 'public', 'S1234')
-        if group == 'CBC':
-            create_voevent.assert_called_once_with(
-                'S1234', 'preliminary', BBH=0.02, BNS=0.94, NSBH=0.03,
-                ProbHasNS=0.0, ProbHasRemnant=0.0, Terrestrial=0.01,
-                internal=False, open_alert=True,
-                skymap_filename='bayestar.fits.gz', skymap_type='bayestar')
+        create_tag.assert_has_calls(
+            [call('S1234-1-Preliminary.xml', 'public', 'S1234'),
+             call('em-bright-filename', 'public', 'S1234'),
+             call('p-astro-filename', 'public', 'S1234'),
+             call('skymap-filename', 'public', 'S1234')],
+            any_order=True
+        )
+        # FIXME: uncomment block below when patching
+        # gracedb.create_voevent instead of orchestrator._create_voevent
+        # if group == 'CBC':
+        #     create_voevent.assert_called_once_with(
+        #         'S1234', 'preliminary', BBH=0.02, BNS=0.94, NSBH=0.03,
+        #         ProbHasNS=0.0, ProbHasRemnant=0.0, Terrestrial=0.01,
+        #         internal=False, open_alert=True,
+        #         skymap_filename='bayestar.fits.gz', skymap_type='bayestar')
         gcn_send.assert_called_once()
         alerts_send.assert_called_once()
         create_initial_circular.assert_called_once()
 
     if alert_type == 'new' and group == 'CBC':
         query_data.assert_called_once()
-        prepare_ini.assert_called_once()
-        if far <= app.conf['pe_threshold']:
+        threshold = (
+            app.conf['preliminary_alert_far_threshold']['cbc'] /
+            app.conf['preliminary_alert_trials_factor']['cbc']
+        )
+        if far <= threshold:
             assert start_pe.call_count == 2
-            # FIXME with proper arguments with lalinference and bilby
+            call_args = [
+                call_args.args[1:] for call_args in start_pe.call_args_list]
+            assert all(
+                [(get_event('G1234'), 'S1234', pipeline) in call_args
+                 for pipeline in ('bilby', 'rapidpe')])
         else:
             start_pe.assert_not_called()
 
@@ -364,9 +402,9 @@ def test_handle_posterior_samples(monkeypatch, alert_type, filename):
         'data': {'comment': 'samples', 'filename': filename}
     }
 
-    download = Mock()
+    download = Mock(return_value='posterior-sample-file-content')
     em_bright_pe = Mock()
-    skymap_from_samples = Mock()
+    skymap_from_samples = Mock(return_value='skymap-content')
     fits_header = Mock()
     plot_allsky = Mock()
     annotate_fits_volume = Mock()
