@@ -31,6 +31,7 @@ def test_select_pipeline_preferred_event():
         'instruments': 'H1,L1',
         'offline': False,
         'far': 6e-30,
+        'search': 'AllSky',
         'labels': ['SKYMAP_READY', 'EMBRIGHT_READY', 'PASTRO_READY'],
         'extra_attributes': {
             'CoincInspiral': {
@@ -110,6 +111,7 @@ def test_update_preferred_event(superevent_labels, new_event_labels,
             instruments="I1,J1,K1,L1,M1",
             group="CBC",
             pipeline="gstlal",
+            search="AllSky",
             offline=False,
             superevent="maybe S0039 or empty",
             far=1e-30,
@@ -299,26 +301,36 @@ def test_is_complete(labels):
 
 
 @pytest.mark.parametrize(
-    'labels,label',
-    [[['EMBRIGHT_READY', 'PASTRO_READY'], 'EMBRIGHT_READY'],
-     [['SKYMAP_READY', 'EMBRIGHT_READY', 'PASTRO_READY'], 'SKYMAP_READY']])
-def test_process_called(labels, label):
+    'labels,label,search,alert_type',
+    [[['EMBRIGHT_READY', 'PASTRO_READY'], 'EMBRIGHT_READY', 'AllSky',
+      'label_added'],
+     [['SKYMAP_READY', 'EMBRIGHT_READY', 'PASTRO_READY'], 'SKYMAP_READY',
+      'AllSky', 'label_added'],
+     [['EMBRIGHT_READY'], 'EMBRIGHT_READY', 'EarlyWarning',
+      'label_added'],  # Less-significant EW events are not processed
+     [['EMBRIGHT_READY'], 'EMBRIGHT_READY', 'EarlyWarning', 'new']]
+)
+def test_process_called(labels, label, search, alert_type):
     """Test whether the :meth:`superevents.process` is called
     new type IGWN alerts, and label additions that complete the event.
     """
     payload = {
-        "alert_type": "label_added",
+        "alert_type": alert_type,
         "data": {"name": label},
         "object": {
             "graceid": "ABCD",
             "far": 1e-6,
             "group": "CBC",
+            "pipeline": "pipeline",
+            "search": search,
             "labels": labels
         }
     }
     with patch('gwcelery.tasks.superevents.process.run') as process:
         superevents.handle(payload)
-        if superevents.is_complete(payload['object']):
+        if search == superevents.EARLY_WARNING_SEARCH_NAME:
+            process.assert_not_called()
+        elif superevents.is_complete(payload['object']):
             process.assert_called()
         else:
             process.assert_not_called()
@@ -329,6 +341,7 @@ _mock_event_data = {
     "gpstime": 100.0,
     "pipeline": "gstlal",
     "group": "CBC",
+    "search": "AllSky",
     "far": 1.e-31,
     "instruments": "H1,L1",
     "labels": [],
@@ -386,46 +399,51 @@ def test_upload_same_event():
 
 
 @pytest.mark.parametrize(
-    'group,pipeline,offline,far,instruments,labels,expected_result,'
-    'expected_result_subthreshold',
-    [['CBC', 'gstlal', False, 1.e-10, 'H1',  # complete significant
+    'group,pipeline,search,offline,far,instruments,labels,expected_result,'
+    'expected_result_less_significant',
+    [['CBC', 'gstlal', 'AllSky', False, 1.e-10, 'H1',  # complete significant
         ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY'], True, True],
-     ['CBC', 'gstlal', False, 1.e-6, 'H1',  # complete subthreshold
+     ['CBC', 'gstlal', 'AllSky', False, 1.e-6, 'H1',  # complete less-signif
         ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY'], False, True],
-     ['CBC', 'gstlal', False, 1.e-6, 'H1',  # incomplete subthreshold
+     ['CBC', 'gstlal', 'AllSky', False, 1.e-6, 'H1',  # incomplete less-signif
         ['PASTRO_READY', 'SKYMAP_READY'], False, False],
-     ['CBC', 'gstlal', False, 1.e-6, 'H1,L1',  # incomplete CBC
+     ['CBC', 'gstlal', 'AllSky', False, 1.e-6, 'H1,L1',  # incomplete CBC
         ['EMBRIGHT_READY'], False, False],
-     ['Burst', 'cwb', False, 1e-15, 'H1,L1',  # complete Burst
+     ['Burst', 'cwb', 'AllSky', False, 1e-15, 'H1,L1',  # complete Burst
         ['SKYMAP_READY'], True, True],
-     ['Burst', 'cwb', False, 1e-15, 'H1,L1',  # incomplete Burst
+     ['Burst', 'cwb', 'AllSky', False, 1e-15, 'H1,L1',  # incomplete Burst
         [], False, False],
-     ['Burst', 'cwb', True, 1e-30, 'H1,L1,V1',  # incomplete 3 ifo Burst
+     ['Burst', 'cwb', 'AllSky', True, 1e-30, 'H1,L1,V1',  # incomplete Burst
         [], False, False],
-     ['CBC', 'gstlal', False, 1.e-6, 'H1,L1,V1',  # incomplete ext coinc
+     ['CBC', 'gstlal', 'AllSky', False, 1.e-6, 'H1,L1,V1',  # incomplete ext
         ['RAVEN_ALERT'], False, False],
-     ['CBC', 'gstlal', False, 1.e-6, 'H1,L1,V1',  # complete ext coinc
+     ['CBC', 'gstlal', 'AllSky', False, 1.e-6, 'H1,L1,V1',  # complete ext
         ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY', 'RAVEN_ALERT'],
         True, True],
-     ['CBC', 'gstlal', False, 1.e-15, 'H1,L1,V1',  # complete 3 ifo significant
+     ['CBC', 'gstlal', 'AllSky', False, 1.e-15, 'H1,L1,V1',  # complete 3 ifo significant  # noqa: E501
         ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY', 'RAVEN_ALERT'],
+        True, True],
+     ['CBC', 'gstlal', 'EarlyWarning', False, 1.e-15, 'H1,L1,V1',  # EW search
+        ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY'],
         True, True]])
-def test_should_publish(group, pipeline, offline, far, instruments, labels,
-                        expected_result, expected_result_subthreshold):
+def test_should_publish(group, pipeline, search, offline, far, instruments,
+                        labels, expected_result,
+                        expected_result_less_significant):
     """Test publishability criteria under different states of a superevent."""
     event = dict(graceid='G123456',
+                 search=search,
                  group=group,
                  pipeline=pipeline,
                  labels=labels,
                  far=far,
                  offline=offline,
                  instruments=instruments)
-    result_subthreshold = (
+    result_less_significant = (
         superevents.is_complete(event) and
         superevents.should_publish(event, significant=False))
     result = (superevents.is_complete(event) and
               superevents.should_publish(event))
-    assert result_subthreshold == expected_result_subthreshold
+    assert result_less_significant == expected_result_less_significant
     assert result == expected_result
 
 
@@ -451,6 +469,7 @@ def test_raising_http_error(failing_create_superevent):
             "gpstime": 100.0,
             "pipeline": "gstlal",
             "group": "CBC",
+            "search": "AllSky",
             "far": 1.e-31,
             "instruments": "H1,L1",
             "extra_attributes": {
@@ -494,6 +513,7 @@ def test_parse_trigger_cbc_1():
                         'gpstime': 1163905224.4332082,
                         'group': 'CBC',
                         'pipeline': 'gstlal',
+                        'search': 'AllSky',
                         'offline': False,
                         'far': 3e-09,
                         'instruments': 'H1,L1',
@@ -531,6 +551,7 @@ def test_parse_trigger_cbc_2():
                         'gpstime': 1163905224.4332082,
                         'group': 'CBC',
                         'pipeline': 'gstlal',
+                        'search': 'AllSky',
                         'offline': False,
                         'far': 3e-31,
                         'instruments': 'H1,L1',
@@ -578,6 +599,7 @@ def test_parse_trigger_cbc_3():
                         'gpstime': 1286741861.52678,
                         'group': 'CBC',
                         'pipeline': 'gstlal',
+                        'search': 'AllSky',
                         'offline': False,
                         'far': 3e-31,
                         'instruments': 'H1,L1,V1',
@@ -610,6 +632,7 @@ def test_parse_trigger_cbc_4():
                         'gpstime': 1286741861.52678,
                         'group': 'CBC',
                         'pipeline': 'gstlal',
+                        'search': 'AllSky',
                         'offline': False,
                         'far': 5.5e-02,
                         'instruments': 'H1,L1,V1',
@@ -640,6 +663,7 @@ def test_parse_trigger_cbc_5():
                         'gpstime': 1286741861.52678,
                         'group': 'CBC',
                         'pipeline': 'gstlal',
+                        'search': 'AllSky',
                         'offline': False,
                         'far': 5.5e-07,
                         'instruments': 'H1,L1,V1',
@@ -680,6 +704,7 @@ def test_parse_trigger_burst_1():
                         'gpstime': 1163905214.4,
                         'group': 'Burst',
                         'pipeline': 'cwb',
+                        'search': 'AllSky',
                         'offline': False,
                         'far': 3.02e-09,
                         'instruments': 'H1,L1',
@@ -726,6 +751,7 @@ def test_parse_trigger_burst_2():
                         'gpstime': 1163905239.5,
                         'group': 'Burst',
                         'pipeline': 'oLIB',
+                        'search': 'AllSky',
                         'offline': False,
                         'far': 3.02e-16,
                         'instruments': 'H1,L1',
@@ -767,6 +793,7 @@ def test_parse_trigger_burst_3():
                         'gpstime': 1163905249.5,
                         'group': 'Burst',
                         'pipeline': 'oLIB',
+                        'search': 'AllSky',
                         'offline': False,
                         'far': 3.02e-16,
                         'instruments': 'H1,L1',
@@ -801,6 +828,7 @@ def test_parse_trigger_burst_4():
                         'gpstime': 1128658942.9878,
                         'group': 'Burst',
                         'pipeline': 'CWB',
+                        'search': 'AllSky',
                         'offline': False,
                         'far': 1.23e-09,
                         'instruments': 'H1,L1',
@@ -831,6 +859,7 @@ def test_parse_trigger_burst_5():
                         'gpstime': 1.0,
                         'group': 'Burst',
                         'pipeline': 'oLIB',
+                        'search': 'AllSky',
                         'offline': False,
                         'far': 1e-6,
                         'instruments': 'H1,L1',
@@ -867,6 +896,7 @@ def test_S190421ar_spiir_scenario():    # noqa: N802
                         'group': 'CBC',
                         'instruments': 'H1,L1',
                         'pipeline': 'spiir',
+                        'search': 'AllSky',
                         'offline': False,
                         'labels': [],
                         'superevent': None,
@@ -902,6 +932,7 @@ def test_inj_means_should_not_publish():
                         'group': 'CBC',
                         'instruments': 'H1,L1',
                         'pipeline': 'spiir',
+                        'search': 'AllSky',
                         'offline': False,
                         'labels': ['INJ'],
                         'extra_attributes': {

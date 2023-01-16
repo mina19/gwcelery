@@ -35,6 +35,11 @@ EARLY_WARNING_LABEL = 'EARLY_WARNING'
 """This label indicates that the superevent contains a significant
 early warning event."""
 
+EARLY_WARNING_SEARCH_NAME = 'EarlyWarning'
+"""Search name for Early Warning searches. Only significant events
+result in
+consideration by the superevent manager."""
+
 READY_LABEL = 'EM_READY'
 """This label indicates that a preferred event has been assigned and it
 has all data products required to make it ready for annotations."""
@@ -62,6 +67,16 @@ def handle(payload):
 
     if far > app.conf['superevent_far_threshold']:
         log.info("Skipping processing of %s because of high FAR", gid)
+        return
+
+    search = payload['object']['search']
+    if search == EARLY_WARNING_SEARCH_NAME and \
+            far > app.conf['early_warning_alert_far_threshold'] / \
+            app.conf['early_warning_alert_trials_factor']:
+        log.info(
+            "Skipping processing EW event %s because it does not"
+            "meet significant event criterion", gid
+        )
         return
 
     priority = 1

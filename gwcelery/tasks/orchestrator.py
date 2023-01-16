@@ -74,7 +74,39 @@ def handle_superevent(alert):
         elif alert['object']['category'] == 'Test':
             query += ' Test'
 
-        if label_name == superevents.SIGNIFICANT_LABEL:
+        # launch less-significant preliminary alerts on EM_Selected
+        if label_name == superevents.FROZEN_LABEL:
+            # don't launch if EM_SelectedConfident is present
+            if superevents.SIGNIFICANT_LABEL in alert['object']['labels']:
+                gracedb.upload.delay(
+                    None, None, superevent_id,
+                    "The superevent already has a significant event, "
+                    "skipping launching less-significant alert"
+                )
+                return
+            (
+                gracedb.upload.s(
+                    None,
+                    None,
+                    superevent_id,
+                    "Automated DQ check before sending less-significant "
+                    "preliminary alert. New results supersede old results.",
+                    tags=['data_quality']
+                )
+                |
+                detchar.check_vectors.si(
+                    alert['object']['preferred_event_data'],
+                    superevent_id,
+                    alert['object']['t_start'],
+                    alert['object']['t_end']
+                )
+                |
+                earlywarning_preliminary_alert.s(
+                    alert, alert_type='less-significant')
+            ).apply_async()
+
+        # launch significant alert on EM_SelectedConfident
+        elif label_name == superevents.SIGNIFICANT_LABEL:
             # ensure superevent is locked before starting alert workflow
             if superevents.FROZEN_LABEL not in alert['object']['labels']:
                 gracedb.create_label(superevents.FROZEN_LABEL, superevent_id)
@@ -104,12 +136,12 @@ def handle_superevent(alert):
                     alert['object']['t_end']
                 )
                 |
-                earlywarning_preliminary_alert.s(alert)
+                earlywarning_preliminary_alert.s(
+                    alert, alert_type='preliminary')
             ).apply_async()
 
         # launch second preliminary on GCN_PRELIM_SENT
         elif label_name == 'GCN_PRELIM_SENT':
-
             (
                 identity.si().set(
                     # https://git.ligo.org/emfollow/gwcelery/-/issues/478
@@ -126,7 +158,7 @@ def handle_superevent(alert):
                 group(
                     _leave_log_message_and_return_event_dict.s(
                         superevent_id,
-                        "Superevent cleaned up."
+                        "Superevent cleaned up after first preliminary alert"
                     ),
 
                     gracedb.create_label.si('DQR_REQUEST', superevent_id)
@@ -134,7 +166,8 @@ def handle_superevent(alert):
                 |
                 get_first.s()
                 |
-                earlywarning_preliminary_alert.s(alert)
+                earlywarning_preliminary_alert.s(
+                    alert, alert_type='preliminary')
             ).apply_async()
 
             # set pipeline preferred events
@@ -148,6 +181,35 @@ def handle_superevent(alert):
                 |
                 _set_pipeline_preferred_events.s(superevent_id)
             ).apply_async(countdown=app.conf['superevent_clean_up_timeout'])
+
+        elif label_name == superevents.EARLY_WARNING_LABEL:
+            if superevents.SIGNIFICANT_LABEL in alert['object']['labels']:
+                # stop if full BW significant event already present
+                gracedb.upload.delay(
+                    None, None, superevent_id,
+                    "Superevent superseded by full BW event, skipping EW."
+                )
+                return
+            # start the EW alert pipeline; is blocked by EM_SelectedConfident
+            # ensure superevent is locked before starting pipeline
+            if superevents.FROZEN_LABEL not in alert['object']['labels']:
+                gracedb.create_label(superevents.FROZEN_LABEL, superevent_id)
+
+            (
+                gracedb.get_events.si(query)
+                |
+                superevents.select_preferred_event.s()
+                |
+                _update_superevent_and_return_event_dict.s(superevent_id)
+                |
+                _leave_log_message_and_return_event_dict.s(
+                    superevent_id,
+                    "Superevent cleaned up before sending EW alert."
+                )
+                |
+                earlywarning_preliminary_alert.s(
+                    alert, alert_type='earlywarning')
+            ).apply_async()
 
         # launch initial/retraction alert on ADVOK/ADVNO
         elif label_name == 'ADVOK':
@@ -494,13 +556,20 @@ def _update_superevent_and_return_event_dict(event, superevent_id):
 
 
 @gracedb.task(shared=False)
-def _proceed_if_no_advocate_action(files, superevent_id):
-    """Return files in case the superevent does not have labels indicating
-    advocate action.
+def _proceed_if_not_blocked_by(files, superevent_id, block_by):
+    """Return files in case the superevent does not have labels `block_by`
+
+    Parameters
+    ----------
+    files : tuple
+        List of files
+    superevent_id : str
+        The superevent id corresponding to files
+    block_by : set
+        Set of blocking labels. E.g. `{'ADVOK', 'ADVNO'}`
     """
     superevent_labels = gracedb.get_labels(superevent_id)
-    blocking_labels = {'ADVOK', 'ADVNO'}.intersection(
-        superevent_labels)
+    blocking_labels = block_by.intersection(superevent_labels)
     if blocking_labels:
         gracedb.upload.delay(
             None, None, superevent_id,
@@ -514,8 +583,7 @@ def _proceed_if_no_advocate_action(files, superevent_id):
 
 
 @app.task(shared=False)
-def _annotate_fits_and_return_input(input_list, superevent_id,
-                                    annotation_prefix):
+def _annotate_fits_and_return_input(input_list, superevent_id):
     """Unpack the output of the skymap, embright, p-astro download group in the
     beginning of the
     :meth:`~gwcelery.tasks.orchestartor.earlywarning_preliminary_alert` canvas
@@ -531,24 +599,23 @@ def _annotate_fits_and_return_input(input_list, superevent_id,
         the em-bright and p-astro lists can be populated by Nones
     superevent_id : str
         A list of the sky map, em_bright, and p_astro filenames.
-    annotation_prefix : str
-        Either '' or 'subthreshold'.
     """
 
     [skymap, skymap_filename], *_ = input_list
 
     skymaps.annotate_fits.delay(
         skymap,
-        annotation_prefix + skymap_filename,
+        skymap_filename,
         superevent_id,
-        ['sky_loc'] if annotation_prefix else ['sky_loc', 'public']
+        ['sky_loc', 'public']
     )
 
     return input_list
 
 
 @app.task(shared=False)
-def _unpack_args_and_send_earlywarning_preliminary_alert(input_list, alert):
+def _unpack_args_and_send_earlywarning_preliminary_alert(input_list, alert,
+                                                         alert_type):
     """Unpack the output of the skymap, embright, p-astro download group in the
     beginning of the
     :meth:`~gwcelery.tasks.orchestartor.earlywarning_preliminary_alert` canvas
@@ -565,8 +632,11 @@ def _unpack_args_and_send_earlywarning_preliminary_alert(input_list, alert):
         the em-bright and p-astro lists can be populated by Nones
     alert : dict
         IGWN-Alert dictionary
+    alert_type : str
+        alert_type passed to
+        :meth:`earlywarning_preliminary_initial_update_alert`
     """
-    if input_list is None:
+    if input_list is None:  # alert is blocked by blocking labels
         return
 
     [skymap, skymap_filename], [em_bright, em_bright_filename], \
@@ -577,15 +647,13 @@ def _unpack_args_and_send_earlywarning_preliminary_alert(input_list, alert):
 
     earlywarning_preliminary_initial_update_alert.delay(
         [skymap_filename, em_bright_filename, p_astro_filename],
-        superevent,
-        ('earlywarning' if superevents.EARLY_WARNING_LABEL in
-         alert['object']['labels'] else 'preliminary'),
+        superevent, alert_type,
         filecontents=[skymap, em_bright, p_astro]
     )
 
 
 @app.task(ignore_result=True, shared=False)
-def earlywarning_preliminary_alert(event, alert, annotation_prefix='',
+def earlywarning_preliminary_alert(event, alert, alert_type='preliminary',
                                    initiate_voevent=True):
     """Produce a preliminary alert by copying any sky maps.
 
@@ -617,7 +685,7 @@ def earlywarning_preliminary_alert(event, alert, annotation_prefix='',
 
     # Determine if the event should be made public.
     is_publishable = (superevents.should_publish(
-                      event) and
+                      event, significant=alert_type != 'less-significant') and
                       {'DQV', 'INJ'}.isdisjoint(
                       event['labels']))
 
@@ -633,12 +701,11 @@ def earlywarning_preliminary_alert(event, alert, annotation_prefix='',
                 identity.s(),
 
                 gracedb.upload.s(
-                    annotation_prefix + skymap_filename,
+                    skymap_filename,
                     superevent_id,
                     message='Localization copied from {}'.format(
                         preferred_event_id),
-                    tags=['sky_loc'] if annotation_prefix else [
-                        'sky_loc', 'public']
+                    tags=['sky_loc', 'public']
                 )
                 |
                 _create_label_and_return_filename.s('SKYMAP_READY',
@@ -652,12 +719,11 @@ def earlywarning_preliminary_alert(event, alert, annotation_prefix='',
                     identity.s(),
 
                     gracedb.upload.s(
-                        annotation_prefix + 'em_bright.json',
+                        'em_bright.json',
                         superevent_id,
                         message='Source properties copied from {}'.format(
                             preferred_event_id),
-                        tags=['em_bright'] if annotation_prefix else [
-                            'em_bright', 'public']
+                        tags=['em_bright', 'public']
                     )
                     |
                     _create_label_and_return_filename.s('EMBRIGHT_READY',
@@ -673,12 +739,11 @@ def earlywarning_preliminary_alert(event, alert, annotation_prefix='',
                     identity.s(),
 
                     gracedb.upload.s(
-                        annotation_prefix + p_astro_filename,
+                        p_astro_filename,
                         superevent_id,
                         message='Source classification copied from {}'.format(
                             preferred_event_id),
-                        tags=['p_astro'] if annotation_prefix else [
-                            'p_astro', 'public']
+                        tags=['p_astro', 'public']
                     )
                     |
                     _create_label_and_return_filename.s('PASTRO_READY',
@@ -692,7 +757,7 @@ def earlywarning_preliminary_alert(event, alert, annotation_prefix='',
         # this task simply calls another task, which is to be avoided in chord
         # headers. Note that any group that chains to a task is automatically
         # upgraded to a chord.
-        _annotate_fits_and_return_input.s(superevent_id, annotation_prefix)
+        _annotate_fits_and_return_input.s(superevent_id)
     )
 
     # Switch for disabling all but MDC alerts.
@@ -707,11 +772,20 @@ def earlywarning_preliminary_alert(event, alert, annotation_prefix='',
 
     # Send notice and upload GCN circular draft for online events.
     if is_publishable and initiate_voevent:
+        # presence of advocate action blocks significant prelim alert
+        # presence of adv action + significant event blocks less-significant
+        # prelim, or EW alert
+        blocking_labels = (
+            {'ADVOK', 'ADVNO'} if alert_type == 'preliminary'
+            else {superevents.SIGNIFICANT_LABEL, 'ADVOK', 'ADVNO'}
+            if alert_type in ['less-significant', 'earlywarning']
+            else {}
+        )
         canvas |= (
-            _proceed_if_no_advocate_action.s(superevent_id)
+            _proceed_if_not_blocked_by.s(superevent_id, blocking_labels)
             |
             _unpack_args_and_send_earlywarning_preliminary_alert.s(
-                alert
+                alert, alert_type
             )
         )
 
@@ -793,7 +867,7 @@ def earlywarning_preliminary_initial_update_alert(
     superevent : dict
         The superevent dictionary, typically obtained from an IGWN Alert or
         from querying GraceDB.
-    alert_type : {'earlywarning', 'preliminary', 'initial', 'update'}
+    alert_type : {'less-significant', 'earlywarning', 'preliminary', 'initial', 'update'}  # noqa: E501
         The alert type.
 
     Notes
@@ -812,7 +886,8 @@ def earlywarning_preliminary_initial_update_alert(
         return
 
     if filecontents:
-        assert alert_type == 'earlywarning' or alert_type == 'preliminary'
+        assert alert_type in {
+            'less-significant', 'earlywarning', 'preliminary'}
 
     skymap_filename, em_bright_filename, p_astro_filename = filenames
     combined_skymap_filename = None
@@ -895,6 +970,7 @@ def earlywarning_preliminary_initial_update_alert(
             identity.si()
         )
 
+    # circular template not needed for less-significant alerts
     if alert_type in {'earlywarning', 'preliminary', 'initial'}:
         if raven_coinc:
             circular_task = circulars.create_emcoinc_circular.si(superevent_id)
@@ -919,6 +995,10 @@ def earlywarning_preliminary_initial_update_alert(
     else:
         circular_canvas = identity.si()
 
+    # less-significant alerts have "preliminary" voevent notice type
+    alert_type_voevent = 'preliminary' if alert_type == 'less-significant' \
+        else alert_type
+
     if filecontents and not combined_skymap_filename:
         skymap, em_bright, p_astro = filecontents
 
@@ -927,14 +1007,17 @@ def earlywarning_preliminary_initial_update_alert(
         voevent_canvas = _create_voevent.si(
             (em_bright, p_astro),
             superevent_id,
-            alert_type,
+            alert_type_voevent,
             skymap_filename=skymap_filename,
             internal=False,
             open_alert=True,
             raven_coinc=raven_coinc,
             combined_skymap_filename=combined_skymap_filename
         )
-
+        # kafka alerts have a field called "significant" based on
+        # https://dcc.ligo.org/LIGO-G2300151/public
+        # The alert_type value passed to alerts.send is used to
+        # set this field in the alert dictionary
         kafka_alert_canvas = alerts.send.si(
             (skymap, em_bright, p_astro),
             superevent,
@@ -950,7 +1033,7 @@ def earlywarning_preliminary_initial_update_alert(
 
         voevent_canvas = _create_voevent.s(
             superevent_id,
-            alert_type,
+            alert_type_voevent,
             skymap_filename=skymap_filename,
             internal=False,
             open_alert=True,
@@ -979,6 +1062,8 @@ def earlywarning_preliminary_initial_update_alert(
         )
     ]
 
+    # FIXME: add significant field to voevent
+    # see https://git.ligo.org/emfollow/gwcelery/-/issues/546
     voevent_canvas |= group(
         gracedb.download.s(superevent_id)
         |

@@ -129,6 +129,7 @@
       "far_is_upper_limit": false,
       "instruments": "H1,L1,V1",
       "pipeline": "gstlal",
+      "search": "AllSky",
       "likelihood": 3.16351696864855e+45,
       "created": "2018-05-10 18:57:58 UTC",
       "submitter": "deep.chatterjee@LIGO.ORG",
@@ -156,6 +157,7 @@
       "graceid": "G000012",
       "gpstime": 1078515565,
       "pipeline": "oLIB",
+      "search": "AllSky",
       "group": "Burst",
       "links": {
         "neighbors": "",
@@ -277,7 +279,8 @@
       "instruments": "H1,L1",
       "labels": [],
       "offline": false,
-      "pipeline": "gstlal"
+      "pipeline": "gstlal",
+      "search": "AllSky"
     },
     "t_start": 1163905214.44,
     "t_0": 1163905224.44,

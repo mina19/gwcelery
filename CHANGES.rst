@@ -23,6 +23,20 @@ Changelog
     of alerts.
 
 -   Remove infinite far threshold for earlywarning alerts for playground configuration.
+    Set far threshold of 1/30 days for early warning triggers in conf/__init__.py.
+
+-   Update the significant far threshold from 1/60 days to 1/30 days in conf/__init__.py.
+
+-   Enable less-significant public alerts. Change the behavior for the ``EM_Selected``
+    label to lauch less-significant alert pipeline.
+    Use the ``EM_SelectedConfident`` label to indicate completeness and passing significant
+    full-bandwidth event; this starts the "significant" alert pipeline. Less-significant
+    alert pipeline is blocked by the presence of ``EM_SelectedConfident``.
+
+-   Enable public early warning alerts. The superevent manager now applies the
+    ``EARLY_WARNING`` label to the superevent when a significant EW event is added
+    to the superevent. The automated pipeline is launched and is blocked before sending
+    if ``EM_SelectedConfident`` is found to be applied.
 
 2.0.3 "Ugly Merman" (2023-02-16)
 --------------------------------

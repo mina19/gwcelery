@@ -18,8 +18,13 @@ def _create_base_alert_dict(classification, superevent, alert_type):
     # public. However, MDC events with this flag are not made public on
     # GraceDB-playground and GraceDB-test.
     # Re time_created: Dont need better than second precision for alert times
+
+    # NOTE less-significant alerts have alert_type as PRELIMINARY
+    alert_type_kafka = 'preliminary' if alert_type == 'less-significant' \
+        else alert_type
+
     alert_dict = {
-        'alert_type': alert_type.upper(),
+        'alert_type': alert_type_kafka.upper(),
         'time_created': time.Time.now().utc.isot.split('.')[0] + 'Z',
         'superevent_id': superevent['superevent_id'],
         'urls': {'gracedb': superevent['links']['self'].replace('api/', '') +
@@ -42,6 +47,9 @@ def _create_base_alert_dict(classification, superevent, alert_type):
         classification = {}
 
     alert_dict['event'] = {
+        # set 'significant' field based on
+        # https://dcc.ligo.org/LIGO-G2300151/public
+        'significant': False if alert_type == 'less-significant' else True,
         'time': time.Time(superevent['t_0'], format='gps').utc.isot + 'Z',
         'far': superevent['far'],
         'instruments': sorted(
@@ -162,12 +170,18 @@ def send(self, skymap_and_classification, superevent, alert_type,
     superevent : dict
         The superevent dictionary, typically obtained from an IGWN Alert or
         from querying GraceDB.
-    alert_type : {'earlywarning', 'preliminary', 'initial', 'update'}
-        The alert type.
+    alert_type : str
+        The alert type. Either of {`less-significant`, `earlywarning`,
+        `preliminary`, `initial`, `update`}.
     raven_coinc: bool
         Is there a coincident external event processed by RAVEN?
     combined_skymap_filename : str
         Combined skymap filename. Default None.
+
+    Notes
+    -----
+    The `alert_type` value is used to set the `significant` field in the
+    alert dictionary.
     """
 
     if skymap_and_classification is not None:

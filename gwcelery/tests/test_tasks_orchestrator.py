@@ -13,7 +13,7 @@ from . import data
 
 
 @pytest.mark.parametrize(  # noqa: F811
-    'alert_type,label,group,pipeline,offline,far,instruments,'
+    'alert_type,alert_label,group,pipeline,offline,far,instruments,'
     'superevent_id,superevent_labels',
     [['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
         ['H1'], 'S1234', ['EM_Selected']],
@@ -31,10 +31,14 @@ from . import data
          ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
      ['label_added', 'GCN_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-9,
          ['H1', 'L1', 'V1'], 'S1234', ['EM_SelectedConfident']],
+     ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
+         ['H1', 'L1', 'V1'], 'S1234', ['EM_SelectedConfident']],
+     ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
+         ['H1', 'L1', 'V1'], 'S1234', []],
      ['new', '', 'CBC', 'gstlal', False, 1.e-9, ['H1', 'L1'], 'S1234',
          ['EM_Selected']]])
 def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
-                           alert_type, label, group, pipeline,
+                           alert_type, alert_label, group, pipeline,
                            offline, far, instruments, superevent_id,
                            superevent_labels):
     """Test a superevent is dispatched to the correct annotation task based on
@@ -56,7 +60,10 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         event = {
             'group': group,
             'pipeline': pipeline,
-            'search': 'AllSky',
+            'search': (
+                'EarlyWarning' if alert_label == 'EARLY_WARNING'
+                else 'AllSky'
+            ),
             'graceid': 'G1234',
             'offline': offline,
             'far': far,
@@ -107,7 +114,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             'preferred_event': 'G1234',
             'preferred_event_data': get_event('G1234'),
             'category': "Production",
-            'labels': ['EM_SelectedConfident']
+            'labels': superevent_labels
         }
     }
     if alert['alert_type'] == 'new':
@@ -115,7 +122,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         alert['data'] = alert['object']
         alert['labels'] = []
     else:
-        alert['data'] = {'name': label}
+        alert['data'] = {'name': alert_label}
 
     if superevent_id == 'S1234':
         raven_coinc = False
@@ -126,7 +133,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
     create_emcoinc_circular = Mock()
     expose = Mock()
     annotate_fits = Mock(return_value=None)
-    proceed_if_no_advocate_action = Mock(
+    proceed_if_not_blocked_by = Mock(
         return_value=(
             ('skymap', 'skymap-filename'),
             ('em-bright', 'em-bright-filename'),
@@ -163,8 +170,8 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         annotate_fits
     )
     monkeypatch.setattr(
-        'gwcelery.tasks.orchestrator._proceed_if_no_advocate_action.run',
-        proceed_if_no_advocate_action
+        'gwcelery.tasks.orchestrator._proceed_if_not_blocked_by.run',
+        proceed_if_not_blocked_by
     )
     monkeypatch.setattr('gwcelery.tasks.gracedb.create_tag._orig_run',
                         create_tag)
@@ -213,7 +220,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
     # Run function under test
     orchestrator.handle_superevent(alert)
 
-    if label == 'GCN_PRELIM_SENT':
+    if alert_label == 'GCN_PRELIM_SENT':
         dqr_request_label = list(
             filter(
                 lambda x: x.args == ('DQR_REQUEST', superevent_id),
@@ -228,7 +235,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             select_pipeline_preferred_event_task.return_value
         )
 
-    elif label == 'EM_SelectedConfident':
+    elif alert_label == 'EM_SelectedConfident':
         annotate_fits.assert_called_once()
         _event_info = get_event('G1234')  # this gets the preferred event info
         assert superevents.should_publish(_event_info)
@@ -254,6 +261,41 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             create_emcoinc_circular.assert_called_once()
         else:
             create_initial_circular.assert_called_once()
+
+    elif alert_label == 'EARLY_WARNING':
+        if 'EM_SelectedConfident' in superevent_labels:
+            expose.assert_not_called()
+            alerts_send.assert_not_called()
+            gcn_send.assert_not_called()
+            create_tag.assert_not_called()
+            create_initial_circular.assert_not_called()
+        else:
+            annotate_fits.assert_called_once()
+            update_superevent_task.assert_called_once_with(
+                'S1234', preferred_event='G1234'
+            )
+            expose.assert_called_once_with('S1234')
+            create_tag.assert_has_calls(
+                [call('S1234-1-Preliminary.xml', 'public', 'S1234'),
+                 call('em-bright-filename', 'public', 'S1234'),
+                 call('p-astro-filename', 'public', 'S1234'),
+                 call('skymap-filename', 'public', 'S1234')],
+                any_order=True
+            )
+    elif alert_label == 'EM_Selected':
+        if 'EM_SelectedConfident' in superevent_labels:
+            expose.assert_not_called()
+            alerts_send.assert_not_called()
+            gcn_send.assert_not_called()
+            create_tag.assert_not_called()
+            create_initial_circular.assert_not_called()
+        else:
+            annotate_fits.assert_called_once()
+            # no superevent clean up needed
+            update_superevent_task.assert_not_called()
+            # no circular creation for less-significant alerts
+            create_initial_circular.assert_not_called()
+            create_emcoinc_circular.assert_not_called()
 
     if alert_type == 'new' and group == 'CBC':
         query_data.assert_called_once()
@@ -385,7 +427,8 @@ def test_handle_superevent_initial_alert(mock_create_initial_circular,
             'labels': labels,
             'category': 'Production',
             'superevent_id': superevent_id,
-            'em_type': ext_id if labels else ''}
+            'em_type': ext_id if labels else '',
+            'category': 'Production'}
     }
     combined_skymap_needed = ('COMBINEDSKYMAP_READY' in labels)
     if combined_skymap_needed:

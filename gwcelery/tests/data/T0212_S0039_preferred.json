@@ -73,6 +73,7 @@
     "far_is_upper_limit": false,
     "instruments": "H1,L1",
     "pipeline": "gstlal",
+    "search": "AllSky",
     "likelihood": 31.4704908735223,
     "created": "2018-05-09 07:23:40 UTC",
     "links": {
