@@ -286,7 +286,6 @@ def handle_burst_event(alert):
     """Perform annotations for burst events that depend on pipeline-specific
     """  # noqa: E501
     graceid = alert['uid']
-    pipeline = alert['object']['pipeline'].lower()
     priority = 0 if superevents.should_publish(alert['object']) else 1
 
     if alert['alert_type'] != 'log':
@@ -298,7 +297,8 @@ def handle_burst_event(alert):
     # Converting to a multiirder ones with proper name.
     # FIXME: Remove block when CWB starts to upload skymaps
     # in multiorder format
-    if filename.endswith('fits.gz'):
+    if filename.endswith('.fits.gz'):
+        new_filename = filename.replace('.fits.gz', '.multiorder.fits')
         flatten_msg = (
             'Multi-resolution fits file created from '
             '<a href="/api/events/{graceid}/files/'
@@ -308,10 +308,10 @@ def handle_burst_event(alert):
         (
             gracedb.download.si(filename, graceid)
             |
-            skymaps.unflatten.s(f'{pipeline}.multiorder.fits')
+            skymaps.unflatten.s(new_filename)
             |
             gracedb.upload.s(
-                    f'{pipeline}.multiorder.fits', graceid, flatten_msg, tags)
+                    new_filename, graceid, flatten_msg, tags)
             |
             gracedb.create_label.si('SKYMAP_READY', graceid)
         ).apply_async(priority=priority)
