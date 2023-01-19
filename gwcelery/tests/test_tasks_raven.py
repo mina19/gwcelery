@@ -166,6 +166,30 @@ def mock_coinc_far(*args):
             'overlap_integral': None}
 
 
+def mock_get_superevent(superevent_id):
+    if superevent_id == 'S1':
+        old_time_far = None
+        old_space_far = None
+    elif superevent_id == 'S2':
+        old_time_far = 1e-5
+        old_space_far = None
+    elif superevent_id == 'S3':
+        old_time_far = 1e-4
+        old_space_far = None
+    elif superevent_id == 'S4':
+        old_time_far = 1e-5
+        old_space_far = 1e-6
+    elif superevent_id == 'S5':
+        old_time_far = 1e-4
+        old_space_far = 1e-6
+    else:
+        old_time_far = 1e-5
+        old_space_far = None
+    return {'time_coinc_far': old_time_far,
+            'space_coinc_far': old_space_far,
+            'superevent_id': superevent_id}
+
+
 @pytest.mark.parametrize(
     'raven_search_results,graceid,tl,th,group',
     [[[{'graceid': 'E1', 'pipeline': 'GRB'}], 'S1', -5, 1, 'CBC'],
@@ -189,6 +213,7 @@ def mock_coinc_far(*args):
 @patch('gwcelery.tasks.gracedb.update_superevent')
 @patch('gwcelery.tasks.gracedb.create_label.run')
 @patch('gwcelery.tasks.external_skymaps.plot_overlap_integral.run')
+@patch('gwcelery.tasks.gracedb.get_superevent', mock_get_superevent)
 def test_raven_pipeline(mock_plot_overlap_integral,
                         mock_create_label,
                         mock_update_superevent,
@@ -298,24 +323,23 @@ def test_preferred_superevent(raven_search_results, testnum):
 
 
 @pytest.mark.parametrize(
-    'new_time_far,new_space_far,old_time_far,old_space_far,pipeline,result',
-    [[1e-4, None, None, None, 'Fermi', True],
-     [1e-4, 1e-3, None, None, 'Swift', True],
-     [1e-4, None, 1e-5, None, 'AGILE', False],
-     [1e-4, 1e-3, 1e-4, None, 'Fermi', True],
-     [1e-4, 1e-3, 1e-5, 1e-6, 'Fermi', False],
-     [1e-8, None, 1e-5, 1e-6, 'Swift', False],
-     [1e-4, 1e-8, 1e-4, 1e-6, 'AGILE', True],
-     [None, None, None, None, 'SNEWS', True]])
+    'new_time_far,new_space_far,superevent_id,pipeline,result',
+    [[1e-4, None, 'S1', 'Fermi', True],
+     [1e-4, 1e-3, 'S1', 'Swift', True],
+     [1e-4, None, 'S2', 'AGILE', False],
+     [1e-4, 1e-3, 'S3', 'Fermi', True],
+     [1e-4, 1e-3, 'S4', 'Fermi', False],
+     [1e-8, None, 'S4', 'Swift', False],
+     [1e-4, 1e-8, 'S5', 'AGILE', True],
+     [None, None, 'S1', 'SNEWS', True]])
 @patch('gwcelery.tasks.gracedb.update_superevent')
+@patch('gwcelery.tasks.gracedb.get_superevent', mock_get_superevent)
 def test_update_superevent(mock_update_superevent,
                            new_time_far, new_space_far,
-                           old_time_far, old_space_far,
+                           superevent_id,
                            pipeline, result):
 
-    superevent = {'time_coinc_far': old_time_far,
-                  'space_coinc_far': old_space_far,
-                  'superevent_id': 'S100'}
+    superevent = {'superevent_id': superevent_id}
     ext_event = {'graceid': 'E100',
                  'pipeline': pipeline}
     coinc_far_dict = {'temporal_coinc_far': new_time_far,
@@ -323,7 +347,7 @@ def test_update_superevent(mock_update_superevent,
     raven.update_coinc_far(coinc_far_dict, superevent, ext_event)
     if result:
         mock_update_superevent.assert_called_with(
-            'S100', em_type='E100',
+            superevent_id, em_type='E100',
             time_coinc_far=new_time_far,
             space_coinc_far=new_space_far)
     else:

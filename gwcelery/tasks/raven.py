@@ -261,15 +261,20 @@ def update_coinc_far(coinc_far_dict, superevent, ext_event):
         external event dictionary
 
     """
+    #  Get graceids
+    superevent_id = superevent['superevent_id']
+    ext_id = ext_event['graceid']
+
     #  Joint FAR isn't computed for SNEWS coincidence
     #  Choose SNEWS coincidence over any other type of coincidence
     if ext_event['pipeline'] == 'SNEWS':
-        superevent_id = superevent['superevent_id']
-        ext_id = ext_event['graceid']
         gracedb.update_superevent(superevent_id, em_type=ext_id,
                                   time_coinc_far=None,
                                   space_coinc_far=None)
         return coinc_far_dict
+
+    #  Get the latest info to prevent race condition
+    superevent_f = gracedb.get_superevent(superevent_id)
 
     #  Load needed variables
     infty = float('inf')
@@ -277,13 +282,10 @@ def update_coinc_far(coinc_far_dict, superevent, ext_event):
     new_space_far = coinc_far_dict['spatiotemporal_coinc_far']
     #  Map None to infinity to make logic easier
     new_space_far_f = new_space_far if new_space_far else infty
-    old_time_far = superevent['time_coinc_far']
+    old_time_far = superevent_f['time_coinc_far']
     old_time_far_f = old_time_far if old_time_far else infty
-    old_space_far = superevent['space_coinc_far']
+    old_space_far = superevent_f['space_coinc_far']
     old_space_far_f = old_space_far if old_space_far else infty
-
-    superevent_id = superevent['superevent_id']
-    ext_id = ext_event['graceid']
 
     if new_space_far_f < old_space_far_f or \
             (new_time_far < old_time_far_f and old_space_far_f == infty):

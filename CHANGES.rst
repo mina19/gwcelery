@@ -17,6 +17,10 @@ Changelog
 
 -   Allow SoG pipeline to be tested with MDC events.
 
+-   Fix race condition of multiple instances of the RAVEN pipeline by
+    including a GraceDB poll of the superevent state before updating joint
+    FAR.
+
 2.0.2 "Flying Icarus" (2022-12-23)
 ----------------------------------
 
