@@ -6,7 +6,6 @@ import json
 import os
 import shutil
 import subprocess
-import tempfile
 import urllib
 
 from celery import group
@@ -753,9 +752,8 @@ def start_pe(frametype_dict, event, superevent_id, pe_pipeline):
     # make an event directory
     pipeline_dir = os.path.expanduser('~/.cache/{}'.format(pe_pipeline))
     mkpath(pipeline_dir)
-    event_dir = tempfile.mkdtemp(
-        dir=pipeline_dir, prefix='{}_'.format(superevent_id)
-    )
+    event_dir = os.path.join(pipeline_dir, superevent_id)
+    os.mkdir(event_dir)
 
     if pe_pipeline == 'bilby':
         modes = [app.conf['bilby_default_mode']]
@@ -772,10 +770,6 @@ def start_pe(frametype_dict, event, superevent_id, pe_pipeline):
 
     for rundir, kwargs, analysis in zip(rundirs, kwargs_list, analyses):
         mkpath(rundir)
-
-        # give permissions to read the files under the run directory so that PE
-        # ROTA can check the status of parameter estimation.
-        os.chmod(rundir, 0o755)
 
         gracedb.upload.delay(
             filecontents=None, filename=None, graceid=superevent_id,
