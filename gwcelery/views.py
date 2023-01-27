@@ -21,7 +21,7 @@ from . import app as celery_app
 from ._version import get_versions
 from .flask import app, cache
 from .tasks import first2years, gracedb, orchestrator, circulars, \
-    superevents, first2years_external, external_triggers
+    superevents, first2years_external, external_skymaps, external_triggers
 from .util import PromiseProxy
 
 distributions = PromiseProxy(lambda: tuple(metadata.distributions()))
@@ -305,6 +305,25 @@ def create_update_gcn_circular():
     else:
         flash('No circular created. Please fill in superevent ID and at ' +
               'least one update type.', 'danger')
+    return redirect(url_for('index'))
+
+
+@app.route('/download_upload_external_skymap', methods=['POST'])
+def download_upload_external_skymap():
+    """Download sky map from URL to be uploaded to external event. Passes
+    a search field 'FromURL' which indicates to get_upload_external_skymap
+    to use the provided URL to download the sky map.
+    """
+    keys = ('ext_id', 'skymap_url')
+    ext_id, skymap_url, *_ = tuple(request.form.get(key) for key in keys)
+    if ext_id and skymap_url:
+        ext_event = {'graceid': ext_id, 'search': 'FromURL'}
+        external_skymaps.get_upload_external_skymap(
+            ext_event, skymap_link=skymap_url)
+        flash('Downloaded sky map for {}.'.format(ext_id),
+              'success')
+    else:
+        flash('No skymap uploaded. Please fill in all fields.', 'danger')
     return redirect(url_for('index'))
 
 

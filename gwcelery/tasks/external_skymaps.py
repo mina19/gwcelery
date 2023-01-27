@@ -226,7 +226,7 @@ def get_external_skymap(link, search):
         trigger_id = re.sub(r'.*\/(\D+?)(\d+)(\D+)\/.*', r'\2', link)
         skymap_name = 'glg_healpix_all_bn{0}_v00.fit'.format(trigger_id)
         skymap_link = link + skymap_name
-    elif search == 'SubGRB':
+    elif search in {'SubGRB', 'FromURL'}:
         skymap_link = link
     #  FIXME: Under Anaconda on the LIGO Caltech computing cluster, Python
     #  (and curl, for that matter) fail to negotiate TLSv1.2 with
@@ -246,6 +246,8 @@ def get_upload_external_skymap(event, skymap_link=None):
     to external event. If sky map is not available, passes so that this can be
     re-run the next time an update GCN notice is received. If GRB, will
     construct a HEASARC url, while if SubGRB, will use the link directly.
+    If SubGRB or FromURL, downloads a skymap using the provided URL rather
+    than construct one.
     """
     graceid = event['graceid']
     search = event['search']
@@ -256,12 +258,17 @@ def get_upload_external_skymap(event, skymap_link=None):
             |
             get_external_skymap.s(search)
         )
-    elif search == 'SubGRB':
+    elif search in {'SubGRB', 'FromURL'}:
         external_skymap_canvas = get_external_skymap.si(skymap_link, search)
 
-    skymap_filename = 'glg_healpix_all_bn_v00'
+    skymap_filename = \
+        ('external_from_url' if search == 'FromURL'
+         else 'glg_healpix_all_bn_v00')
 
-    message = (
+    fits_message = \
+        ('Downloaded from {}.'.format(skymap_link) if search == 'FromURL'
+         else 'Official sky map from Fermi analysis.')
+    png_message = (
         'Mollweide projection of <a href="/api/events/{graceid}/files/'
         '{filename}">{filename}</a>').format(
             graceid=graceid, filename=skymap_filename + '.fits')
@@ -273,14 +280,14 @@ def get_upload_external_skymap(event, skymap_link=None):
             gracedb.upload.s(
                 skymap_filename + '.fits',
                 graceid,
-                'Official sky map from Fermi analysis.',
+                fits_message,
                 ['sky_loc']),
 
             skymaps.plot_allsky.s()
             |
             gracedb.upload.s(skymap_filename + '.png',
                              graceid,
-                             message,
+                             png_message,
                              ['sky_loc'])
         )
         |

@@ -272,3 +272,18 @@ def test_typeahead_em_bright_and_p_astro(
     assert HTTP_STATUS_CODES[response.status_code] == 'OK'
     mock_logs.assert_called_once_with('MS190208a')
     assert response.json == ['foobar.json,0', 'foobat.json,0']
+
+
+def test_download_upload_external_skymap(client, monkeypatch):
+    """Test download event from URL and upload to external event."""
+    mock_get_upload_external_skymap = Mock()
+    monkeypatch.setattr(
+        'gwcelery.tasks.external_skymaps.get_upload_external_skymap',
+        mock_get_upload_external_skymap)
+    response = client.post(url_for('download_upload_external_skymap'), data={
+        'ext_id': 'E12345', 'skymap_url': 'https://url.fits.gz'
+    })
+    assert HTTP_STATUS_CODES[response.status_code] == 'Found'
+    mock_get_upload_external_skymap.assert_called_once_with(
+            {'graceid': 'E12345', 'search': 'FromURL'},
+            skymap_link='https://url.fits.gz')

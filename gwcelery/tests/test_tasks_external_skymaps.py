@@ -171,14 +171,15 @@ def test_external_trigger_heasarc(mock_download):
     assert heasarc_link == true_heasarc_link
 
 
+@pytest.mark.parametrize('search', ['GRB', 'SubGRB', 'FromURL'])
 @patch('urllib.request.urlopen')
-def test_get_external_skymap(mock_urlopen):
+def test_get_external_skymap(mock_urlopen, search):
     """Assert that the correct call to astropy.get_file_contents is used"""
-    external_skymaps.get_external_skymap(true_heasarc_link, 'GRB')
-
+    external_skymaps.get_external_skymap(true_heasarc_link, search)
     mock_urlopen.assert_called_once()
 
 
+@pytest.mark.parametrize('search', ['GRB', 'SubGRB', 'FromURL'])
 @patch('gwcelery.tasks.gracedb.upload.run')
 @patch('gwcelery.tasks.skymaps.plot_allsky.run')
 @patch('gwcelery.tasks.external_skymaps.get_external_skymap.run')
@@ -186,11 +187,13 @@ def test_get_external_skymap(mock_urlopen):
 def test_get_upload_external_skymap(mock_external_trigger_heasarc,
                                     mock_get_external_skymap,
                                     mock_plot_allsky,
-                                    mock_upload):
+                                    mock_upload,
+                                    search):
     """Test that an external sky map is grabbed and uploaded."""
-    event = {'graceid': 'E12345', 'search': 'GRB'}
+    event = {'graceid': 'E12345', 'search': search}
     external_skymaps.get_upload_external_skymap(event)
-    mock_external_trigger_heasarc.assert_called_once()
+    if search == 'GRB':
+        mock_external_trigger_heasarc.assert_called_once()
     mock_get_external_skymap.assert_called_once()
     mock_upload.assert_called()
 
