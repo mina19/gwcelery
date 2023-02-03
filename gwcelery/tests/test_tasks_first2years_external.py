@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import call, Mock
+from unittest.mock import call, Mock, patch
 
 from . import data
 from .. import app
@@ -88,3 +88,21 @@ def test_handle_create_grb_event(monkeypatch,
     else:
         mock_create_event.assert_not_called()
         mock_create_upload_external_skymap.assert_not_called()
+
+
+@patch('gwcelery.tasks.detchar.check_vectors.run')
+@patch('gwcelery.tasks.gracedb.create_event.run', return_value={
+    'graceid': 'M1', 'gpstime': 1, 'instruments': '', 'pipeline': 'SNEWS',
+    'search': 'MDC',
+    'links': {'self': 'https://gracedb.ligo.org/events/E356793/'}})
+@patch('gwcelery.tasks.gracedb.get_events', return_value=[])
+def test_upload_snews_event(mock_get_events,
+                            mock_create_event,
+                            mock_check_vectors):
+    event = first2years_external.upload_snews_event()
+    mock_create_event.assert_called_once_with(
+        filecontents=event,
+        search='MDC',
+        pipeline='SNEWS',
+        group='External')
+    mock_check_vectors.assert_called_once()

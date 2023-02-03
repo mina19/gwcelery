@@ -567,15 +567,19 @@ def test_handle_subgrb_targeted_creation(mock_raven_coincidence_search,
 
 @pytest.mark.parametrize('path',
                          ['igwn_alert_snews_test_creation.json',
-                          'igwn_alert_snews_creation.json'])
+                          'igwn_alert_snews_creation.json',
+                          'igwn_alert_superevent_creation.json'])
 @patch('gwcelery.tasks.raven.coincidence_search')
 def test_handle_sntrig_creation(mock_raven_coincidence_search, path):
     """Test dispatch of an IGWN alert message for SNEWS alerts
     This now includes both real and test SNEWS events to ensure both are
-    ingested correctly.
+    ingested correctly, as well as a superevent.
     """
     # Test IGWN alert payload.
     alert = read_json(data, path)
+
+    if 'superevent' in path:
+        alert['object']['preferred_event_data']['group'] = 'Burst'
 
     # Run function under test
     external_triggers.handle_snews_igwn_alert(alert)
@@ -585,10 +589,14 @@ def test_handle_sntrig_creation(mock_raven_coincidence_search, path):
     else:
         graceid = 'E1235'
 
-    mock_raven_coincidence_search.assert_has_calls([
-            call(graceid, alert['object'],
-                 group='Burst', searches=['Supernova'],
-                 pipelines=['SNEWS'])])
+    if 'superevent' in path:
+        mock_raven_coincidence_search.assert_called_once_with(
+            'S180616h', alert['object'], group='Burst', searches=['Supernova'],
+            pipelines=['SNEWS'])
+    elif 'snews' in path:
+        mock_raven_coincidence_search.assert_called_once_with(
+            graceid, alert['object'], group='Burst', searches=['Supernova'],
+            pipelines=['SNEWS'])
 
 
 @patch('gwcelery.tasks.gracedb.get_superevent',
@@ -664,3 +672,33 @@ def test_handle_mdc_creation(mock_raven_coincidence_search,
                  call('E1234', alert['object'], group='Burst',
                       se_searches=['MDC'])]
     mock_raven_coincidence_search.assert_has_calls(calls, any_order=True)
+
+
+@pytest.mark.parametrize('path',
+                         ['igwn_alert_superevent_creation.json',
+                          'igwn_alert_snews_creation.json'])
+@patch('gwcelery.tasks.raven.coincidence_search')
+def test_handle_mdc_sn_creation(mock_raven_coincidence_search,
+                                path):
+    """Test dispatch of an MDC with the supernovae igwn alert listener,
+    both a superevent and external event."""
+    # Test IGWN alert payload.
+    alert = read_json(data, path)
+    if 'superevent' in path:
+        alert['object']['preferred_event_data']['search'] = 'MDC'
+        alert['object']['preferred_event_data']['group'] = 'Burst'
+    elif 'snews' in path:
+        alert['object']['search'] = 'MDC'
+
+    # Run function under test
+    external_triggers.handle_snews_igwn_alert(alert)
+
+    # Check that the correct tasks were dispatched.
+    if 'superevent' in path:
+        mock_raven_coincidence_search.assert_called_once_with(
+            'S180616h', alert['object'], group='Burst', searches=['MDC'],
+            pipelines=['SNEWS'])
+    elif 'snews' in path:
+        mock_raven_coincidence_search.assert_called_once_with(
+            'E1235', alert['object'], group='Burst', se_searches=['MDC'],
+            pipelines=['SNEWS'])

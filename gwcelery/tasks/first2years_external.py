@@ -13,9 +13,8 @@ from . import external_triggers
 from . import igwn_alert
 
 
-def create_grb_event(gpstime, pipeline, se_search):
-    """ Create a random GRB event for a certain percentage of MDC or O3-replay
-     superevents.
+def create_external_event(gpstime, pipeline, se_search):
+    """ Create a random external event VOEvent.
 
     Parameters
     ----------
@@ -28,8 +27,16 @@ def create_grb_event(gpstime, pipeline, se_search):
     """
     new_date = str(Time(gpstime, format='gps', scale='utc').isot) + 'Z'
     new_TrigID = str(int(gpstime))
+
+    if pipeline in {'Fermi', 'Swift', 'INTEGRAL', 'AGILE'}:
+        is_grb = True
+    else:
+        is_grb = False
+
     fname = str(Path(__file__).parent /
-                '../tests/data/{}_grb_gcn.xml'.format(pipeline.lower()))
+                '../tests/data/{0}_{1}gcn.xml'.format(
+                    pipeline.lower(),
+                    'grb_' if is_grb else ''))
 
     root = etree.parse(fname)
     # Change ivorn to indicate if this is an MDC event or O3 replay event
@@ -47,21 +54,23 @@ def create_grb_event(gpstime, pipeline, se_search):
     root.find("./What/Param[@name='TrigID']").attrib['value'] = \
         str(new_TrigID).encode()
 
-    # Give random sky position
-    root.find(("./WhereWhen/ObsDataLocation/"
-               "ObservationLocation/AstroCoords/Position2D/Value2/"
-               "C1")).text = str(random.uniform(0, 360)).encode()
-    thetas = np.arange(-np.pi / 2, np.pi / 2, .01)
-    root.find(("./WhereWhen/ObsDataLocation/"
-               "ObservationLocation/AstroCoords/Position2D/Value2/"
-               "C2")).text = \
-        str(random.choices(
-            np.rad2deg(thetas),
-            weights=np.cos(thetas) / sum(np.cos(thetas)))[0]).encode()
-    if pipeline != 'Swift':
+    if is_grb:
+        # Give random sky position
         root.find(("./WhereWhen/ObsDataLocation/"
-                   "ObservationLocation/AstroCoords/Position2D/"
-                   "Error2Radius")).text = str(random.uniform(1, 30)).encode()
+                   "ObservationLocation/AstroCoords/Position2D/Value2/"
+                   "C1")).text = str(random.uniform(0, 360)).encode()
+        thetas = np.arange(-np.pi / 2, np.pi / 2, .01)
+        root.find(("./WhereWhen/ObsDataLocation/"
+                   "ObservationLocation/AstroCoords/Position2D/Value2/"
+                   "C2")).text = \
+            str(random.choices(
+                np.rad2deg(thetas),
+                weights=np.cos(thetas) / sum(np.cos(thetas)))[0]).encode()
+        if pipeline != 'Swift':
+            root.find(
+                ("./WhereWhen/ObsDataLocation/"
+                 "ObservationLocation/AstroCoords/Position2D/"
+                 "Error2Radius")).text = str(random.uniform(1, 30)).encode()
 
     return etree.tostring(root, xml_declaration=True, encoding="UTF-8",
                           pretty_print=True)
@@ -149,7 +158,7 @@ def upload_external_event(alert):
         # Choose external grb pipeline to simulate
         pipeline = np.random.choice(['Fermi', 'Swift', 'INTEGRAL', 'AGILE'],
                                     p=[.5, .3, .1, .1])
-        ext_event = create_grb_event(new_time, pipeline, se_search)
+        ext_event = create_external_event(new_time, pipeline, se_search)
 
         # Upload as from GCN
         external_triggers.handle_grb_gcn(ext_event)
@@ -157,3 +166,14 @@ def upload_external_event(alert):
         events.append(ext_event), pipelines.append(pipeline)
 
     return events, pipelines
+
+
+@app.task(queue='exttrig',
+          ignore_result=True,
+          shared=False)
+def upload_snews_event():
+    """Create and upload a SNEWS-like MDC external event."""
+    current_time = Time(Time.now(), format='gps').value
+    ext_event = create_external_event(current_time, 'SNEWS', 'MDC')
+    external_triggers.handle_snews_gcn(ext_event)
+    return ext_event

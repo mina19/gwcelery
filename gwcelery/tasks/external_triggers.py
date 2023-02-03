@@ -50,6 +50,10 @@ def handle_snews_gcn(payload):
     ext_group = 'Test' if root.attrib['role'] == 'test' else 'External'
 
     event_observatory = 'SNEWS'
+    if 'mdc-test_event' in root.attrib['ivorn'].lower():
+        search = 'MDC'
+    else:
+        search = 'Supernova'
     query = 'group: External pipeline: {} grbevent.trigger_id = "{}"'.format(
         event_observatory, trig_id)
     events = gracedb.get_events(query=query)
@@ -63,7 +67,7 @@ def handle_snews_gcn(payload):
 
     else:
         canvas = gracedb.create_event.s(filecontents=payload,
-                                        search='Supernova',
+                                        search=search,
                                         group=ext_group,
                                         pipeline=event_observatory)
         canvas |= _launch_external_detchar.s()
@@ -420,16 +424,28 @@ def handle_snews_igwn_alert(alert):
     if alert['alert_type'] == 'new':
         if alert['object'].get('superevent_id'):
             group = alert['object']['preferred_event_data']['group']
+            search = alert['object']['preferred_event_data']['search']
+            if search == 'MDC':
+                raven.coincidence_search(graceid, alert['object'],
+                                         group='Burst', searches=['MDC'],
+                                         pipelines=['SNEWS'])
             # Run on Test and Burst superevents
-            if group in {'Burst', 'Test'}:
+            elif group in {'Burst', 'Test'}:
                 raven.coincidence_search(graceid, alert['object'],
                                          group='Burst', searches=['Supernova'],
                                          pipelines=['SNEWS'])
         else:
             # Run on SNEWS event, either real or test
-            raven.coincidence_search(graceid, alert['object'],
-                                     group='Burst', searches=['Supernova'],
-                                     pipelines=['SNEWS'])
+            search = alert['object']['search']
+            if search == 'MDC':
+                raven.coincidence_search(graceid, alert['object'],
+                                         group='Burst',
+                                         se_searches=['MDC'],
+                                         pipelines=['SNEWS'])
+            elif search == 'Supernova':
+                raven.coincidence_search(graceid, alert['object'],
+                                         group='Burst', searches=['Supernova'],
+                                         pipelines=['SNEWS'])
 
 
 def _skymaps_are_ready(event, label, task):
@@ -452,7 +468,7 @@ def _get_superevent_ext_ids(graceid, event):
           shared=False)
 def _launch_external_detchar(event):
     start = event['gpstime']
-    if event['search'] == 'Supernova':
+    if event['pipeline'] == 'SNEWS':
         start, end = event['gpstime'], event['gpstime']
     else:
         integration_time = \

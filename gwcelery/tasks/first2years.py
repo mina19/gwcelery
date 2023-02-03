@@ -15,7 +15,7 @@ import numpy as np
 from .core import get_last
 from ..data import first2years as data_first2years
 from ..import app
-from . import gracedb
+from . import gracedb, first2years_external
 
 log = get_task_logger(__name__)
 
@@ -154,6 +154,7 @@ def setup_periodic_tasks(sender, **kwargs):
     https://docs.celeryproject.org/en/stable/userguide/periodic-tasks.html.
     """
     sender.add_periodic_task(3600.0, upload_event)
+    sender.add_periodic_task(7200.0, first2years_external.upload_snews_event)
 
 
 @app.task(ignore_result=True, shared=False)

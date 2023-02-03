@@ -384,8 +384,8 @@ def send_mock_event():
 def _create_upload_external_event(gpstime):
     new_time = first2years_external._offset_time(gpstime, 'CBC')
 
-    ext_event = first2years_external.create_grb_event(new_time, 'Fermi',
-                                                      'MDC')
+    ext_event = first2years_external.create_external_event(new_time, 'Fermi',
+                                                           'MDC')
 
     # Upload as from GCN
     external_triggers.handle_grb_gcn(ext_event)

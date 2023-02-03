@@ -47,6 +47,9 @@ Changelog
 -   Populate the duration and central_frequency fields in Kafka notices about
     burst events.
 
+-   Add periodic SNEWS MDC events to test the corresponding IGWN alert
+    listener.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 
