@@ -140,8 +140,8 @@ def test_update_preferred_event(superevent_labels, new_event_labels,
                                        None,
                                        None,
                                        None)
-        # presence of EM_Selected should not
-        if 'EM_Selected' in superevent_labels:
+        # presence of FROZEN_LABEL should not update superevent
+        if superevents.FROZEN_LABEL in superevent_labels:
             p.assert_not_called()
 
         else:
@@ -278,8 +278,11 @@ def test_raven_alert(mock_create_label, labels):
         superevents.handle(payload)
     calls = [call('ADVREQ', 'S100')]
     if {'SKYMAP_READY', 'EMBRIGHT_READY', 'PASTRO_READY'}.issubset(labels):
-        calls.append(call('EM_Selected', 'S100'))
-    mock_create_label.assert_has_calls(calls)
+        calls.extend(
+            [call('EM_READY', 'S100'), call('EM_Selected', 'S100'),
+             call('EM_SelectedConfident', 'S100')]
+        )
+    mock_create_label.assert_has_calls(calls, any_order=True)
 
 
 @pytest.mark.parametrize('labels',
@@ -383,23 +386,33 @@ def test_upload_same_event():
 
 
 @pytest.mark.parametrize(
-    'group,pipeline,offline,far,instruments,labels,expected_result',
-    [['CBC', 'gstlal', False, 1.e-10, 'H1',
-        ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY'], True],
-     ['CBC', 'gstlal', False, 1.e-10, 'H1',
-         ['PASTRO_READY', 'SKYMAP_READY'], False],
-     ['CBC', 'gstlal', False, 1.e-6, 'H1,L1', ['EMBRIGHT_READY'], False],
-     ['Burst', 'cwb', False, 1e-15, 'H1,L1', ['SKYMAP_READY'], True],
-     ['Burst', 'cwb', False, 1e-15, 'H1,L1', [], False],
-     ['Burst', 'cwb', True, 1e-30, 'H1,L1,V1', [], False],
-     ['CBC', 'gstlal', False, 1.e-6, 'H1,L1,V1', ['RAVEN_ALERT'], False],
-     ['CBC', 'gstlal', False, 1.e-6, 'H1,L1,V1', [
-      'PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY', 'RAVEN_ALERT'], True],
-     ['CBC', 'gstlal', False, 1.e-15, 'H1,L1,V1', [
-      'PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY', 'RAVEN_ALERT'],
-      True]])
+    'group,pipeline,offline,far,instruments,labels,expected_result,'
+    'expected_result_subthreshold',
+    [['CBC', 'gstlal', False, 1.e-10, 'H1',  # complete significant
+        ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY'], True, True],
+     ['CBC', 'gstlal', False, 1.e-6, 'H1',  # complete subthreshold
+        ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY'], False, True],
+     ['CBC', 'gstlal', False, 1.e-6, 'H1',  # incomplete subthreshold
+        ['PASTRO_READY', 'SKYMAP_READY'], False, False],
+     ['CBC', 'gstlal', False, 1.e-6, 'H1,L1',  # incomplete CBC
+        ['EMBRIGHT_READY'], False, False],
+     ['Burst', 'cwb', False, 1e-15, 'H1,L1',  # complete Burst
+        ['SKYMAP_READY'], True, True],
+     ['Burst', 'cwb', False, 1e-15, 'H1,L1',  # incomplete Burst
+        [], False, False],
+     ['Burst', 'cwb', True, 1e-30, 'H1,L1,V1',  # incomplete 3 ifo Burst
+        [], False, False],
+     ['CBC', 'gstlal', False, 1.e-6, 'H1,L1,V1',  # incomplete ext coinc
+        ['RAVEN_ALERT'], False, False],
+     ['CBC', 'gstlal', False, 1.e-6, 'H1,L1,V1',  # complete ext coinc
+        ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY', 'RAVEN_ALERT'],
+        True, True],
+     ['CBC', 'gstlal', False, 1.e-15, 'H1,L1,V1',  # complete 3 ifo significant
+        ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY', 'RAVEN_ALERT'],
+        True, True]])
 def test_should_publish(group, pipeline, offline, far, instruments, labels,
-                        expected_result):
+                        expected_result, expected_result_subthreshold):
+    """Test publishability criteria under different states of a superevent."""
     event = dict(graceid='G123456',
                  group=group,
                  pipeline=pipeline,
@@ -407,8 +420,12 @@ def test_should_publish(group, pipeline, offline, far, instruments, labels,
                  far=far,
                  offline=offline,
                  instruments=instruments)
+    result_subthreshold = (
+        superevents.is_complete(event) and
+        superevents.should_publish(event, significant=False))
     result = (superevents.is_complete(event) and
               superevents.should_publish(event))
+    assert result_subthreshold == expected_result_subthreshold
     assert result == expected_result
 
 
@@ -545,11 +562,12 @@ def test_parse_trigger_cbc_2():
         p2.assert_called_once_with('S0039', preferred_event='G000003',
                                    t_0=1163905224.4332082)
         p3.assert_called_once()
-        create_label.assert_called_once_with('ADVREQ', 'S0039')
+        expected_calls = [call('ADVREQ', 'S0039')]
         if superevents.is_complete(event_dictionary):
-            create_label.assert_called_once_with('EM_READY', 'S0039')
-        else:
-            assert_not_called_with(create_label, 'EM_READY', 'S0039')
+            expected_calls.extend(
+                [call('EM_READY', 'S0039'), call('EM_Selected', 'S0039'),
+                 call('EM_SelectedConfident', 'S0039')])
+        create_label.assert_has_calls(expected_calls, any_order=True)
 
 
 def test_parse_trigger_cbc_3():
@@ -612,6 +630,45 @@ def test_parse_trigger_cbc_4():
     with patch.object(superevents, 'process') as mock_process:
         superevents.handle(payload)
         mock_process.assert_not_called()
+
+
+def test_parse_trigger_cbc_5():
+    """New trigger G000002 is complete, with no intersecting superevent,
+    passes subhthreshold far, but not significant far. New superevent
+    should be created, and labeled EM_Selected."""
+    event_dictionary = {'graceid': 'G000002',
+                        'gpstime': 1286741861.52678,
+                        'group': 'CBC',
+                        'pipeline': 'gstlal',
+                        'offline': False,
+                        'far': 5.5e-07,
+                        'instruments': 'H1,L1,V1',
+                        'labels': [
+                            'PASTRO_READY',
+                            'SKYMAP_READY',
+                            'EMBRIGHT_READY'
+                        ],
+                        'superevent': None,
+                        'superevent_neighbours': SUPEREVENTS_NEIGHBOURS,
+                        'extra_attributes': {
+                            'CoincInspiral': {'snr': 4.0},
+                            'SingleInspiral': [
+                                {"ifo": ifo} for ifo in
+                                ["H1", "L1", "V1"]]}}
+    payload = dict(alert_type='new',
+                   object=event_dictionary,
+                   data=event_dictionary,
+                   uid='G000002')
+    superevents.handle(payload)
+    with patch('gwcelery.tasks.gracedb.create_superevent',
+               return_value='S123456') as p1, \
+            patch('gwcelery.tasks.gracedb.get_superevents',
+                  return_value=SUPEREVENTS_NEIGHBOURS.values()) as p2, \
+            patch('gwcelery.tasks.gracedb.create_label') as p3:
+        superevents.handle(payload)
+        p1.assert_called_once()
+        p2.assert_called_once()
+        p3.assert_called_once_with('EM_Selected', 'S123456')
 
 
 def test_parse_trigger_burst_1():
@@ -764,6 +821,37 @@ def test_parse_trigger_burst_4():
             patch('gwcelery.tasks.gracedb.create_label'):
         superevents.handle(payload)
         p.assert_called_once()
+
+
+def test_parse_trigger_burst_5():
+    """New subthreshold oLIB trigger, which is complete, no intersecting
+    superevent. New superevent created and labeled EM_Selected.
+    """
+    event_dictionary = {'graceid': 'G000007',
+                        'gpstime': 1.0,
+                        'group': 'Burst',
+                        'pipeline': 'oLIB',
+                        'offline': False,
+                        'far': 1e-6,
+                        'instruments': 'H1,L1',
+                        'labels': ['SKYMAP_READY'],
+                        'superevent': None,
+                        'superevent_neighbours': SUPEREVENTS_NEIGHBOURS,
+                        'extra_attributes': {
+                            'LalInferenceBurst': {
+                                'quality_mean': 100.0,
+                                'frequency_mean': 100.0,
+                                'omicron_snr_network': 8.0}}}
+    payload = dict(object=event_dictionary,
+                   data=event_dictionary,
+                   alert_type='new',
+                   uid='G000007')
+    with patch('gwcelery.tasks.gracedb.create_superevent',
+               return_value='S123456') as p1, \
+            patch('gwcelery.tasks.gracedb.create_label') as p2:
+        superevents.handle(payload)
+        p1.assert_called_once()
+        p2.assert_called_once_with('EM_Selected', 'S123456')
 
 
 def test_S190421ar_spiir_scenario():    # noqa: N802

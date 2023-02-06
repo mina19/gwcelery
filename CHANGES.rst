@@ -52,6 +52,13 @@ Changelog
 -   Don't try to download psd.xml.gz in online PE, as it is no longer uploaded
     by any search pipelines.
 
+-   Add functionality in superevent manager to decide confident vs. less significant
+    alert criteria.
+
+-   Re-purpose FROZEN_LABEL to mean subthreshold alert criteria is met. Add new
+    SIGNIFICANT_LABEL to indicate presence of significant full-bandwidth trigger.
+    Apply EARLY_WARNING_LABEL to superevent when there is a significant EW event.
+
 2.0.2 "Flying Icarus" (2022-12-23)
 ----------------------------------
 

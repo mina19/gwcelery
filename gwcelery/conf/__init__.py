@@ -119,20 +119,29 @@ preliminary_alert_timeout = 0.0
 """Wait this many seconds for the preferred event to stabilize before issuing a
 preliminary alert."""
 
-preliminary_alert_far_threshold = {'cbc': 1 / (60 * 86400),
+significant_alert_far_threshold = {'cbc': 1 / (60 * 86400),
                                    'burst': 1 / (365 * 86400),
                                    'test': 1 / (30 * 86400)}
 """Group specific maximum false alarm rate to consider
-sending preliminary alerts."""
+sending significant alerts."""
 
-early_warning_alert_trials_factor = 2.0
+preliminary_alert_far_threshold = {'cbc': 2 / (1 * 86400),
+                                   'burst': 2 / (1 * 86400),
+                                   'test': 2 / (1 * 86400)}
+"""Group specific maximum false alarm rate to consider
+sending less significant alerts."""
+
+early_warning_alert_trials_factor = 4.0
 """Trials factor for early warning alerts. There are two pipelines that are
 producing early warning events: gstlal and spiir."""
 
-preliminary_alert_trials_factor = dict(cbc=5.0, burst=4.0)
+significant_alert_trials_factor = dict(cbc=5.0, burst=4.0)
 """Trials factor corresponding to trigger categories. For CBC and Burst, trials
 factor is the number of pipelines. CBC pipelines are gstlal, pycbc, mbta and
 spiir. Burst searches are cwb.allsky, cwb.bbh and cwb.imbh."""
+
+preliminary_alert_trials_factor = dict(cbc=8.0, burst=8.0)
+"""Trials factor for less significant alerts."""
 
 early_warning_alert_far_threshold = 1 / (3600 * 24)
 """False alarm rate threshold for early warning alerts."""

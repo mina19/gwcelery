@@ -68,7 +68,7 @@ def handle_superevent(alert):
 
     elif alert['alert_type'] == 'label_added':
         label_name = alert['data']['name']
-        if label_name == superevents.FROZEN_LABEL:
+        if label_name == superevents.SIGNIFICANT_LABEL:
             (
                 gracedb.upload.s(
                     None,

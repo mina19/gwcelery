@@ -28,6 +28,9 @@ FROZEN_LABEL = 'EM_Selected'
 """This label indicates that the superevent manager should make no further
 changes to the preferred event."""
 
+SIGNIFICANT_LABEL = 'EM_SelectedConfident'
+"""This label indicates that the superevent is elevated to significant"""
+
 EARLY_WARNING_LABEL = 'EARLY_WARNING'
 """This label indicates that the superevent contains a significant
 early warning event."""
@@ -174,17 +177,23 @@ def process(payload):
                 sid = gracedb.create_superevent(event_info['graceid'],
                                                 t_0, t_start, t_end)
 
-    if should_publish(event_info):
+    if should_publish(event_info, significant=True):
         gracedb.create_label.delay('ADVREQ', sid)
         if is_complete(event_info):
             if app.conf['preliminary_alert_timeout'] \
                     and EARLY_WARNING_LABEL not in event_info['labels']:
-                gracedb.create_label.s(FROZEN_LABEL, sid).set(
+                gracedb.create_label.s(SIGNIFICANT_LABEL, sid).set(
                     queue='superevent',
                     countdown=app.conf['preliminary_alert_timeout']
                 ).delay()
+            elif EARLY_WARNING_LABEL in event_info['labels']:
+                gracedb.create_label(EARLY_WARNING_LABEL, sid)
             else:  # fast path if no countdown
-                gracedb.create_label(FROZEN_LABEL, sid)
+                gracedb.create_label(SIGNIFICANT_LABEL, sid)
+
+    if should_publish(event_info, significant=False):
+        if is_complete(event_info):
+            gracedb.create_label(FROZEN_LABEL, sid)
 
 
 def get_category(event):
@@ -414,7 +423,7 @@ def is_complete(event):
     return required_labels.issubset(label_set)
 
 
-def should_publish(event):
+def should_publish(event, significant=True):
     """Determine whether an event should be published as a public alert.
 
     All of the following conditions must be true for a public alert:
@@ -422,9 +431,11 @@ def should_publish(event):
     *   The event's ``offline`` flag is not set.
     *   The event's false alarm rate, weighted by the group-specific trials
         factor as specified by the
-        :obj:`~gwcelery.conf.preliminary_alert_trials_factor` configuration
-        setting, is less than or equal to
-        :obj:`~gwcelery.conf.preliminary_alert_far_threshold`.
+        :obj:`~gwcelery.conf.preliminary_alert_trials_factor`
+        (:obj:`~gwcelery.conf.significant_alert_trials_factor`)
+        configuration setting, is less than or equal to
+        :obj:`~gwcelery.conf.preliminary_alert_far_threshold`
+        (:obj:`~gwcelery.conf.significant_alert_far_threshold`)
 
     Parameters
     ----------
@@ -432,6 +443,12 @@ def should_publish(event):
         Event dictionary (e.g., the return value from
         :meth:`gwcelery.tasks.gracedb.get_event`, or
         ``preferred_event_data`` in igwn-alert packet.)
+    significant : bool
+        Flag to use significant
+        (:obj:`~gwcelery.conf.significant_alert_far_threshold`),
+        or less-significant
+        (:obj:`~gwcelery.conf.preliminary_alert_far_threshold`)
+        FAR threshold.
 
     Returns
     -------
@@ -440,20 +457,23 @@ def should_publish(event):
         :obj:`False` if it does not.
 
     """
-    return all(_should_publish(event))
+    return all(_should_publish(event, significant=significant))
 
 
-def _should_publish(event):
+def _should_publish(event, significant=False):
     """Wrapper around :meth:`should_publish`. Returns the boolean returns of
     the publishability criteria as a tuple for later use.
     """
     group = event['group'].lower()
-    if EARLY_WARNING_LABEL in event['labels']:
+    if not significant:
+        far_threshold = app.conf['preliminary_alert_far_threshold'][group]
+        trials_factor = app.conf['preliminary_alert_trials_factor'][group]
+    elif EARLY_WARNING_LABEL in event['labels']:
         far_threshold = app.conf['early_warning_alert_far_threshold']
         trials_factor = app.conf['early_warning_alert_trials_factor']
     else:
-        far_threshold = app.conf['preliminary_alert_far_threshold'][group]
-        trials_factor = app.conf['preliminary_alert_trials_factor'][group]
+        far_threshold = app.conf['significant_alert_far_threshold'][group]
+        trials_factor = app.conf['significant_alert_trials_factor'][group]
     far = trials_factor * event['far']
     raven_coincidence = ('RAVEN_ALERT' in event['labels'])
 

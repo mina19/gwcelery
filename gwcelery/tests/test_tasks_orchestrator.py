@@ -17,19 +17,20 @@ from . import data
     'superevent_id,superevent_labels',
     [['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
         ['H1'], 'S1234', ['EM_Selected']],
-     ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
+     ['label_added', 'EM_SelectedConfident', 'CBC', 'gstlal', False, 1.e-9,
          ['H1', 'L1'], 'S1234', ['EM_Selected']],
-     ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
+     ['label_added', 'EM_SelectedConfident', 'CBC', 'gstlal', False, 1.e-9,
          ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
-     ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
+     ['label_added', 'EM_SelectedConfident', 'CBC', 'gstlal', False, 1.e-9,
          ['H1', 'L1', 'V1'], 'S2468',
-         ['EM_Selected', 'COMBINEDSKYMAP_READY', 'RAVEN_ALERT', 'EM_COINC']],
-     ['label_added', 'EM_Selected', 'Burst', 'CWB', False, 1.e-9,
+         ['EM_Selected', 'COMBINEDSKYMAP_READY',
+          'RAVEN_ALERT', 'EM_COINC']],
+     ['label_added', 'EM_SelectedConfident', 'Burst', 'CWB', False, 1.e-9,
          ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
-     ['label_added', 'EM_Selected', 'Burst', 'oLIB', False, 1.e-9,
+     ['label_added', 'EM_SelectedConfident', 'Burst', 'oLIB', False, 1.e-9,
          ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
      ['label_added', 'GCN_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
+         ['H1', 'L1', 'V1'], 'S1234', ['EM_SelectedConfident']],
      ['new', '', 'CBC', 'gstlal', False, 1.e-9, ['H1', 'L1'], 'S1234',
          ['EM_Selected']]])
 def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
@@ -106,7 +107,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             'preferred_event': 'G1234',
             'preferred_event_data': get_event('G1234'),
             'category': "Production",
-            'labels': ['EM_Selected']
+            'labels': ['EM_SelectedConfident']
         }
     }
     if alert['alert_type'] == 'new':
@@ -227,7 +228,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             select_pipeline_preferred_event_task.return_value
         )
 
-    elif label == 'EM_Selected':
+    elif label == 'EM_SelectedConfident':
         annotate_fits.assert_called_once()
         _event_info = get_event('G1234')  # this gets the preferred event info
         assert superevents.should_publish(_event_info)
