@@ -527,8 +527,8 @@ def _unpack_args_and_send_earlywarning_preliminary_alert(input_list, alert):
     earlywarning_preliminary_initial_update_alert.delay(
         [skymap_filename, em_bright_filename, p_astro_filename],
         alert['object'],
-        ('earlywarning' if 'EARLY_WARNING' in alert['object']['labels']
-         else 'preliminary'),
+        ('earlywarning' if superevents.EARLY_WARNING_LABEL in
+         alert['object']['labels'] else 'preliminary'),
         filecontents=[skymap, em_bright, p_astro]
     )
 

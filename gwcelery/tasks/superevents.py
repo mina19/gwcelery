@@ -28,6 +28,10 @@ FROZEN_LABEL = 'EM_Selected'
 """This label indicates that the superevent manager should make no further
 changes to the preferred event."""
 
+EARLY_WARNING_LABEL = 'EARLY_WARNING'
+"""This label indicates that the superevent contains a significant
+early warning event."""
+
 READY_LABEL = 'EM_READY'
 """This label indicates that a preferred event has been assigned and it
 has all data products required to make it ready for annotations."""
@@ -174,7 +178,7 @@ def process(payload):
         gracedb.create_label.delay('ADVREQ', sid)
         if is_complete(event_info):
             if app.conf['preliminary_alert_timeout'] \
-                    and 'EARLY_WARNING' not in event_info['labels']:
+                    and EARLY_WARNING_LABEL not in event_info['labels']:
                 gracedb.create_label.s(FROZEN_LABEL, sid).set(
                     queue='superevent',
                     countdown=app.conf['preliminary_alert_timeout']
@@ -418,7 +422,7 @@ def _should_publish(event):
     the publishability criteria as a tuple for later use.
     """
     group = event['group'].lower()
-    if 'EARLY_WARNING' in event['labels']:
+    if EARLY_WARNING_LABEL in event['labels']:
         far_threshold = app.conf['early_warning_alert_far_threshold']
         trials_factor = app.conf['early_warning_alert_trials_factor']
     else:
