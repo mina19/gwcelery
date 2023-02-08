@@ -187,7 +187,9 @@ def mock_get_superevent(superevent_id):
         old_space_far = None
     return {'time_coinc_far': old_time_far,
             'space_coinc_far': old_space_far,
-            'superevent_id': superevent_id}
+            'superevent_id': superevent_id,
+            'labels': [],
+            'em_type': None}
 
 
 @pytest.mark.parametrize(
@@ -338,8 +340,11 @@ def test_update_superevent(mock_update_superevent,
                            new_time_far, new_space_far,
                            superevent_id,
                            pipeline, result):
-
-    superevent = {'superevent_id': superevent_id}
+    """This function tests that new coincidences update the superevent when
+    they have a superior joint FAR or are a SNEWS event.
+    """
+    superevent = {'superevent_id': superevent_id,
+                  'labels': []}
     ext_event = {'graceid': 'E100',
                  'pipeline': pipeline}
     coinc_far_dict = {'temporal_coinc_far': new_time_far,
@@ -350,6 +355,69 @@ def test_update_superevent(mock_update_superevent,
             superevent_id, em_type='E100',
             time_coinc_far=new_time_far,
             space_coinc_far=new_space_far)
+    else:
+        mock_update_superevent.assert_not_called()
+
+
+def mock_get_event(graceid):
+    if 'E' in graceid:
+        if graceid == "E1":
+            pipeline, search, labels = 'Fermi', 'GRB', []
+        elif graceid == "E2":
+            pipeline, search, labels = 'Fermi', 'GRB', ['NOT_GRB']
+        elif graceid == "E3":
+            pipeline, search, labels = 'SNEWS', 'Supernova', []
+        elif graceid == "E4":
+            pipeline, search, labels = 'Fermi', 'GRB', []
+        return {'superevent_id': graceid.replace('E', 'S'),
+                'graceid': graceid,
+                'pipeline': pipeline,
+                'search': search,
+                'labels': labels}
+    elif 'S' in graceid:
+        return {'em_type': graceid.replace('S', 'E'),
+                'time_coinc_far': 1e-20,
+                'space_coinc_far': 1e-20,
+                'superevent_id': graceid,
+                'labels': ['COMBINEDSKYMAP_READY'] if graceid == 'S4' else []}
+
+
+@pytest.mark.parametrize(
+    'superevent_id,ext_event_id_old,ext_event_id_new,result',
+    # NOT_GRB should not supersede NOT_GRB
+    [['S1', 'E1', 'E2', False],
+     # Real GRB should supersede NOT_GRB
+     ['S2', 'E2', 'E1', True],
+     # SNEWS event should not be overwritten by GRB
+     ['S3', 'E3', 'E1', False]])
+@patch('gwcelery.tasks.gracedb.update_superevent')
+@patch('gwcelery.tasks.gracedb.get_event', mock_get_event)
+@patch('gwcelery.tasks.gracedb.get_superevent', mock_get_event)
+def test_update_superevent_w_emtype(mock_update_superevent,
+                                    superevent_id,
+                                    ext_event_id_old, ext_event_id_new,
+                                    result):
+    """This function tests that new coincidences update the superevent
+    if the new GRB is likely a real GRB and the old is likely not.
+    Also tested is that SNEWS event aren't overwritten by GRBs and locked
+    events are overwritten, denote by the COMBINEDSKYMAP_READY label in the
+    superevent which is applied just before sending an alert.
+    """
+    superevent = mock_get_event(superevent_id)
+    superevent['em_type'] = ext_event_id_old
+    ext_event_new = mock_get_event(ext_event_id_new)
+    ext_event_old = mock_get_event(ext_event_id_old)
+    time_coinc_far = 1e-10 if ext_event_old['labels'] else 1e-20
+    space_coinc_far = 1e-10 if ext_event_old['labels'] else 1e-30
+    coinc_far_dict = {'temporal_coinc_far': time_coinc_far,
+                      'spatiotemporal_coinc_far': space_coinc_far}
+    raven.update_coinc_far(coinc_far_dict, superevent, ext_event_new)
+    if result:
+        mock_update_superevent.assert_called_with(
+            superevent_id,
+            em_type=ext_event_id_new if result else ext_event_id_old,
+            time_coinc_far=time_coinc_far,
+            space_coinc_far=space_coinc_far)
     else:
         mock_update_superevent.assert_not_called()
 

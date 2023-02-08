@@ -265,6 +265,9 @@ def update_coinc_far(coinc_far_dict, superevent, ext_event):
     superevent_id = superevent['superevent_id']
     ext_id = ext_event['graceid']
 
+    #  Get the latest info to prevent race condition
+    superevent_latest = gracedb.get_superevent(superevent_id)
+
     #  Joint FAR isn't computed for SNEWS coincidence
     #  Choose SNEWS coincidence over any other type of coincidence
     if ext_event['pipeline'] == 'SNEWS':
@@ -273,22 +276,41 @@ def update_coinc_far(coinc_far_dict, superevent, ext_event):
                                   space_coinc_far=None)
         return coinc_far_dict
 
-    #  Get the latest info to prevent race condition
-    superevent_f = gracedb.get_superevent(superevent_id)
-
     #  Load needed variables
     infty = float('inf')
     new_time_far = coinc_far_dict['temporal_coinc_far']
     new_space_far = coinc_far_dict['spatiotemporal_coinc_far']
     #  Map None to infinity to make logic easier
     new_space_far_f = new_space_far if new_space_far else infty
-    old_time_far = superevent_f['time_coinc_far']
+    old_time_far = superevent_latest['time_coinc_far']
     old_time_far_f = old_time_far if old_time_far else infty
-    old_space_far = superevent_f['space_coinc_far']
+    old_space_far = superevent_latest['space_coinc_far']
     old_space_far_f = old_space_far if old_space_far else infty
+    is_far_improved = (new_space_far_f < old_space_far_f or
+                       (new_time_far < old_time_far_f and
+                        old_space_far_f == infty))
 
-    if new_space_far_f < old_space_far_f or \
-            (new_time_far < old_time_far_f and old_space_far_f == infty):
+    if superevent_latest['em_type']:
+        #  If previous preferred external event, load to compare
+        emtype_event = gracedb.get_event(superevent_latest['em_type'])
+        #  Don't overwrite SNEWS with GRB event
+        snews_to_grb = \
+            (emtype_event['pipeline'] == 'SNEWS' and
+             ext_event['pipeline'] != 'SNEWS')
+        #  Determine which events are likely real or not
+        is_old_grb_real, is_new_grb_real = \
+            ('NOT_GRB' not in emtype_event['labels'],
+             'NOT_GRB' not in ext_event['labels'])
+        #  Use new event if real
+        is_event_improved = is_new_grb_real
+        #  if both real or both not, use FAR to differentiate
+        if is_old_grb_real == is_new_grb_real:
+            is_event_improved = is_far_improved
+    else:
+        snews_to_grb = False
+        is_event_improved = is_far_improved
+
+    if is_event_improved and not snews_to_grb:
         gracedb.update_superevent(superevent_id, em_type=ext_id,
                                   time_coinc_far=new_time_far,
                                   space_coinc_far=new_space_far)
