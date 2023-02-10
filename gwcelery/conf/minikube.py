@@ -25,8 +25,15 @@ mock_events_simulate_multiple_uploads = False
 """If True, then upload each mock event several times in rapid succession with
 random jitter in order to simulate multiple pipeline uploads."""
 
+kafka_consumer_config = {
+}
+"""Kafka consumer configuration details. The keys describe the senders of the
+messages to be consumed. The values are a dictionary of the URL to listen to
+and information about the message serializer."""
+
 kafka_alert_config = {
     'scimma': {'url': 'kafka://hopskotch-server/igwn.gwalert-minikube',
-               'suffix': 'avro', 'skymap_encoder': lambda _: _}
+               'suffix': 'avro', 'skymap_encoder': lambda _: _,
+               'auth': False}
 }
 """Kafka broker configuration details"""

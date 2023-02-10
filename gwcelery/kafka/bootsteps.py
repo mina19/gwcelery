@@ -66,7 +66,12 @@ class KafkaBase:
     def __init__(self, name, config, prefix):
         self.name = name
         self._config = config
-        self._credential = self.get_auth(prefix)
+        if config.get('auth') is not False:
+            # Users only add auth to config to disable authentication
+            self._credential = self.get_auth(prefix)
+        else:
+            # Dont use credentials
+            self._credential = False
         self._hop_stream = Stream(self._credential)
 
         # FIXME Drop get_payload_content method once
