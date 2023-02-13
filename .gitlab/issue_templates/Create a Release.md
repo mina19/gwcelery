@@ -51,17 +51,20 @@
 17. [ ] Issuing an `ADVOK` signoff through GraceDB results in an initial VOEvent.
 18. [ ] Issuing an `ADVNO` signoff through GraceDB results in a retraction VOEvent.
 19. [ ] Requesting an update alert through the [Flask dashboard](https://emfollow-playground.ligo.caltech.edu/gwcelery) results in an update VOEvent.
-20. [ ] Playground has recently [produced an MDC superevent with an external coincidence](https://gracedb-playground.ligo.org/latest/?query=MDC+EM_COINC&query_type=S), i.e. with a `EM_COINC` label. Use the [Flask dashboard](https://emfollow-playground.ligo.caltech.edu/gwcelery) to do this manually (note that joint events with Swift may not pass publishing conditions).
+20. [ ] Playground has recently [produced an MDC superevent with an external coincidence](https://gracedb-playground.ligo.org/latest/?query=MDC+EM_COINC&query_type=S), i.e. with an `EM_COINC` label. Use the [Flask dashboard](https://emfollow-playground.ligo.caltech.edu/gwcelery) to do this manually (note that joint events with Swift may not pass publishing conditions and or have a combined sky map, indicated by the lack of `RAVEN_ALERT` and `COMBINEDSKYMAP_READY` label respectively).
 21. [ ] The joint MDC superevent has the following annotations.
     - [ ] `coincidence_far.json`
-    - [ ] `bayestar-ext.fits.gz` or `subthreshold.bayestar-ext.fits.gz`
-    - [ ] `bayestar-ext.png` or `subthreshold.bayestar-ext.png`
+    - [ ] `combined-ext.multiorder.fits` or `combined-ext.fits.gz`
+    - [ ] `combined-ext.png`
+    - [ ] `overlap_integral.png`
 22. [ ] The joint MDC superevent has the following labels.
     - [ ] `EM_COINC`
     - [ ] `RAVEN_ALERT`
+    - [ ] `COMBINEDSKYMAP_READY`
     - [ ] `GCN_PRELIM_SENT`
 23. [ ] The joint MDC superevent is sending alerts with coincidence information.
     - [ ] At least one VOEvent with `<Group name="External Coincidence">`.
+    - [ ] At least one Kafka JSON packet with an `external_coinc` field.
     - [ ] At least one circular w/ `-emcoinc-` in filename.
 24. [ ] Issue a manual RAVEN alert using the [Flask dashboard](https://emfollow-playground.ligo.caltech.edu/gwcelery) for a coincidence (i.e. has `EM_COINC` label) that has does not have the `RAVEN_ALERT` label yet. Choose a [recent joint coincidence that meets this criteria](https://gracedb-playground.ligo.org/latest/?query=MDC+%7ERAVEN_ALERT+%26+EM_COINC&query_type=S&get_neighbors=&results_format=) and ensure that a `RAVEN_ALERT` label is applied to the associated superevent, external event, and preferred event.
 
