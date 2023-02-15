@@ -358,13 +358,15 @@ numpy = "*"
 
 [[package]]
 name = "bilby-pipe"
-version = "1.0.8.dev48+g542b546"
+version = "1.0.7"
 description = "Automating the running of bilby for gravitational wave signals"
 category = "main"
 optional = false
 python-versions = ">=3.8"
-files = []
-develop = false
+files = [
+    {file = "bilby_pipe-1.0.7-py3-none-any.whl", hash = "sha256:23d6149c20c252ea74f454c7f5ba46ad2d9ac0558c786d437926be1e39234f3a"},
+    {file = "bilby_pipe-1.0.7.tar.gz", hash = "sha256:c5c855e0bd2122f8aaf28a77ab9da9cdb188f78f0d918394e58d58ced21e34ac"},
+]
 
 [package.dependencies]
 astropy = "*"
@@ -385,12 +387,6 @@ python-ligo-lw = ">=1.8.0"
 scipy = ">=1.2.0"
 seaborn = "*"
 tqdm = "*"
-
-[package.source]
-type = "git"
-url = "https://git.ligo.org/lscsoft/bilby_pipe"
-reference = "master"
-resolved_reference = "542b5466e1fc03be39f0d6e23ce374b3413f1c7f"
 
 [[package]]
 name = "billiard"
