@@ -1,5 +1,5 @@
 import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 
 from flask import get_flashed_messages, url_for
 from requests.exceptions import HTTPError
@@ -291,3 +291,56 @@ def test_download_upload_external_skymap(client, monkeypatch):
     mock_get_upload_external_skymap.assert_called_once_with(
             {'graceid': 'E12345', 'search': 'FromURL'},
             skymap_link='https://url.fits.gz')
+
+
+def test_apply_raven_labels(client, monkeypatch):
+    """Test assigning a RAVEN alert."""
+    mock_create_label = Mock()
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.create_label.run',
+        mock_create_label)
+    response = client.post(url_for('apply_raven_labels'), data={
+        'superevent_id': 'MS190208a',
+        'ext_id': 'E12345',
+        'event_id': 'G54321'})
+    assert HTTP_STATUS_CODES[response.status_code] == 'Found'
+    mock_create_label.assert_has_calls(
+        [call('RAVEN_ALERT', 'MS190208a'),
+         call('RAVEN_ALERT', 'E12345'),
+         call('RAVEN_ALERT', 'G54321')]
+    )
+
+
+def test_apply_raven_labels_no_data(client, monkeypatch):
+    """Test assigning a RAVEN alert."""
+    response = client.post(url_for('apply_raven_labels'))
+    assert HTTP_STATUS_CODES[response.status_code] == 'Found'
+    assert get_flashed_messages() == [
+        'No alert sent. Please fill in all fields.']
+
+
+def test_send_mock_event(client, monkeypatch):
+    """Test creating a mock event."""
+    mock_first2years_upload = Mock()
+    monkeypatch.setattr(
+        'gwcelery.tasks.first2years.upload_event.run',
+        mock_first2years_upload)
+    response = client.post(url_for('send_mock_event'))
+    assert HTTP_STATUS_CODES[response.status_code] == 'Found'
+    mock_first2years_upload.assert_called_once()
+
+
+def test_send_mock_joint_event(client, monkeypatch):
+    """Test creating a joint mock event."""
+    mock_first2years_upload = Mock(return_value=100.)
+    mock_handle_grb_gcn = Mock()
+    monkeypatch.setattr(
+        'gwcelery.tasks.first2years.upload_event.run',
+        mock_first2years_upload)
+    monkeypatch.setattr(
+        'gwcelery.tasks.external_triggers.handle_grb_gcn',
+        mock_handle_grb_gcn)
+    response = client.post(url_for('send_mock_joint_event'))
+    assert HTTP_STATUS_CODES[response.status_code] == 'Found'
+    mock_first2years_upload.assert_called_once()
+    mock_handle_grb_gcn.assert_called_once()

@@ -11,6 +11,9 @@ Changelog
 -   Filter external events based on ``External`` group in ``superevents.py``,
     instead of logic based on substring matching.
 
+-   Increase test coverage for views.py and fix manual mock coincidence
+    injections.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 
