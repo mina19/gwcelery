@@ -300,7 +300,7 @@ def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
                 'queue': 'Online_PE'}
 
     if mode == 'fast_bns':
-        setup_arg += ['--cbc-likelihood-mode', 'lowspin_phenomd_narrowmc_roq']
+        # TODO: add cbc likelihood mode here once bilby_pipe is released
         settings.update(
             {'sampler_kwargs': {'nact': 3, 'nlive': 500, 'npool': 24},
              'n_parallel': 2,

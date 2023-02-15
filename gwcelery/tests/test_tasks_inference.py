@@ -187,10 +187,6 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, mode):
         if mode == 'fast_test':
             assert 'o3replay' in cmd and 'FastTest' in cmd
 
-        if mode == 'fast_bns':
-            assert '--cbc-likelihood-mode' in cmd and \
-                'lowspin_phenomd_narrowmc_roq' in cmd
-
         assert cmd[2] == os.path.join(
             app.conf['pe_results_path'], sid, 'bilby')
 
