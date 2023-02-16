@@ -1,35 +1,48 @@
 Changelog
 =========
 
-2.0.3 (unreleased)
+2.0.3 "Ugly Merman" (2023-02-16)
 ------------------
--   Updated ligo.em-bright to version 1.1.0
 
--   BAYESTAR now uses the PSDs included in the ``coinc.xml`` file for all pipelines.
+-   Require bilby_pipe>=1.0.7.
 
--   Allow alerts (using multi-order skymaps) for burst events.
+-   Require matplotlib<3.7 to fix bleeding edge dependencies tests.
 
--   Add the ability to use multi-order GW sky maps to create combined sky maps
-    and include these in alerts. The presence of the COMBINEDSKYMAP_READY label
+-   Use multi-order GW sky maps to produce combined sky maps and add combined
+    sky maps to alerts alerts. The presence of the `COMBINEDSKYMAP_READY` label
     indicates the combined sky map is now available in that external event or
-    superevent. We will only copy a combined sky map to the superevent when
-    sending an alert once if the preferred external event has one available.
+    superevent. Only copy a combined sky map to the superevent when sending an
+    alert if the preferred external event has one available.
+
+-   Resurrect unit test `test_handle_superevent`.
+
+-   Make igwn alert listener retry all non-fatal errors. This
+    should be revisited once https://github.com/astronomy-commons/adc-streaming/issues/54
+    is resolved.
+
+-   Add `EARLY_WARNING_LABEL` symbol to superevents.py.
+
+-   Remove subthreshold annotations from orchestrator canvases.
+
+-   Fix race condition of multiple instances of the RAVEN pipeline by
+    polling the superevent state before updating joint FAR.
+
+-   Adjust PE event directory permissions.
+
+-   Test SoG pipeline with MDC events.
+
+-   Update ligo.em-bright to version 1.1.0.
+
+-   Update BAYESTAR task to use PSD in ``coinc.xml`` file for all pipelines.
+
+-   Convert cWB fits files to multiorder format if not already in the
+    multiorder format.
 
 -   Don't compute p-astro for PyCBC/AllSky because it now computes
     and uploads its own.
 
 -   Don't try to download psd.xml.gz in online PE, as it is no longer uploaded
     by any search pipelines.
-
--   Allow SoG pipeline to be tested with MDC events.
-
--   Fix race condition of multiple instances of the RAVEN pipeline by
-    including a GraceDB poll of the superevent state before updating joint
-    FAR.
-
--   Make igwn alert listener retry all non-fatal errors. This
-    should be revisited once https://github.com/astronomy-commons/adc-streaming/issues/54
-    is resolved.
 
 2.0.2 "Flying Icarus" (2022-12-23)
 ----------------------------------
