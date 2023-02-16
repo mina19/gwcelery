@@ -36,7 +36,7 @@ def ifo_h1(monkeypatch):
 @pytest.fixture
 def ifo_h1_idq(monkeypatch):
     monkeypatch.setitem(
-        app.conf, 'idq_channels', ['H1:IDQ-PGLITCH_OVL_32_2048'])
+        app.conf, 'idq_channels', ['H1:IDQ-FAP_OVL_32_2048'])
 
 
 @pytest.fixture
@@ -113,11 +113,11 @@ def test_omegascan_skips_ew(caplog):
 
 
 def test_check_idq(llhoft_glob_pass):
-    channel = 'H1:IDQ-PGLITCH_OVL_32_2048'
+    channel = 'H1:IDQ-FAP_OVL_32_2048'
     start, end = 1216577976, 1216577980
     cache = detchar.create_cache('H1', start, end)
     assert detchar.check_idq(cache, channel, start, end) == (
-        'H1:IDQ-PGLITCH_OVL_32_2048', 0)
+        'H1:IDQ-FAP_OVL_32_2048', 1)
 
 
 @patch('time.strftime', return_value='00:00:00 UTC Mon 01 Jan 2000')
@@ -227,11 +227,11 @@ def test_check_vectors(mock_create_label, mock_remove_label, mock_upload,
             ['data_quality']),
         call(
             None, None, 'S12345a',
-            ('iDQ glitch probabilities at both H1 and L1'
-             ' are good (below {} threshold). '
-             'Maximum p(glitch) is "H1:IDQ-PGLITCH_OVL_32_2048": 0.0. '
+            ('iDQ false alarm probabilities at both H1 and L1'
+             ' are good (above {} threshold). '
+             'Minimum FAP is "H1:IDQ-FAP_OVL_32_2048": 1.0. '
              'Check looked within -1.5/+1.5 seconds of superevent. ').format(
-                 app.conf['idq_pglitch_thresh']),
+                 app.conf['idq_fap_thresh']),
             ['data_quality']),
         call(
             '"dqrjson"', 'gwcelerydetcharcheckvectors-S12345a.json', 'S12345a',

@@ -207,12 +207,12 @@ llhoft_channels = {
 """Low-latency h(t) state vector configuration. This is a dictionary consisting
 of a channel and its bitmask, as defined in :mod:`gwcelery.tasks.detchar`."""
 
-idq_channels = ['H1:IDQ-PGLITCH_OVL_16_4096',
-                'L1:IDQ-PGLITCH_OVL_16_4096']
-"""Low-latency iDQ p(glitch) channel names from O3 replay."""
+idq_channels = ['H1:IDQ-FAP_OVL_16_4096',
+                'L1:IDQ-FAP_OVL_16_4096']
+"""Low-latency iDQ false alarm probability channel names from O3 replay."""
 
-idq_pglitch_thresh = 0.95
-"""If P(Glitch) is above this threshold, and
+idq_fap_thresh = 0.01
+"""If FAP is below this threshold, and
 :obj:`~gwcelery.conf.idq_veto` for the pipeline is true, DQV will be labeled
 for the event.
 """
@@ -230,8 +230,8 @@ idq_veto = {'gstlal': False,
             'INTEGRAL': False,
             'AGILE': False,
             'SNEWS': False}
-"""If true for a pipeline, iDQ values above the threshold defined in
-:obj:`~gwcelery.conf.idq_pglitch.thres` will cause DQV to be labeled.
+"""If true for a pipeline, iDQ values below the threshold defined in
+:obj:`~gwcelery.conf.idq_fap_thresh` will cause DQV to be labeled.
 Currently all False, pending iDQ review (should be done before O3).
 """
 

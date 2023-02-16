@@ -266,27 +266,27 @@ def check_idq(cache, channel, start, end):
     cache : :class:`glue.lal.Cache`
         Cache from which to check.
     channel : str
-        which idq channel (pglitch)
+        which idq channel (FAP)
     start, end: int or float
         GPS start and end times desired.
 
     Returns
     -------
     tuple
-        Tuple mapping iDQ channel to its maximum P(glitch).
+        Tuple mapping iDQ channel to its minimum FAP.
 
     Example
     -------
-    >>> check_idq(cache, 'H1:IDQ-PGLITCH-OVL-100-1000',
+    >>> check_idq(cache, 'H1:IDQ-FAP_OVL_100_1000',
                   1216496260, 1216496262)
-    ('H1:IDQ-PGLITCH-OVL-100-1000', 0.87)
+    ('H1:IDQ-FAP_OVL_100_1000', 0.003)
 
     """
     if cache:
         try:
-            idq_prob = TimeSeries.read(
+            idq_fap = TimeSeries.read(
                 cache, channel, start=start, end=end)
-            return (channel, float(idq_prob.max().value))
+            return (channel, float(idq_fap.min().value))
         except (IndexError, RuntimeError):
             # FIXME: Change from log.exception to log.warning until this fixed,
             # because it's saturating Sentry.
@@ -458,18 +458,18 @@ def check_vectors(event, graceid, start, end):
                          if key.split(':')[0] in instruments}
 
     # Check iDQ states
-    idq_probs = dict(check_idq(caches[channel.split(':')[0]],
-                               channel, start, end)
-                     for channel in app.conf['idq_channels'])
+    idq_faps = dict(check_idq(caches[channel.split(':')[0]],
+                    channel, start, end)
+                    for channel in app.conf['idq_channels'])
 
     # Logging iDQ to GraceDB
-    if None not in idq_probs.values():
-        idq_probs_readable = {k: round(v, 3) for k, v in idq_probs.items()}
-        if max(idq_probs.values()) >= app.conf['idq_pglitch_thresh']:
-            idq_msg = ("iDQ glitch probability is high: "
-                       "maximum p(glitch) is {}. ").format(
-                json.dumps(idq_probs_readable)[1:-1])
-            # If iDQ p(glitch) is high and pipeline enabled, apply DQV
+    if None not in idq_faps.values():
+        idq_faps_readable = {k: round(v, 3) for k, v in idq_faps.items()}
+        if max(idq_faps.values()) <= app.conf['idq_fap_thresh']:
+            idq_msg = ("iDQ false alarm probability is low: "
+                       "minimum FAP is {}. ").format(
+                json.dumps(idq_faps_readable)[1:-1])
+            # If iDQ FAP is low and pipeline enabled, apply DQV
             if app.conf['idq_veto'][pipeline]:
                 gracedb.remove_label('DQOK', graceid)
                 gracedb.create_label('DQV', graceid)
@@ -480,13 +480,13 @@ def check_vectors(event, graceid, start, end):
                 except ValueError:  # not in list
                     pass
         else:
-            idq_msg = ("iDQ glitch probabilities at both H1 and L1 "
-                       "are good (below {} threshold). "
-                       "Maximum p(glitch) is {}. ").format(
-                           app.conf['idq_pglitch_thresh'],
-                           json.dumps(idq_probs_readable)[1:-1])
+            idq_msg = ("iDQ false alarm probabilities at both H1 and L1 "
+                       "are good (above {} threshold). "
+                       "Minimum FAP is {}. ").format(
+                           app.conf['idq_fap_thresh'],
+                           json.dumps(idq_faps_readable)[1:-1])
     else:
-        idq_msg = "iDQ glitch probabilities unknown. "
+        idq_msg = "iDQ false alarm probabilities unknown. "
     gracedb.upload.delay(
         None, None, graceid, idq_msg + prepost_msg, ['data_quality'])
 

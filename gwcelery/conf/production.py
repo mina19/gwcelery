@@ -58,9 +58,9 @@ high_latency_frame_types = {'H1': 'H1_HOFT_C00',
 checks (see :mod:`gwcelery.tasks.detchar`).
 """
 
-idq_channels = ['H1:IDQ-PGLITCH_OVL_16_4096',
-                'L1:IDQ-PGLITCH_OVL_16_4096']
-"""Low-latency iDQ p(glitch) channel names from live O3 frames"""
+idq_channels = ['H1:IDQ-FAP_OVL_16_4096',
+                'L1:IDQ-FAP_OVL_16_4096']
+"""Low-latency iDQ false alarm probability channel names from live O3 frames"""
 
 strain_channel_names = {'H1': 'H1:GDS-CALIB_STRAIN_CLEAN',
                         'L1': 'L1:GDS-CALIB_STRAIN_CLEAN',
