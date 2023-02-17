@@ -1,8 +1,16 @@
 Changelog
 =========
 
-2.0.3 "Ugly Merman" (2023-02-16)
+2.0.4 (unreleased)
 ------------------
+
+-   Add dashboard button to download sky map from a URL and upload to an
+    external event.
+
+-   Set pipeline preferred events.
+
+2.0.3 "Ugly Merman" (2023-02-16)
+--------------------------------
 
 -   Require bilby_pipe>=1.0.7.
 
