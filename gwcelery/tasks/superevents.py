@@ -180,13 +180,7 @@ def process(payload):
     if should_publish(event_info, significant=True):
         gracedb.create_label.delay('ADVREQ', sid)
         if is_complete(event_info):
-            if app.conf['preliminary_alert_timeout'] \
-                    and EARLY_WARNING_LABEL not in event_info['labels']:
-                gracedb.create_label.s(SIGNIFICANT_LABEL, sid).set(
-                    queue='superevent',
-                    countdown=app.conf['preliminary_alert_timeout']
-                ).delay()
-            elif EARLY_WARNING_LABEL in event_info['labels']:
+            if EARLY_WARNING_LABEL in event_info['labels']:
                 gracedb.create_label(EARLY_WARNING_LABEL, sid)
             else:  # fast path if no countdown
                 gracedb.create_label(SIGNIFICANT_LABEL, sid)

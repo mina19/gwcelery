@@ -9,6 +9,9 @@ Changelog
 
 -   Set pipeline preferred events.
 
+-   Remove the ``prelimimary_alert_timeout`` variable and workflow, since the
+    value is set to zero, and the pathway is no longer used.
+
 2.0.3 "Ugly Merman" (2023-02-16)
 --------------------------------
 
