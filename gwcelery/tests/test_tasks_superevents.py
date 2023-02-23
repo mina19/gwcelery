@@ -634,7 +634,7 @@ def test_parse_trigger_cbc_4():
 
 def test_parse_trigger_cbc_5():
     """New trigger G000002 is complete, with no intersecting superevent,
-    passes subhthreshold far, but not significant far. New superevent
+    passes less-significant far, but not significant far. New superevent
     should be created, and labeled EM_Selected."""
     event_dictionary = {'graceid': 'G000002',
                         'gpstime': 1286741861.52678,
@@ -824,7 +824,7 @@ def test_parse_trigger_burst_4():
 
 
 def test_parse_trigger_burst_5():
-    """New subthreshold oLIB trigger, which is complete, no intersecting
+    """New less-significant oLIB trigger, which is complete, no intersecting
     superevent. New superevent created and labeled EM_Selected.
     """
     event_dictionary = {'graceid': 'G000007',

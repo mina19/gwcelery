@@ -383,6 +383,7 @@ def test_handle_superevent_initial_alert(mock_create_initial_circular,
         'data': {'name': 'ADVOK'},
         'object': {
             'labels': labels,
+            'category': 'Production',
             'superevent_id': superevent_id,
             'em_type': ext_id if labels else ''}
     }
@@ -455,6 +456,7 @@ def test_handle_superevent_retraction_alert(mock_create_retraction_circular,
         'data': {'name': 'ADVNO'},
         'object': {
             'labels': [],
+            'category': 'Production',
             'superevent_id': 'S1234'
         }
     }

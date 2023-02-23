@@ -48,16 +48,19 @@ factors in order to resolve any ties:
      function :meth:`~gwcelery.tasks.superevents.is_complete`,
      for sending an automated public alert?
 
-2.   **Public FAR threshold**: Does the false alarm rate pass the false alarm
+2.   **Less-significant FAR threshold**: Does the false alarm rate pass the false alarm
      rate threshold mentioned in :obj:`~gwcelery.conf.preliminary_alert_far_threshold`?
 
-3.   **Search group**: Is it a CBC event or a burst event? CBC events takes
+3.   **Significant FAR threshold**: Does the false alarm rate pass the false alarm
+     rate threshold mentioned in :obj:`~gwcelery.conf.significant_alert_far_threshold`?
+
+4.   **Search group**: Is it a CBC event or a burst event? CBC events take
      precedence.
 
-4.   **Number of detectors**: How many detectors contributed data to the event?
+5.   **Number of detectors**: How many detectors contributed data to the event?
      For CBC events, events with triggers from more detectors take precedence.
 
-5.   **Significance**: For CBC events, which has the highest SNR? For burst
+6.   **Significance**: For CBC events, which has the highest SNR? For burst
      events, which has the lowest FAR?
 
 The selection of the preferred event from a pair of events is illustrated by
@@ -82,8 +85,13 @@ the decision tree below.
         target = "_top"
     ]
 
-    far_differs [
-        label = "Does only\none event pass \n public FAR\nthreshold?"
+    significant_far_differs [
+        label = "Does only\none event pass \n significant FAR\nthreshold?"
+        shape = diamond
+    ]
+
+    less_significant_far_differs [
+        label = "Does only\none event pass \n less-significant FAR\nthreshold?"
         shape = diamond
     ]
 
@@ -92,7 +100,11 @@ the decision tree below.
         shape = diamond
     ]
 
-    far_decides [
+    significant_far_decides [
+        label = "Select the\npublishable\nevent"
+    ]
+
+    less_significant_far_decides [
         label = "Select the\npublishable\nevent"
     ]
 
@@ -132,9 +144,11 @@ the decision tree below.
     ]
 
     completeness_differs -> completeness_decides [label = Yes]
-    completeness_differs -> far_differs[label = No]
-    far_differs -> far_decides [label = Yes]
-    far_differs -> group_differs [label = No]
+    completeness_differs -> significant_far_differs[label = No]
+    significant_far_differs -> significant_far_decides [label = Yes]
+    significant_far_differs -> less_significant_far_differs [label = No]
+    less_significant_far_differs -> group_differs [label = No]
+    less_significant_far_differs -> less_significant_far_decides [label = Yes]
     group_differs -> group_decides [label = Yes]
     group_differs -> which_group [label = No]
     which_group -> detectors_differ [label = CBC]
@@ -149,11 +163,13 @@ the decision tree below.
     ``EM_READY`` label is applied to the superevent.
 
     The preferred event is frozen once an event candidate passing the
-    public false alarm rate threshold is added to the superevent.
+    less-significant false alarm rate threshold is added to the superevent.
     This is denoted by the application of the ``EM_Selected`` label
-    on the superevent.
+    on the superevent. If the event instead passes the significant
+    false alarm rate threshold, the ``EM_SelectedConfident`` label
+    gets applied. All ``EM_SelectedConfident`` events are ``EM_Selected``.
 
-    When the preliminary alert has been dispatched to the GCN broker, the
+    When the first significant preliminary alert has been dispatched to the GCN broker, the
     ``GCN_PRELIM_SENT`` label is applied to the superevent which is used
     to revise the preferred event and launch a second preliminary alert.
 

@@ -68,19 +68,37 @@ def handle_superevent(alert):
 
     elif alert['alert_type'] == 'label_added':
         label_name = alert['data']['name']
+        query = f'superevent: {superevent_id} group: CBC Burst'
+        if alert['object']['category'] == 'MDC':
+            query += ' MDC'
+        elif alert['object']['category'] == 'Test':
+            query += ' Test'
+
         if label_name == superevents.SIGNIFICANT_LABEL:
+            # ensure superevent is locked before starting alert workflow
+            if superevents.FROZEN_LABEL not in alert['object']['labels']:
+                gracedb.create_label(superevents.FROZEN_LABEL, superevent_id)
+
             (
-                gracedb.upload.s(
-                    None,
-                    None,
+                gracedb.get_events.si(query)
+                |
+                superevents.select_preferred_event.s()
+                |
+                _update_superevent_and_return_event_dict.s(superevent_id)
+                |
+                _leave_log_message_and_return_event_dict.s(
                     superevent_id,
-                    "Automated DQ check before sending preliminary alert. "
+                    "Superevent cleaned up after significant event. "
+                )
+                |
+                _leave_log_message_and_return_event_dict.s(
+                    superevent_id,
+                    "Automated DQ check before sending significant alert. "
                     "New results supersede old results.",
                     tags=['data_quality']
                 )
                 |
-                detchar.check_vectors.si(
-                    alert['object']['preferred_event_data'],
+                detchar.check_vectors.s(
                     superevent_id,
                     alert['object']['t_start'],
                     alert['object']['t_end']
@@ -91,11 +109,6 @@ def handle_superevent(alert):
 
         # launch second preliminary on GCN_PRELIM_SENT
         elif label_name == 'GCN_PRELIM_SENT':
-            query = f'superevent: {superevent_id} group: CBC Burst'
-            if alert['object']['category'] == 'MDC':
-                query += ' MDC'
-            elif alert['object']['category'] == 'Test':
-                query += ' Test'
 
             (
                 identity.si().set(

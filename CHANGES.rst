@@ -16,6 +16,12 @@ Changelog
 
 -   Use more production-like settings in online bilby PE for MDC triggers.
 
+-   Clean up the superevent before sending significant alert.
+
+-   Explicitly rank publishability of significant events higher than less-significant
+    events ones in ``superevents.keyfunc`` since these are two distinct categories
+    of alerts.
+
 2.0.3 "Ugly Merman" (2023-02-16)
 --------------------------------
 

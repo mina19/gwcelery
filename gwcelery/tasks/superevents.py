@@ -182,7 +182,7 @@ def process(payload):
         if is_complete(event_info):
             if EARLY_WARNING_LABEL in event_info['labels']:
                 gracedb.create_label(EARLY_WARNING_LABEL, sid)
-            else:  # fast path if no countdown
+            else:
                 gracedb.create_label(SIGNIFICANT_LABEL, sid)
 
     if should_publish(event_info, significant=False):
@@ -508,16 +508,30 @@ def keyfunc(event):
     if group == 'cbc':
         group_rank = 1
         n_ifos = len(get_instruments(event))
-        significance = get_snr(event)
+        snr_or_far_ranking = get_snr(event)
     else:
         # We don't care about the number of detectors for burst events.
         n_ifos = -1
         # Smaller FAR -> higher IFAR -> more significant.
         # Use -FAR instead of IFAR=1/FAR so that rank for FAR=0 is defined.
-        significance = -event['far']
+        snr_or_far_ranking = -event['far']
 
-    return (is_complete(event), *_should_publish(event), group_rank, n_ifos,
-            significance)
+    # Conditions that determine choice of the preferred event
+    # event completeness comes first
+    # then, publishability criteria for significant events
+    # then, publishability criteria for less-significant events
+    # then, CBC group is given higher priority over Burst
+    # then, prioritize more number of detectors
+    # finally, use SNR (FAR) between two CBC (Burst) events
+    # See https://rtd.igwn.org/projects/gwcelery/en/latest/gwcelery.tasks.superevents.html#selection-of-the-preferred-event  # noqa: E501
+    return (
+        is_complete(event),
+        *_should_publish(event, significant=True),
+        *_should_publish(event, significant=False),
+        group_rank,
+        n_ifos,
+        snr_or_far_ranking
+    )
 
 
 def _update_superevent(superevent_id, new_event_dict,
