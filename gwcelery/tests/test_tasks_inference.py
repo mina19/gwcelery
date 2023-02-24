@@ -1,4 +1,5 @@
 import configparser
+from itertools import product
 import os
 import subprocess
 
@@ -174,18 +175,24 @@ def test_setup_dag_for_lalinference(monkeypatch, tmp_path):
 
 
 @pytest.mark.parametrize(
-    'mode', ['production', 'fast_bns', 'fast_test'])
-def test_setup_dag_for_bilby(monkeypatch, tmp_path, mode):
+    "host,mode",
+    product(
+        ['gracedb-playground.ligo.org', 'gracedb.ligo.org'],
+        ['fast_test', 'quick_bns', 'production']
+    )
+)
+def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode):
     psd = b'psd'
     rundir = str(tmp_path)
     event = {'gpstime': 1187008882, 'graceid': 'G1234'}
     sid = 'S1234'
     ini = 'bilby configuration ini file'
     dag = 'bilby dag'
+    monkeypatch.setitem(app.conf, 'gracedb_host', host)
 
     def _subprocess_run(cmd, **kwargs):
-        if mode == 'fast_test':
-            assert 'o3replay' in cmd and 'FastTest' in cmd
+        if host != 'gracedb.ligo.org':
+            assert 'o3replay' in cmd
 
         assert cmd[2] == os.path.join(
             app.conf['pe_results_path'], sid, 'bilby')
@@ -209,12 +216,19 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, mode):
                                        'no_ligo_skymap': True},
             'queue': 'Online_PE'
         }
-        if mode == 'fast_bns':
+        if mode == 'quick_bns':
             ans.update(
                 {'sampler_kwargs': {'nact': 3, 'nlive': 500, 'npool': 24},
-                 'n_parallel': 2,
+                 'n_parallel': 1,
                  'request_cpus': 24,
                  'request_memory_generation': 8.0}
+            )
+        elif mode == 'fast_test':
+            ans.update(
+                {'sampler_kwargs': {'nact': 5, 'nlive': 500, 'npool': 24},
+                 'n_parallel': 1,
+                 'request_cpus': 24,
+                 'spline_calibration_nodes': 4}
             )
         with open(path_to_settings, 'r') as f:
             assert json.load(f) == ans
@@ -239,6 +253,14 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, mode):
     with open(path_to_dag, 'r') as f:
         assert f.read() == dag
     upload.assert_called_once()
+
+
+def test_setup_dag_for_bilby_unknown_mode(tmp_path):
+    with pytest.raises(ValueError):
+        inference._setup_dag_for_bilby(
+            b'psd', str(tmp_path),
+            {'gpstime': 1187008882, 'graceid': 'G1234'}, 'S1234', 'unknown'
+        )
 
 
 def test_setup_dag_for_rapidpe(monkeypatch, tmp_path):

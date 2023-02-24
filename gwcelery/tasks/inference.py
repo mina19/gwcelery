@@ -278,6 +278,11 @@ def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
     path_to_dag : str
         The path to the .dag file
 
+    Notes
+    -----
+    `--channel-dict o3replay` is added to bilby_pipe_gracedb arguments when the
+    gracedb host is different from `gracedb.ligo.org`.
+
     """
     path_to_json = os.path.join(rundir, 'event.json')
     with open(path_to_json, 'w') as f:
@@ -295,21 +300,29 @@ def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
     setup_arg = ['bilby_pipe_gracedb', '--webdir', path_to_webdir,
                  '--outdir', rundir, '--json', path_to_json,
                  '--psd-file', path_to_psd, '--settings', path_to_settings]
+    if app.conf['gracedb_host'] != 'gracedb.ligo.org':
+        setup_arg += ['--channel-dict', 'o3replay']
     settings = {'summarypages_arguments': {'gracedb': event['graceid'],
                                            'no_ligo_skymap': True},
                 'queue': 'Online_PE'}
 
-    if mode == 'fast_bns':
+    if mode == 'quick_bns':
         # TODO: add cbc likelihood mode here once bilby_pipe is released
         settings.update(
             {'sampler_kwargs': {'nact': 3, 'nlive': 500, 'npool': 24},
-             'n_parallel': 2,
+             'n_parallel': 1,
              'request_cpus': 24,
              'request_memory_generation': 8.0}
         )
     elif mode == 'fast_test':
-        setup_arg += ['--channel-dict', 'o3replay',
-                      '--sampler-kwargs', 'FastTest']
+        settings.update(
+            {'sampler_kwargs': {'nact': 5, 'nlive': 500, 'npool': 24},
+             'n_parallel': 1,
+             'request_cpus': 24,
+             'spline_calibration_nodes': 4}
+        )
+    elif mode != 'production':
+        raise ValueError(f"mode: {mode} not recognized.")
 
     with open(path_to_settings, 'w') as f:
         json.dump(settings, f, indent=2)
@@ -759,7 +772,7 @@ def start_pe(frametype_dict, event, superevent_id, pe_pipeline):
         modes = [app.conf['bilby_default_mode']]
         # add quick-bns mode if chirp mass is lower than that of 3Msun-3Msun
         if event['extra_attributes']['CoincInspiral']['mchirp'] < 2.62:
-            modes += ['quick-bns']
+            modes += ['quick_bns']
         rundirs = [os.path.join(event_dir, m) for m in modes]
         kwargs_list = [{'bilby_mode': m} for m in modes]
         analyses = [f'{m} bilby' for m in modes]

@@ -353,7 +353,7 @@ joint_mdc_freq = 2
 MDC superevent to test the RAVEN alert pipeline, i.e for every x
 MDC superevents an external MDC event is created."""
 
-bilby_default_mode = 'fast-test'
+bilby_default_mode = 'fast_test'
 """Sampling mode of bilby"""
 
 condor_retry_kwargs = dict(

@@ -12,6 +12,10 @@ Changelog
 -   Remove the ``prelimimary_alert_timeout`` variable and workflow, since the
     value is set to zero, and the pathway is no longer used.
 
+-   Fix bugs in online bilby PE.
+
+-   Use more production-like settings in online bilby PE for MDC triggers.
+
 2.0.3 "Ugly Merman" (2023-02-16)
 --------------------------------
 
