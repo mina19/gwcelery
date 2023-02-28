@@ -40,21 +40,30 @@ personal credentials obtained from the `LSC DataGrid Client`_ by running
 days or whenever your machine's temporary directory is wiped (e.g., at system
 restart).
 
-For production deployment, you should `obtain a robot certificate`_ and store
-it in a location such as ``~/.globus/userkey.pem`` and
-``~/.globus/usercert.pem``.
+For production deployment using continuous deployment mentioned above,
+authentication is done via `kerberos keytabs`_. Keytabs can be
+`requested here`_.
 
 .. rubric:: IGWN Alert
 
 You must provide a valid username and password for :doc:`IGWN Alert <igwn-alert:index>`. You can request an
 account using the `SCiMMA Auth portal`_. To get started, see :doc:`IGWN Alert Userguide <igwn-alert:guide>`.
-The IGWN Alert username and password should be stored in your `netrc file`_.
+The IGWN Alert username and password should be stored in ``auth.toml``. See instructions provided by
+`hop client`_. The same credentials can be used to publish to the ``igwn.gwalert`` topic.
+
+.. rubric:: GCN
+
+To publish alerts to the ``igwn.gwalert`` topic of `GCN kafka broker`_, you need to provide username and password
+for GCN in the same auth file as above. The authentication mechanism uses Open ID connect and requires
+the ``token_endpoint`` URL.
+
 
 .. _`LSC DataGrid Client`: https://www.lsc-group.phys.uwm.edu/lscdatagrid/doc/installclient.html
-.. _`obtain a robot certificate`: https://robots.ligo.org
+.. _`requested here`: https://robots.ligo.org
+.. _`kerberos keytabs`: https://computing.docs.ligo.org/guide/auth/kerberos/
 .. _`SCiMMA Auth portal`: https://my.hop.scimma.org/
-.. _`netrc file`: https://www.gnu.org/software/inetutils/manual/html_node/The-_002enetrc-file.html
-
+.. _`hop client`: https://hop-client.readthedocs.io/en/latest/user/auth.html
+.. _`GCN kafka broker`: https://gcn.nasa.gov/
 .. _redis-configuration:
 
 Redis
