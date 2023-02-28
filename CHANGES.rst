@@ -49,6 +49,8 @@ Changelog
     are preferred over those likely not to be real, and SNEWS events won't be
     overwritten by GRBs.
 
+-   Update external coincidence to update circulars.
+
 -   Update bilby to 2.0.0 and bilby_pipe to 1.0.8. Use ROQ bases dedicated for
     BNS mass region for low-mass signal. Switch to acceptance-walk method for
     dynesty sampling, and use naccept=10, nlive=500, and nparallel=2 for

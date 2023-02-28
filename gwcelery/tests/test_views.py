@@ -154,20 +154,24 @@ def test_send_update_gcn_circular_post_no_data(client):
 
 
 @pytest.mark.parametrize(
-     'sky_loc,em_bright,p_astro,answer',
-     [["True", None, None, ['sky_localization']],
-      [None, "True", "True", ['em_bright', 'p_astro']],
-      ["True", "True", "True", ['sky_localization', 'em_bright', 'p_astro']]])
+     'sky_loc,em_bright,p_astro,raven,answer',
+     [["True", None, None, None, ['sky_localization']],
+      [None, "True", "True", None, ['em_bright', 'p_astro']],
+      [None, None, None, "True", ['raven']],
+      ["True", "True", "True", "True",
+       ['sky_localization', 'em_bright', 'p_astro', 'raven']]])
 @patch('gwcelery.tasks.circulars.create_update_circular', return_value='')
 def test_send_update_gcn_circular_post(mock_create_circular,
-                                       sky_loc, em_bright, p_astro, answer,
+                                       sky_loc, em_bright, p_astro, raven,
+                                       answer,
                                        client):
     """Test send_update_gcn_circular endpoint with complete form data."""
     response = client.post(url_for('create_update_gcn_circular'), data={
         'superevent_id': 'MS190208a',
         'sky_localization': sky_loc,
         'em_bright': em_bright,
-        'p_astro': p_astro})
+        'p_astro': p_astro,
+        'raven': raven})
 
     assert HTTP_STATUS_CODES[response.status_code] == 'OK'
     mock_create_circular.assert_called_once_with(

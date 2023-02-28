@@ -1,3 +1,4 @@
+import pytest
 from unittest.mock import Mock
 
 from ..tasks import circulars
@@ -30,6 +31,26 @@ def test_create_emcoinc_circular(monkeypatch):
     circulars.create_emcoinc_circular(superevent_id)
     mock_compose_emcoinc_circular.assert_called_once_with(
         'S1234', client=gracedb.client)
+
+
+@pytest.mark.parametrize(
+     'update_types',
+     [['sky_localization', 'em_bright', 'p_astro'],
+      ['sky_localization', 'em_bright', 'p_astro', 'raven'],
+      ['raven']])
+def test_create_update_circular(monkeypatch, update_types):
+    """Test that the compose update circulars method is called with the
+    correct input parameters.
+    """
+    superevent_id = 'S1234'
+    mock_compose_update_circular = Mock()
+    monkeypatch.setattr('ligo.followup_advocate.compose_update',
+                        mock_compose_update_circular)
+
+    # call create_emcoinc_circular
+    circulars.create_update_circular(superevent_id, update_types=update_types)
+    mock_compose_update_circular.assert_called_once_with(
+        'S1234', client=gracedb.client, update_types=update_types)
 
 
 def test_create_retraction_circular(monkeypatch):

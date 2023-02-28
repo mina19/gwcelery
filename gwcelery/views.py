@@ -294,7 +294,7 @@ def send_update_gcn():
 @app.route('/create_update_gcn_circular', methods=['POST'])
 def create_update_gcn_circular():
     """Handle submission of GCN Circular form."""
-    keys = ['sky_localization', 'em_bright', 'p_astro']
+    keys = ['sky_localization', 'em_bright', 'p_astro', 'raven']
     superevent_id = request.form.get('superevent_id')
     updates = [key for key in keys if request.form.get(key)]
     if superevent_id and updates:
