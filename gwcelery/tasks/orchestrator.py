@@ -600,24 +600,20 @@ def earlywarning_preliminary_alert(event, alert, annotation_prefix='',
     5.   Apply the GCN_PRELIM_SENT label to the superevent.
     6.   Create and upload a GCN Circular draft.
     """
-    priority = 0 if superevents.should_publish(
-        alert['object']['preferred_event_data']) else 1
+    priority = 0 if superevents.should_publish(event) else 1
     preferred_event_id = event['graceid']
     superevent_id = alert['uid']
 
-    if alert['object']['preferred_event_data']['group'] == 'CBC':
+    if event['group'] == 'CBC':
         skymap_filename = 'bayestar.multiorder.fits'
-    elif alert['object']['preferred_event_data']['group'] == 'Burst':
+        p_astro_filename = event['pipeline'].lower() + '.p_astro.json'
+    elif event['group'] == 'Burst':
         skymap_filename = event['pipeline'].lower() + '.multiorder.fits'
+        p_astro_filename = None
     else:
         raise NotImplementedError(
             'Valid skymap required for preliminary alert'
         )
-
-    if event['group'] == 'CBC':
-        p_astro_filename = event['pipeline'].lower() + '.p_astro.json'
-    else:
-        p_astro_filename = None
 
     # Determine if the event should be made public.
     is_publishable = (superevents.should_publish(
