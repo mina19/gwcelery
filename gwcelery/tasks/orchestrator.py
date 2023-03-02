@@ -735,8 +735,8 @@ def parameter_estimation(far_event, superevent_id):
     uploads messages explaining why parameter estimation is not started.
     """
     far, event = far_event
-    threshold = (app.conf['preliminary_alert_far_threshold']['cbc'] /
-                 app.conf['preliminary_alert_trials_factor']['cbc'])
+    threshold = (app.conf['significant_alert_far_threshold']['cbc'] /
+                 app.conf['significant_alert_trials_factor']['cbc'])
     if far > threshold:
         gracedb.upload.delay(
             filecontents=None, filename=None,

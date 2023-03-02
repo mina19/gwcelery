@@ -650,8 +650,8 @@ def test_parameter_estimation(monkeypatch, far, event):
     orchestrator.parameter_estimation.delay(
         far_event=(far, event), superevent_id=superevent_id)
 
-    threshold = (app.conf['preliminary_alert_far_threshold']['cbc'] /
-                 app.conf['preliminary_alert_trials_factor']['cbc'])
+    threshold = (app.conf['significant_alert_far_threshold']['cbc'] /
+                 app.conf['significant_alert_trials_factor']['cbc'])
     if (
         far <= threshold and event['group'] == 'CBC' and
         event['search'] != 'MDC'
