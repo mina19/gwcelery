@@ -9,9 +9,6 @@ sentry_environment = 'playground'
 <https://docs.sentry.io/enriching-error-data/environments/>`_ in Sentry log
 messages."""
 
-early_warning_alert_far_threshold = float('inf')
-"""False alarm rate threshold for early warning alerts."""
-
 mock_events_simulate_multiple_uploads = True
 """If True, then upload each mock event several times in rapid succession with
 random jitter in order to simulate multiple pipeline uploads."""

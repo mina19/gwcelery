@@ -22,6 +22,8 @@ Changelog
     events ones in ``superevents.keyfunc`` since these are two distinct categories
     of alerts.
 
+-   Remove infinite far threshold for earlywarning alerts for playground configuration.
+
 2.0.3 "Ugly Merman" (2023-02-16)
 --------------------------------
 
