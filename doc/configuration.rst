@@ -50,6 +50,29 @@ You must provide a valid username and password for :doc:`IGWN Alert <igwn-alert:
 account using the `SCiMMA Auth portal`_. To get started, see :doc:`IGWN Alert Userguide <igwn-alert:guide>`.
 The IGWN Alert username and password should be stored in your `netrc file`_.
 
+.. rubric:: Kafka
+
+You must provide a file named ``kafka_credential_map.json`` that maps
+deployment specific usernames for Kafka credentials to the logical names given
+in the configuration files. This file should be saved in the GWCelery XDG
+config directory (``${HOME}/.config/gwcelery/`` by default on many Linux and
+UNIX-like operating systems). An example file can be seen below::
+
+    {
+        "consumer": {
+            "fermi": "user_one",
+            "swift": "user_two"
+        },
+        "producer": {
+            "gcn": "user_one",
+            "scimma": "user_three"
+        }
+    }
+
+Note that one user can be specified multiple times. ``hop auth`` must have
+information about each user specified in this file. Every Kafka producer and
+consumer configuration key must have an entry in this file.
+
 .. _`LSC DataGrid Client`: https://www.lsc-group.phys.uwm.edu/lscdatagrid/doc/installclient.html
 .. _`obtain a robot certificate`: https://robots.ligo.org
 .. _`SCiMMA Auth portal`: https://my.hop.scimma.org/

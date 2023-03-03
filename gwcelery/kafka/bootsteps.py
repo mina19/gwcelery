@@ -1,18 +1,22 @@
 from functools import cache
+import json
+from os import path
+from threading import Thread
 
 from celery import bootsteps
 from celery.concurrency import solo
 from celery.utils.log import get_logger
 from confluent_kafka.error import KafkaException
 from fastavro.schema import parse_schema
-from hop import stream
+from hop import auth, Stream
 from hop.io import list_topics
 from hop.models import AvroBlob, JSONBlob
+from xdg.BaseDirectory import xdg_config_home
 
+from .signals import kafka_record_consumed
 from ..util import read_json
 
-
-__all__ = ('Producer',)
+__all__ = ('Producer', 'Consumer')
 
 log = get_logger(__name__)
 
@@ -41,37 +45,102 @@ def schema():
     return schema
 
 
+def _load_hopauth_map():
+    hop_auth = auth.load_auth()
+    with open(path.join(xdg_config_home,
+                        'gwcelery/kafka_credential_map.json'),
+              'r') as fo:
+        kafka_credential_map = json.load(fo)
+
+    return hop_auth, kafka_credential_map
+
+
 class AvroBlobWrapper(AvroBlob):
 
     def __init__(self, payload):
         return super().__init__([payload], schema())
 
 
-class KafkaWriter:
-    '''Class to write to kafka stream and monitor stream health.'''
+class KafkaBase:
 
-    def __init__(self, config):
+    def __init__(self, name, config, prefix):
+        self.name = name
         self._config = config
-        self._open_hop_stream = stream.open(
+        self._hop_stream = Stream(auth=self.get_auth(prefix))
+
+        # FIXME Drop get_payload_content method once
+        # https://github.com/scimma/hop-client/pull/190 is merged
+        if config['suffix'] == 'avro':
+            self.serialization_model = AvroBlobWrapper
+            self.get_payload_content = lambda payload: payload.content[0]
+        elif config['suffix'] == 'json':
+            self.serialization_model = JSONBlob
+            self.get_payload_content = lambda payload: payload.content
+        else:
+            raise NotImplementedError(
+                'Supported serialization method required for alert notices'
+            )
+
+    def get_auth(self, prefix):
+        hop_auth, kafka_credential_map = _load_hopauth_map()
+
+        # kafka_credential_map contains map between logical name for broker
+        # topic and username
+        username = kafka_credential_map.get(prefix, {}).get(self.name)
+        if username is None:
+            raise ValueError('Unable to find {} entry in kafka credential map '
+                             'for {}'.format(prefix, self.name))
+
+        # hop auth contains map between username and password/hostname
+        target_auth = None
+        for cred in hop_auth:
+            if cred.username != username:
+                continue
+            target_auth = cred
+            break
+        else:
+            raise ValueError('Unable to find entry in hop auth file for '
+                             'username {}'.format(username))
+        return target_auth
+
+
+class KafkaListener(KafkaBase):
+
+    def __init__(self, name, config):
+        super().__init__(name, config, 'consumer')
+        self._open_hop_stream = None
+        # Don't kill worker if listener can't connect
+        try:
+            self._open_hop_stream = self._hop_stream.open(config['url'], 'r')
+        except KafkaException:
+            log.exception('Connection to %s failed', self._config["url"])
+        except ValueError:
+            # Hop client will return a ValueError if the topic doesn't exist on
+            # the broker
+            log.exception('Connection to %s failed', self._config["url"])
+
+    def listen(self):
+        for message in self._open_hop_stream:
+            # Send signal
+            kafka_record_consumed.send(
+                None,
+                name=self.name,
+                record=self.get_payload_output(message)
+            )
+
+
+class KafkaWriter(KafkaBase):
+    """Write Kafka topics and monitor health."""
+
+    def __init__(self, name, config):
+        super().__init__(name, config, 'producer')
+        self._open_hop_stream = self._hop_stream.open(
             config['url'], 'w',
             message_max_bytes=1024 * 1024 * 2,
             compression_type='zstd')
 
         # Set up flag for failed delivery of messages
         self.kafka_delivery_failures = False
-
-        # FIXME Drop get_payload_input method once
-        # https://github.com/scimma/hop-client/pull/190 is merged
-        if config['suffix'] == 'avro':
-            self.serialization_model = AvroBlobWrapper
-            self.get_payload_input = lambda payload: payload.content[0]
-        elif config['suffix'] == 'json':
-            self.serialization_model = JSONBlob
-            self.get_payload_input = lambda payload: payload.content
-        else:
-            raise NotImplementedError(
-                'Supported serialization method required for alert notices'
-            )
 
     def kafka_topic_up(self):
         '''Check for problems in broker and topic. Returns True is broker and
@@ -129,15 +198,47 @@ class KafkaBootStep(bootsteps.ConsumerStep):
                 'The Kafka broker only works with the "solo" task pool. '
                 'Start the worker with "--queues=kafka --pool=solo".')
 
+
+class Consumer(KafkaBootStep):
+    """Run MOU Kafka consumers in background threads.
+    """
+
+    name = 'Kafka consumer'
+
     def start(self, consumer):
         log.info(f'Starting {self.name}, topics: ' +
                  ' '.join(config['url'] for config in
-                          consumer.app.conf['kafka_alert_config'].values()))
+                          consumer.app.conf['kafka_consumer_config'].values()))
+        self._listeners = {
+            key: KafkaListener(key, config) for key, config in
+            consumer.app.conf['kafka_consumer_config'].items()
+        }
+        self.threads = [
+            Thread(target=s.listen, name=f'{key}_KafkaConsumerThread') for key,
+            s in self._listeners.items() if s._open_hop_stream is not None
+        ]
+        for thread in self.threads:
+            thread.start()
 
     def stop(self, consumer):
         log.info('Closing connection to topics: ' +
-                 ' '.join(config['url'] for config in
-                          consumer.app.conf['kafka_alert_config'].values()))
+                 ' '.join(listener._config['url'] for listener in
+                          self._listeners.values() if listener._open_hop_stream
+                          is not None))
+        for s in self._listeners.values():
+            if s._open_hop_stream is not None:
+                s._open_hop_stream.close()
+
+        for thread in self.threads:
+            thread.join()
+
+    def info(self, consumer):
+        return {
+            'active_kafka_consumers': {listener.name for listener in
+                                       self._listeners.values() if
+                                       listener._open_hop_stream is not
+                                       None}
+        }
 
 
 class Producer(KafkaBootStep):
@@ -152,21 +253,25 @@ class Producer(KafkaBootStep):
     name = 'Kafka producer'
 
     def start(self, consumer):
-        super().start(consumer)
+        log.info(f'Starting {self.name}, topics: ' +
+                 ' '.join(config['url'] for config in
+                          consumer.app.conf['kafka_alert_config'].values()))
         consumer.app.conf['kafka_streams'] = self._writers = {
-            brokerhost: KafkaWriter(config) for brokerhost, config in
-            consumer.app.conf['kafka_alert_config'].items()
+            brokerhost: KafkaWriter(brokerhost, config) for brokerhost, config
+            in consumer.app.conf['kafka_alert_config'].items()
         }
 
     def stop(self, consumer):
-        super().stop(consumer)
+        log.info('Closing connection to topics: ' +
+                 ' '.join(config['url'] for config in
+                          consumer.app.conf['kafka_alert_config'].values()))
         for s in self._writers.values():
             s._open_hop_stream.close()
 
     def info(self, consumer):
         return {'kafka_topic_up': {
-                    brokerhost: writer.kafka_topic_up() for brokerhost, writer
-                    in self._writers.items()
+                    brokerhost: writer.kafka_topic_up() for brokerhost,
+                    writer in self._writers.items()
                 },
                 'kafka_delivery_failures': {
                     brokerhost: writer.kafka_delivery_failures for

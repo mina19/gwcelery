@@ -36,16 +36,25 @@ def test_nagios(capsys, monkeypatch, request, socket_enabled, starter,
     mock_hop_stream_object = Mock()
     mock_hop_stream_object.configure_mock(**{'close.return_value': None})
     mock_hop_stream = Mock(return_value=mock_hop_stream_object)
+    mock_get_auth = Mock()
     mock_list_topics = Mock()
     unix_socket = str(tmp_path / 'redis.sock')
     broker_url = f'redis+socket://{unix_socket}'
 
     monkeypatch.setattr('hop.io.Stream.open', mock_hop_stream)
     monkeypatch.setattr('igwn_alert.client', mock_igwn_alert_client)
+    monkeypatch.setattr('gwcelery.kafka.bootsteps.KafkaBase.get_auth',
+                        mock_get_auth)
     monkeypatch.setattr('gwcelery.kafka.bootsteps.list_topics',
                         mock_list_topics)
     monkeypatch.setitem(app.conf, 'broker_url', broker_url)
     monkeypatch.setitem(app.conf, 'result_backend', broker_url)
+    monkeypatch.setitem(app.conf, 'kafka_consumer_config', {
+        'swift': {
+            'url': 'kafka://kafka.gcn.nasa.gov/swift.bat.guano',
+            'suffix': 'json'
+        }
+    })
 
     # no broker
 
@@ -189,7 +198,32 @@ def test_nagios(capsys, monkeypatch, request, socket_enabled, starter,
                                     True},
                                    'kafka_delivery_failures':
                                    {'kafka://kafka.scimma.org/gwalert-test':
-                                    False}}}))  # noqa: E501
+                                    False},
+                                   'active_kafka_consumers': set()}}))
+
+    with pytest.raises(SystemExit) as excinfo:
+        main(['gwcelery', 'nagios'])
+    assert excinfo.value.code == nagios.NagiosPluginStatus.CRITICAL
+    out, err = capsys.readouterr()
+    assert 'CRITICAL: Not all Kafka consumer bootstep topics are active' \
+           in out
+
+    expected_kafka_consumer_topics = \
+        nagios.get_expected_kafka_consumer_bootstep_names(app)
+    monkeypatch.setattr(
+        'celery.app.control.Inspect.stats',
+        Mock(return_value={'foo': {'voevent-broker-peers': ['127.0.0.1'],
+                                   'voevent-receiver-peers': ['127.0.0.1'],
+                                   'igwn-alert-topics':
+                                   expected_igwn_alert_topics,
+                                   'kafka_topic_up':
+                                   {'kafka://kafka.scimma.org/gwalert-test':
+                                    True},
+                                   'kafka_delivery_failures':
+                                   {'kafka://kafka.scimma.org/gwalert-test':
+                                    False},
+                                   'active_kafka_consumers':
+                                   expected_kafka_consumer_topics}}))
 
     with pytest.raises(SystemExit) as excinfo:
         main(['gwcelery', 'nagios'])

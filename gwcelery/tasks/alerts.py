@@ -6,9 +6,47 @@ from celery.utils.log import get_logger
 import numpy as np
 
 from ..import app
+from .core import DispatchHandler
 from . import gracedb
+from ..kafka.signals import kafka_record_consumed
 
 log = get_logger(__name__)
+
+
+class _KafkaDispatchHandler(DispatchHandler):
+
+    def process_args(self, name, record):
+        return name, (record,), {}
+
+
+handler = _KafkaDispatchHandler()
+r"""Function decorator to register a handler callback for specified Kafka URLs.
+The decorated function is turned into a Celery task, which will be
+automatically called whenever a message is received from a matching URL.
+
+Parameters
+----------
+\*keys
+    List of keys from :obj:`gwcelery.conf.kafka_consumer_config`
+    associated with Kafka topics to listen to messages to.
+\*\*kwargs
+    Additional keyword arguments for :meth:`celery.Celery.task`.
+
+Examples
+--------
+Declare a new handler like this::
+
+    # Assumes kafka_consumer_config dictionary has 'fermi_swift' key
+    @alerts.handler('fermi_swift')
+    def handle_swift(record):
+        # record is a dict that contains the contents of the message
+        # do work here...
+"""
+
+
+@kafka_record_consumed.connect
+def _on_kafka_record_consumed(name, record, **kwargs):
+    handler.dispatch(name, record)
 
 
 def _create_base_alert_dict(classification, superevent, alert_type):
@@ -136,9 +174,9 @@ def _upload_notice(self, payload, brokerhost, superevent_id):
     config = self.app.conf['kafka_alert_config'][brokerhost]
     kafka_writer = self.app.conf['kafka_streams'][brokerhost]
 
-    # FIXME Drop get_payload_input method once
+    # FIXME Drop get_payload_content method once
     # https://github.com/scimma/hop-client/pull/190 is merged
-    alert_dict = kafka_writer.get_payload_input(payload)
+    alert_dict = kafka_writer.get_payload_content(payload)
     message = 'Kafka alert notice sent to {}'.format(config['url'])
 
     filename = '{}-{}.{}'.format(

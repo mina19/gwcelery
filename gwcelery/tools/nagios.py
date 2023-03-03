@@ -83,6 +83,19 @@ def get_undelivered_message_urls(inspector):
     return undelievered_messages
 
 
+def get_active_kafka_consumer_bootstep_names(inspector):
+    stats = inspector.stats()
+    active_kafka_consumer_urls = {consumer for stat in stats.values() for
+                                  consumer in stat.get(
+                                      'active_kafka_consumers', ()
+                                  )}
+    return active_kafka_consumer_urls
+
+
+def get_expected_kafka_consumer_bootstep_names(app):
+    return {name for name in app.conf['kafka_consumer_config'].keys()}
+
+
 def get_celery_queue_length(app):
     return app.backend.client.llen("celery")
 
@@ -147,6 +160,14 @@ def check_status(app):
         raise NagiosCriticalError(
             'Tasks are piled up in Celery queue') from AssertionError(
                 'Length of celery queue is {}'.format(celery_queue_length))
+
+    active = get_active_kafka_consumer_bootstep_names(inspector)
+    expected = get_expected_kafka_consumer_bootstep_names(app)
+    missing = expected - active
+    if missing:
+        raise NagiosCriticalError('Not all Kafka consumer bootstep topics are '
+                                  'active') \
+            from AssertionError('Missing urls: ' + ', '.join(missing))
 
 
 @click.command(help=__doc__)

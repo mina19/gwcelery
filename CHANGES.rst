@@ -16,6 +16,8 @@ Changelog
 -   Retry GCN circular creation upon 408 or 409 errors, likely due to AWS
     issues for GraceDB.
 
+-   Add Kafka consumer bootstep.
+
 2.0.5 "Mothman" (2023-04-20)
 ----------------------------
 

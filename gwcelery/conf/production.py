@@ -33,6 +33,16 @@ kafka_alert_config = {
 }
 """Kafka broker configuration details"""
 
+kafka_consumer_config = {
+    'fermi': {'url': 'kafka://kafka.gcn.nasa.gov/fermi.gbm.targeted.private',
+              'suffix': 'json'},
+    'swift': {'url': 'kafka://kafka.gcn.nasa.gov/swift.bat.guano',
+              'suffix': 'json'}
+}
+"""Kafka consumer configuration details. The keys describe the senders of the
+messages to be consumed. The values are a dictionary of the URL to listen to
+and information about the message serializer."""
+
 voevent_broadcaster_address = ':5341'
 """The VOEvent broker will bind to this address to send GCNs.
 This should be a string of the form `host:port`. If `host` is empty,
