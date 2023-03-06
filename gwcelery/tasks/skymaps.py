@@ -184,8 +184,9 @@ def skymap_from_samples(samplefilecontents):
     with NamedTemporaryFile(content=samplefilecontents) as samplefile, \
             tempfile.TemporaryDirectory() as tmpdir, \
             handling_system_exit():
-        ligo_skymap_from_samples.main(
-            ['-j', '-o', tmpdir, samplefile.name])
+        ligo_skymap_from_samples.main([
+            '-j', '--seed', '150914', '--maxpts', '5000', '-o', tmpdir,
+            samplefile.name])
         with open(os.path.join(tmpdir, 'skymap.fits'), 'rb') as f:
             return f.read()
 

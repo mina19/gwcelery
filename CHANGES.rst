@@ -51,6 +51,10 @@ Changelog
     quick-BNS run, and naccept=20, nlive=1000, and nparallel=2 for the other
     runs.
 
+-   Adjust arguments for ``ligo-skymap-from-samples``: set the random seed to
+    make the results reproducible and set the maximum number of points to limit
+    run time.
+
 2.0.3 "Ugly Merman" (2023-02-16)
 --------------------------------
 

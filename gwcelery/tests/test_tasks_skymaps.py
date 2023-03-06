@@ -125,6 +125,8 @@ def test_skymap_from_samples(toy_3d_fits_filecontents):
     def mock_skymap_from_samples(args):
         parser = argparse.ArgumentParser()
         parser.add_argument('--outdir', '-o', default='.')
+        parser.add_argument('--maxpts', type=int)
+        parser.add_argument('--seed', type=int)
         parser.add_argument('--fitsoutname', default='skymap.fits')
         parser.add_argument('samples')
         parser.add_argument('--jobs', '-j', action='store_true')
