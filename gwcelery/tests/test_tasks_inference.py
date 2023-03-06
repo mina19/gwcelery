@@ -175,16 +175,18 @@ def test_setup_dag_for_lalinference(monkeypatch, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "host,mode",
+    "host,mode,mc",
     product(
         ['gracedb-playground.ligo.org', 'gracedb.ligo.org'],
-        ['fast_test', 'quick_bns', 'production']
+        ['fast_test', 'quick_bns', 'production'],
+        [10, 3, 1]
     )
 )
-def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode):
+def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
     psd = b'psd'
     rundir = str(tmp_path)
-    event = {'gpstime': 1187008882, 'graceid': 'G1234'}
+    event = {'gpstime': 1187008882, 'graceid': 'G1234',
+             'extra_attributes': {'CoincInspiral': {'mchirp': mc}}}
     sid = 'S1234'
     ini = 'bilby configuration ini file'
     dag = 'bilby dag'
@@ -218,15 +220,20 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode):
         }
         if mode == 'quick_bns':
             ans.update(
-                {'sampler_kwargs': {'nact': 3, 'nlive': 500, 'npool': 24},
-                 'n_parallel': 1,
+                {'sampler_kwargs': {'naccept': 10, 'nlive': 500,
+                                    'npool': 24, 'sample': 'acceptance-walk'},
+                 'n_parallel': 2,
                  'request_cpus': 24,
+                 'spline_calibration_nodes': 4,
                  'request_memory_generation': 8.0}
             )
         elif mode == 'fast_test':
+            if mc < 3.9:
+                ans['request_memory_generation'] = 8.0
             ans.update(
-                {'sampler_kwargs': {'nact': 5, 'nlive': 500, 'npool': 24},
-                 'n_parallel': 1,
+                {'sampler_kwargs': {'naccept': 20, 'nlive': 1000,
+                                    'npool': 24, 'sample': 'acceptance-walk'},
+                 'n_parallel': 2,
                  'request_cpus': 24,
                  'spline_calibration_nodes': 4}
             )

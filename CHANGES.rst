@@ -45,6 +45,12 @@ Changelog
 -   Fix collation of INTEGRAL notices by getting the GCN ID from the IVORN
     field.
 
+-   Update bilby to 2.0.0 and bilby_pipe to 1.0.8. Use ROQ bases dedicated for
+    BNS mass region for low-mass signal. Switch to acceptance-walk method for
+    dynesty sampling, and use naccept=10, nlive=500, and nparallel=2 for
+    quick-BNS run, and naccept=20, nlive=1000, and nparallel=2 for the other
+    runs.
+
 2.0.3 "Ugly Merman" (2023-02-16)
 --------------------------------
 

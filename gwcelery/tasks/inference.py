@@ -307,17 +307,28 @@ def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
                 'queue': 'Online_PE'}
 
     if mode == 'quick_bns':
-        # TODO: add cbc likelihood mode here once bilby_pipe is released
+        setup_arg += ['--cbc-likelihood-mode', 'lowspin_phenomd_narrowmc_roq']
         settings.update(
-            {'sampler_kwargs': {'nact': 3, 'nlive': 500, 'npool': 24},
-             'n_parallel': 1,
+            {'sampler_kwargs': {'naccept': 10, 'nlive': 500,
+                                'npool': 24, 'sample': 'acceptance-walk'},
+             'n_parallel': 2,
              'request_cpus': 24,
+             'spline_calibration_nodes': 4,
              'request_memory_generation': 8.0}
         )
     elif mode == 'fast_test':
+        # use pv2_nrtidalv2 below chirp mass of m1=3Msun, m2=1Msun
+        if event['extra_attributes']['CoincInspiral']['mchirp'] < 1.465:
+            setup_arg += ['--cbc-likelihood-mode', 'phenompv2nrtidalv2_roq']
+            settings['request_memory_generation'] = 8.0
+        # use bns-mass pv2 basis for chirp mass range where it is available
+        elif event['extra_attributes']['CoincInspiral']['mchirp'] < 3.9:
+            setup_arg += ['--cbc-likelihood-mode', 'phenompv2_bns_roq']
+            settings['request_memory_generation'] = 8.0
         settings.update(
-            {'sampler_kwargs': {'nact': 5, 'nlive': 500, 'npool': 24},
-             'n_parallel': 1,
+            {'sampler_kwargs': {'naccept': 20, 'nlive': 1000,
+                                'npool': 24, 'sample': 'acceptance-walk'},
+             'n_parallel': 2,
              'request_cpus': 24,
              'spline_calibration_nodes': 4}
         )

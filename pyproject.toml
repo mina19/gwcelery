@@ -54,7 +54,8 @@ include = [
 python = "^3.8,<3.11"
 adc-streaming = ">=2.2.0"  # https://github.com/astronomy-commons/adc-streaming/pull/58
 astropy = ">=4.3.1"  # https://github.com/astropy/astropy/issues/11879
-bilby-pipe = ">=1.0.7"
+bilby = ">=2.0.0"
+bilby-pipe = ">=1.0.8"
 celery = {version = ">=5.1", extras = ["redis"]}
 click = ">=7"
 comet = "*"
