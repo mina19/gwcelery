@@ -16,6 +16,8 @@ Changelog
 
 -   Bump ligo.em-bright version to v1.1.1.
 
+-   Also update the preferred external event when issuing a manual RAVEN alert.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 

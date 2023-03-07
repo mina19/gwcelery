@@ -327,14 +327,38 @@ def download_upload_external_skymap():
     return redirect(url_for('index'))
 
 
+@celery_app.task(queue='exttrig',
+                 shared=False)
+def _update_preferred_external_event(ext_event, superevent_id):
+    """Update preferred external event to given external event."""
+    # FIXME: Consider consolidating with raven.update_coinc_far by using
+    # a single function in superevents.py
+    if ext_event['search'] in {'GRB', 'SubGRB', 'SubGRBTargeted'}:
+        coinc_far_dict = gracedb.download(
+            'coincidence_far.json', ext_event['graceid'])
+        time_coinc_far = coinc_far_dict['temporal_coinc_far']
+        space_coinc_far = coinc_far_dict['spatiotemporal_coinc_far']
+    else:
+        time_coinc_far = None
+        space_coinc_far = None
+    gracedb.update_superevent(superevent_id, em_type=ext_event['graceid'],
+                              time_coinc_far=time_coinc_far,
+                              space_coinc_far=space_coinc_far)
+
+
 @app.route('/apply_raven_labels', methods=['POST'])
 def apply_raven_labels():
-    """Applying RAVEN alert label for the missed coincident alerts."""
+    """Applying RAVEN alert label and update the preferred external event
+    to the given coincidence."""
     keys = ('superevent_id', 'ext_id', 'event_id')
     superevent_id, ext_id, event_id, *_ = tuple(request.form.get(key)
                                                 for key in keys)
     if superevent_id and ext_id and event_id:
         (
+                gracedb.get_event.si(ext_id)
+                |
+                _update_preferred_external_event.s(superevent_id)
+                |
                 gracedb.create_label.si('RAVEN_ALERT', superevent_id)
                 |
                 gracedb.create_label.si('RAVEN_ALERT', ext_id)

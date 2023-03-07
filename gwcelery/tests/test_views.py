@@ -293,12 +293,36 @@ def test_download_upload_external_skymap(client, monkeypatch):
             skymap_link='https://url.fits.gz')
 
 
-def test_apply_raven_labels(client, monkeypatch):
-    """Test assigning a RAVEN alert."""
+@pytest.mark.parametrize('search,time_far,space_far', [
+    ('GRB', 1e-6, 1e-8),
+    ('SNEWS', None, None)
+])
+def test_apply_raven_labels(search, time_far, space_far,
+                            client, monkeypatch):
+    """Test assigning RAVEN alert labels and update the preferred
+    external event."""
     mock_create_label = Mock()
+    mock_gracedb_download = Mock(return_value={
+        'temporal_coinc_far': time_far,
+        'spatiotemporal_coinc_far': space_far
+    })
+    mock_update_superevent = Mock()
+    mock_get_event = Mock(return_value={
+        'graceid': 'E12345',
+        'search': search
+    })
     monkeypatch.setattr(
         'gwcelery.tasks.gracedb.create_label.run',
         mock_create_label)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.download',
+        mock_gracedb_download)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.update_superevent',
+        mock_update_superevent)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.get_event.run',
+        mock_get_event)
     response = client.post(url_for('apply_raven_labels'), data={
         'superevent_id': 'MS190208a',
         'ext_id': 'E12345',
@@ -308,6 +332,10 @@ def test_apply_raven_labels(client, monkeypatch):
         [call('RAVEN_ALERT', 'MS190208a'),
          call('RAVEN_ALERT', 'E12345'),
          call('RAVEN_ALERT', 'G54321')]
+    )
+    mock_update_superevent.assert_called_once_with(
+        'MS190208a', em_type='E12345',
+        time_coinc_far=time_far, space_coinc_far=space_far
     )
 
 
