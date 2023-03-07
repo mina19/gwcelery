@@ -273,7 +273,7 @@ def test_handle_create_skymap_label_from_superevent(mock_create_label,
                          ['Fermi', 'Swift'])
 @patch('gwcelery.tasks.raven.raven_pipeline.run')
 @patch('gwcelery.tasks.external_skymaps.create_combined_skymap.run')
-@patch('gwcelery.tasks.gracedb.get_superevent',
+@patch('gwcelery.tasks.gracedb.get_superevent.run',
        return_value={
            'superevent_id': 'S1234',
            'preferred_event': 'G1234',
@@ -302,11 +302,11 @@ def test_handle_skymaps_ready(mock_get_superevent,
                        }
              }
     external_triggers.handle_grb_igwn_alert(alert)
-    mock_raven_pipeline.assert_called_once_with([alert['object']], 'S1234',
-                                                {'superevent_id': 'S1234',
-                                                 'preferred_event': 'G1234',
-                                                 'preferred_event_data':
-                                                     {'group': 'CBC'}},
+    mock_raven_pipeline.assert_called_once_with([{'superevent_id': 'S1234',
+                                                  'preferred_event': 'G1234',
+                                                  'preferred_event_data':
+                                                      {'group': 'CBC'}}],
+                                                'E1212', alert['object'],
                                                 -5, 1, 'CBC')
     if pipeline != 'Swift':
         mock_create_combined_skymap.assert_called_once_with(
@@ -352,6 +352,81 @@ def test_handle_label_removed(mock_get_superevent,
         coinc_far_dict, superevent, alert['uid'],
         alert['object'], 'CBC'
     )
+
+
+def _mock_get_event(graceid):
+    if graceid == 'E1':
+        pipeline = 'Fermi'
+    elif graceid == 'E2':
+        pipeline = 'Swift'
+    return {'graceid': graceid,
+            'pipeline': pipeline,
+            'search': 'GRB',
+            'superevent': 'S1',
+            'labels': ['EM_COINC', 'SKYMAP_READY', 'EXT_SKYMAP_READY']}
+
+
+def _mock_get_superevent(graceid):
+    return {'superevent_id': 'S1',
+            'preferred_event_data':
+                {'group': 'CBC'},
+            'em_events': ['E1', 'E2'],
+            'em_type': 'E1',
+            'far': 1e-5,
+            'labels': ['COMBINEDSKYMAP_READY', 'RAVEN_ALERT',
+                       'EM_COINC', 'GCN_PRELIM_SENT']}
+
+
+@pytest.mark.parametrize('graceid',
+                         ['S1', 'E1', 'E2'])
+@patch('gwcelery.tasks.raven.raven_pipeline.run')
+@patch('gwcelery.tasks.external_skymaps.create_combined_skymap.run')
+@patch('gwcelery.tasks.gracedb.get_event', _mock_get_event)
+@patch('gwcelery.tasks.gracedb.get_superevent.run', _mock_get_superevent)
+def test_handle_rerun_combined_skymap(mock_create_combined_skymap,
+                                      mock_raven_pipeline,
+                                      graceid):
+    """This tests re-creating a combined sky map and rerunning the RAVEN
+    pipeline whenever a new GW or external skymap is added after sending the
+    first alert (and likely after creating the first combined skymap). For
+    superevents (S1), this tests this is run for all related em_events. Note
+    the combined sky map is not required for Swift (E2) since these are
+    produced in this case."""
+    event = (_mock_get_superevent(graceid) if 'S' in graceid else
+             _mock_get_event(graceid))
+    alert = {
+        "data": {"filename": ("skymap.multiorder.fits" if 'S' in graceid
+                              else 'fermi_skymap.fits.gz'),
+                 "file_version": 1},
+        "uid": graceid,
+        "alert_type": "log",
+        "object": event
+    }
+    external_triggers.handle_grb_igwn_alert(alert)
+    if graceid in {'S1', 'E1'}:
+        mock_create_combined_skymap.assert_called_once_with(
+            'S1', 'E1')
+    else:
+        mock_create_combined_skymap.assert_not_called()
+    if 'S' in graceid:
+        calls = [
+            call(
+                [_mock_get_event('E1')],
+                graceid, event,
+                -1, 5, 'CBC'),
+            call(
+                [_mock_get_event('E2')],
+                graceid, event,
+                -1, 5, 'CBC')
+        ]
+    else:
+        calls = [
+            call(
+                [_mock_get_superevent('S1')],
+                graceid, event,
+                -5, 1, 'CBC')
+        ]
+    mock_raven_pipeline.assert_has_calls(calls)
 
 
 @pytest.mark.parametrize('labels',

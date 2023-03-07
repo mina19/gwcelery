@@ -17,6 +17,7 @@ log = get_logger(__name__)
 
 REQUIRED_LABELS_BY_TASK = {
     'compare': {'SKYMAP_READY', 'EXT_SKYMAP_READY', 'EM_COINC'},
+    'combine': {'RAVEN_ALERT'},
     'SoG': {'SKYMAP_READY', 'RAVEN_ALERT', 'ADVOK'}
 }
 """These labels should be present on an external event to consider it to
@@ -316,27 +317,12 @@ def handle_grb_igwn_alert(alert):
                               'compare'):
             # if both sky maps present and a coincidence, rreun RAVEN
             # pipeline and create combined sky maps
-            event = alert['object']
+            ext_event = alert['object']
             superevent_id, ext_id = _get_superevent_ext_ids(
-                graceid, event)
+                graceid, ext_event)
             superevent = gracedb.get_superevent(superevent_id)
-            gw_group = superevent['preferred_event_data']['group']
-            tl, th = raven._time_window(graceid, gw_group,
-                                        [event['pipeline']],
-                                        [event['search']])
-            # FIXME: both overlap integral and combined sky map could be
-            # done by the same function since they are so similar
-            group_canvas = ()
-            group_canvas += raven.raven_pipeline.si(
-                                [event], superevent_id,
-                                superevent, tl, th, gw_group),
-            # Swift localizations are incredibly well localized and require
-            # a different method from Fermi/Integral/AGILE
-            # FIXME: Add Swift localization information in the future
-            if event['pipeline'] != 'Swift':
-                group_canvas += external_skymaps.create_combined_skymap.si(
-                                    superevent_id, ext_id),
-            group(group_canvas).delay()
+            _relaunch_raven_pipeline_with_skymaps(
+                superevent, ext_event, graceid)
         elif 'EM_COINC' in alert['object']['labels']:
             # if not complete, check if GW sky map; apply label to external
             # event if GW sky map
@@ -362,6 +348,36 @@ def handle_grb_igwn_alert(alert):
                 |
                 raven.sog_paper_pipeline.s(alert['object'])
             ).delay()
+    # if new GW or external sky map after first being available, try to remake
+    # combine sky map and rerun raven pipeline
+    elif alert['alert_type'] == 'log' and \
+            'EM_COINC' in alert['object']['labels'] and \
+            'fit' in alert['data']['filename'] and \
+            (alert['data']['filename'] not in
+             {external_skymaps.COMBINED_SKYMAP_FILENAME_MULTIORDER,
+              external_skymaps.COMBINED_SKYMAP_FILENAME_FLAT}):
+        superevent_id, external_id = _get_superevent_ext_ids(
+                                         graceid, alert['object'])
+        if 'S' in graceid:
+            superevent = alert['object']
+        else:
+            superevent = gracedb.get_superevent(alert['object']['superevent'])
+            external_event = alert['object']
+        # check if combined sky map already made, with the exception of Swift
+        # which will fail
+        if 'S' in graceid:
+            # Rerun for all eligible external events
+            for ext_id in superevent['em_events']:
+                external_event = gracedb.get_event(ext_id)
+                if REQUIRED_LABELS_BY_TASK['compare'].issubset(
+                        set(external_event['labels'])):
+                    _relaunch_raven_pipeline_with_skymaps(
+                        superevent, external_event, graceid)
+        else:
+            if REQUIRED_LABELS_BY_TASK['compare'].issubset(
+                    set(external_event['labels'])):
+                _relaunch_raven_pipeline_with_skymaps(
+                    superevent, external_event, graceid)
     elif alert['alert_type'] == 'label_removed' and \
             alert['object'].get('group') == 'External':
         if alert['data']['name'] == 'NOT_GRB' and \
@@ -443,3 +459,38 @@ def _launch_external_detchar(event):
     detchar.check_vectors.si(event, event['graceid'], start, end).delay()
 
     return event
+
+
+def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid):
+    """Relaunch the RAVEN sky map comparision workflow, include recalculating
+    the joint FAR with updated sky map info and create a new combined sky map.
+
+    Parameters
+    ----------
+    superevent: dict
+        superevent dictionary
+    exttrig: dict
+        external event dictionary
+    graceid: str
+        GraceDB ID of event
+
+    """
+    gw_group = superevent['preferred_event_data']['group']
+    tl, th = raven._time_window(graceid, gw_group,
+                                [ext_event['pipeline']],
+                                [ext_event['search']])
+    # FIXME: both overlap integral and combined sky map could be
+    # done by the same function since they are so similar
+    canvas = raven.raven_pipeline.si(
+                 [ext_event] if 'S' in graceid else [superevent],
+                 graceid,
+                 superevent if 'S' in graceid else ext_event,
+                 tl, th, gw_group)
+    # Swift localizations are incredibly well localized and require
+    # a different method from Fermi/Integral/AGILE
+    # FIXME: Add Swift localization information in the future
+    if ext_event['pipeline'] != 'Swift':
+        # Create new updated combined sky map
+        canvas |= external_skymaps.create_combined_skymap.si(
+                      superevent['superevent_id'], ext_event['graceid'])
+    canvas.delay()

@@ -16,6 +16,7 @@ from . import circulars
 from .core import identity, get_first
 from . import detchar
 from . import em_bright
+from . import external_skymaps
 from . import gcn
 from . import gracedb
 from . import inference
@@ -928,41 +929,47 @@ def earlywarning_preliminary_initial_update_alert(
                     and f.startswith('combined-ext.') \
                     and 'fit' in f:
                 combined_skymap_filename = fv
-                # only download first sky map and prevent more downloads
-                # FIXME: remove if there exists a system to recalculate
-                # combined sky maps later
-                combined_skymap_needed = False
 
     if combined_skymap_needed:
-        # if no combined sky map present and needed, download sky map from
-        # external event
+        # for every alert, copy combined sky map over if applicable
         # FIXME: use file inheritance once available
         ext_id = superevent['em_type']
-        combined_skymap_filename = \
-            ('combined-ext.multiorder.fits' if '.multiorder.fits' in
-             skymap_filename else 'combined-ext.fits.gz')
-        message = 'Combined LVC-external sky map using {0} and {1}'.format(
-            superevent_id, ext_id)
+        if combined_skymap_filename:
+            # If previous sky map, increase version by 1
+            combined_skymap_filename_base, v = \
+                combined_skymap_filename.split(',')
+            v = str(int(v) + 1)
+            combined_skymap_filename = \
+                combined_skymap_filename_base + ',' + v
+        else:
+            combined_skymap_filename_base = \
+                (external_skymaps.COMBINED_SKYMAP_FILENAME_MULTIORDER
+                 if '.multiorder.fits' in skymap_filename else
+                 external_skymaps.COMBINED_SKYMAP_FILENAME_FLAT)
+            combined_skymap_filename = combined_skymap_filename_base + ',0'
+        message = 'Combined LVK-external sky map copied from {0}'.format(
+            ext_id)
         message_png = (
             'Mollweide projection of <a href="/api/events/{se_id}/files/'
-            '{filename}">{filename}</a>, using {se_id} and {ext_id}').format(
+            '{filename}">{filename}</a>, copied from {ext_id}').format(
                se_id=superevent_id,
                ext_id=ext_id,
                filename=combined_skymap_filename)
 
         combined_skymap_canvas = group(
-            gracedb.download.si(combined_skymap_filename, ext_id)
+            gracedb.download.si(combined_skymap_filename_base, ext_id)
             |
             gracedb.upload.s(
-                combined_skymap_filename, superevent_id,
+                combined_skymap_filename_base, superevent_id,
                 message, ['sky_loc', 'ext_coinc', 'public'])
             |
             gracedb.create_label.si('COMBINEDSKYMAP_READY', superevent_id),
 
-            gracedb.download.si('combined-ext.png', ext_id)
+            gracedb.download.si(external_skymaps.COMBINED_SKYMAP_FILENAME_PNG,
+                                ext_id)
             |
             gracedb.upload.s(
-                'combined-ext.png', superevent_id,
+                external_skymaps.COMBINED_SKYMAP_FILENAME_PNG, superevent_id,
                 message_png, ['sky_loc', 'ext_coinc', 'public']
             )
             |

@@ -53,6 +53,10 @@ Changelog
 
 -   Update external coincidence to update circulars.
 
+-   Relaunch RAVEN sky map comparison whenever a new GW or external sky map is
+    available. Also copy over to the superevent if an alert has already been
+    sent out.
+
 -   Update bilby to 2.0.0 and bilby_pipe to 1.0.8. Use ROQ bases dedicated for
     BNS mass region for low-mass signal. Switch to acceptance-walk method for
     dynesty sampling, and use naccept=10, nlive=500, and nparallel=2 for

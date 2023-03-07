@@ -39,7 +39,7 @@ def mock_download(monkeypatch, toy_3d_fits_filecontents):  # noqa: F811
 
     def download(filename, graceid):
         """Mocks GraceDB download functionality"""
-        if graceid == 'S12345' and filename == 'bayestar.fits.gz':
+        if graceid == 'S12345' and filename == 'bayestar.fits.gz,0':
             return toy_3d_fits_filecontents
         elif (graceid == 'E12345' and
               filename == ('nasa.gsfc.gcn_Fermi%23GBM_Gnd_Pos_2017-08-17'
@@ -151,9 +151,9 @@ def test_get_skymap_filename(mock_get_logs, graceid):
     """Test getting the LVC skymap fits filename"""
     filename = external_skymaps.get_skymap_filename(graceid)
     if 'S' in graceid:
-        assert filename == 'bayestar.multiorder.fits'
+        assert filename == 'bayestar.multiorder.fits,0'
     elif 'E' in graceid:
-        assert filename == 'fermi_skymap.fits.gz'
+        assert filename == 'fermi_skymap.fits.gz,0'
 
 
 @patch('gwcelery.tasks.gracedb.get_event', mock_get_event)

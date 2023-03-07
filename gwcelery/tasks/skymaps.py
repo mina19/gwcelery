@@ -15,6 +15,7 @@ from ligo.skymap.tool import ligo_skymap_plot_volume
 from matplotlib import pyplot as plt
 import numpy as np
 
+from . import external_skymaps
 from . import gracedb
 from . import igwn_alert
 from ..import app
@@ -334,7 +335,10 @@ def handle_plot_coherence(alert):
     """
     if alert['alert_type'] != 'log':
         return  # not for us
-    if not alert['data']['filename'].endswith('.fits'):
+    if not alert['data']['filename'].endswith('.fits') and \
+            (alert['data']['filename'] not in
+             {external_skymaps.COMBINED_SKYMAP_FILENAME_MULTIORDER,
+              external_skymaps.COMBINED_SKYMAP_FILENAME_FLAT}):
         return  # not for us
 
     graceid = alert['uid']

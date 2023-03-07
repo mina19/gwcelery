@@ -433,8 +433,11 @@ def test_handle_superevent_initial_alert(mock_create_initial_circular,
     combined_skymap_needed = ('COMBINEDSKYMAP_READY' in labels)
     if combined_skymap_needed:
         combined_skymap_filename = \
-            ('combined-ext.multiorder.fits' +
-             (',0' if superevent_id == 'S2468' else ''))
+            ('combined-ext.multiorder.fits,')
+        if superevent_id == 'S1234':
+            combined_skymap_filename += '0'
+        elif superevent_id == 'S2468':
+            combined_skymap_filename += '1'
     else:
         combined_skymap_filename = None
 
@@ -453,8 +456,7 @@ def test_handle_superevent_initial_alert(mock_create_initial_circular,
                                            superevent_id),
          superevent_initial_alert_download('em_bright.json,0', superevent_id),
          superevent_initial_alert_download('p_astro.json,0', superevent_id)) +
-        ((6 if combined_skymap_needed and superevent_id == 'S1234' else 4)
-         * (None,)),
+        ((6 if combined_skymap_needed else 4) * (None,)),
         alert['object'], 'initial', raven_coinc='RAVEN_ALERT' in labels,
         combined_skymap_filename=combined_skymap_filename)
     mock_gcn_send.assert_called_once_with('contents of S1234-Initial-1.xml')
