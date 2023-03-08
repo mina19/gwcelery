@@ -308,7 +308,9 @@ def test_is_complete(labels):
       'AllSky', 'label_added'],
      [['EMBRIGHT_READY'], 'EMBRIGHT_READY', 'EarlyWarning',
       'label_added'],  # Less-significant EW events are not processed
-     [['EMBRIGHT_READY'], 'EMBRIGHT_READY', 'EarlyWarning', 'new']]
+     [['EMBRIGHT_READY'], 'EMBRIGHT_READY', 'EarlyWarning', 'new'],
+     [[''], '', 'SSM', 'new'],
+     [['PASTRO_READY'], '', 'SSM', 'label_added']]
 )
 def test_process_called(labels, label, search, alert_type):
     """Test whether the :meth:`superevents.process` is called
@@ -328,7 +330,8 @@ def test_process_called(labels, label, search, alert_type):
     }
     with patch('gwcelery.tasks.superevents.process.run') as process:
         superevents.handle(payload)
-        if search == superevents.EARLY_WARNING_SEARCH_NAME:
+        if search == superevents.EARLY_WARNING_SEARCH_NAME or \
+                search == superevents.SUBSOLAR_SEARCH_NAME:
             process.assert_not_called()
         elif superevents.is_complete(payload['object']):
             process.assert_called()

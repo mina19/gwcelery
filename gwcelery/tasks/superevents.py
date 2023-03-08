@@ -37,8 +37,11 @@ early warning event."""
 
 EARLY_WARNING_SEARCH_NAME = 'EarlyWarning'
 """Search name for Early Warning searches. Only significant events
-result in
-consideration by the superevent manager."""
+result in consideration by the superevent manager."""
+
+SUBSOLAR_SEARCH_NAME = 'SSM'
+"""Search name for subsolar mass search. These are ignored by
+the superevent manager."""
 
 READY_LABEL = 'EM_READY'
 """This label indicates that a preferred event has been assigned and it
@@ -78,6 +81,9 @@ def handle(payload):
             "Skipping processing EW event %s because it does not"
             "meet significant event criterion", gid
         )
+        return
+    elif search == SUBSOLAR_SEARCH_NAME:
+        log.info("Skipping processing subsolar search event %s", gid)
         return
 
     priority = 1

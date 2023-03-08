@@ -17,6 +17,9 @@ Changelog
 
 -   Add pe tag to pesummary uploads.
 
+-   Ignore SSM search for superevent, until decision about dedicated notice type
+    and other details from OpsDiv are decided.
+
 2.0.6 "Spaghetti Tree" (2023-05-10)
 -----------------------------------
 
