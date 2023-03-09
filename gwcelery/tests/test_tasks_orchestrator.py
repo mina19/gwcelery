@@ -621,7 +621,7 @@ def test_handle_cbc_event_new_event(mock_source_properties,
                                     mock_localize, mock_p_astro,
                                     alert_search, alert_pipeline):
     alert = read_json(data, 'lvalert_event_creation.json')
-    pipelines_stock_p_astro = {('spiir', 'allsky'), ('spiir', 'earlywarning'),
+    pipelines_stock_p_astro = {('spiir', 'earlywarning'),
                                ('pycbc', 'earlywarning'), ('gstlal', 'mdc')}
     alert['object']['search'] = alert_search
     alert['object']['pipeline'] = alert_pipeline

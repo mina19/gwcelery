@@ -71,6 +71,9 @@ Changelog
 -   Replace ``EM_Selected`` and ``EM_SelectedConfident`` labels with
     ``LOW_SIGNIF_LOCKED`` and ``SIGNIF_LOCKED``.
 
+-   Don't compute p-astro for spiir/AllSky because it now computes and uploads
+    its own.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 
