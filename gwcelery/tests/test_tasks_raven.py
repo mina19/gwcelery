@@ -122,7 +122,8 @@ def test_calculate_spacetime_coincidence_far_fermi(
         ext_fitsfile='fermi_skymap.fits.gz',
         se_moc=True, ext_moc=False,
         use_radec=False,
-        gracedb=gracedb.client, far_grb=None)
+        gracedb=gracedb.client, far_grb=None,
+        use_preferred_event_skymap=False)
 
 
 @pytest.mark.parametrize('group', ['CBC', 'Burst'])  # noqa: F811
@@ -150,7 +151,38 @@ def test_calculate_spacetime_coincidence_far_swift(
         ext_fitsfile='swift_skymap.fits.gz',
         se_moc=True, ext_moc=False,
         use_radec=True,
-        gracedb=gracedb.client, far_grb=None)
+        gracedb=gracedb.client, far_grb=None,
+        use_preferred_event_skymap=False)
+
+
+@pytest.mark.parametrize('group', ['CBC', 'Burst'])  # noqa: F811
+@patch('gwcelery.tasks.external_skymaps.get_skymap_filename',
+       return_value='fermi_skymap.fits.gz')
+@patch('ligo.raven.search.calc_signif_gracedb')
+def test_calculate_spacetime_coincidence_far_preferred(
+        mock_calc_signif, mock_get_skymap_filename, group):
+    se = {'superevent_id': 'S1234',
+          'preferred_event': 'G1'}
+    ext = {'graceid': 'E4321',
+           'pipeline': 'Fermi',
+           'search': 'GRB',
+           'labels': ['EXT_SKYMAP_READY', 'EM_READY'],
+           'far': None}
+    if group == 'CBC':
+        tl, th = -5, 1
+    else:
+        tl, th = -600, 60
+    raven.calculate_coincidence_far(se, ext, tl, th)
+    mock_calc_signif.assert_called_once_with(
+        'S1234', 'E4321', tl, th,
+        incl_sky=True, grb_search='GRB',
+        se_dict=se, ext_dict=ext,
+        se_fitsfile='fermi_skymap.fits.gz',
+        ext_fitsfile='fermi_skymap.fits.gz',
+        se_moc=True, ext_moc=False,
+        use_radec=False,
+        gracedb=gracedb.client, far_grb=None,
+        use_preferred_event_skymap=True)
 
 
 def mock_get_labels(superevent_id):

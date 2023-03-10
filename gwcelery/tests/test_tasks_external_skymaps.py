@@ -166,7 +166,8 @@ def test_create_combined_skymap_moc_flat(missing_header_values, instrument):
 @patch('gwcelery.tasks.gracedb.get_log', side_effect=mock_get_log)
 def test_get_skymap_filename(mock_get_logs, graceid):
     """Test getting the LVC skymap fits filename"""
-    filename = external_skymaps.get_skymap_filename(graceid)
+    filename = external_skymaps.get_skymap_filename(graceid,
+                                                    is_gw='S' in graceid)
     if 'S' in graceid:
         assert filename == 'bayestar.multiorder.fits,0'
     elif 'E' in graceid:

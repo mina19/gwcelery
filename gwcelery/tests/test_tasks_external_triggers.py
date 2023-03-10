@@ -238,7 +238,7 @@ def test_handle_replace_grb_event(mock_get_events,
 @patch('gwcelery.tasks.gracedb.get_group', return_value='CBC')
 @patch('gwcelery.tasks.gracedb.create_label.run')
 @patch('gwcelery.tasks.gracedb.get_labels',
-       return_value=['SKYMAP_READY'])
+       return_value=['SKYMAP_READY', 'EM_READY'])
 def test_handle_create_skymap_label_from_ext_event(mock_get_labels,
                                                    mock_create_label,
                                                    mock_get_group):
@@ -252,7 +252,8 @@ def test_handle_create_skymap_label_from_ext_event(mock_get_labels,
                        }
              }
     external_triggers.handle_grb_igwn_alert(alert)
-    mock_create_label.assert_called_once_with('SKYMAP_READY', 'E1212')
+    calls = [call('SKYMAP_READY', 'E1212'), call('EM_READY', 'E1212')]
+    mock_create_label.assert_has_calls(calls)
 
 
 @patch('gwcelery.tasks.gracedb.get_group', return_value='CBC')
@@ -264,13 +265,14 @@ def test_handle_create_skymap_label_from_superevent(mock_create_label,
              "data": {"name": "SKYMAP_READY"},
              "object": {
                  "group": "CBC",
-                 "labels": ["SKYMAP_READY"],
+                 "labels": ["SKYMAP_READY", "EM_READY"],
                  "superevent_id": "S1234",
                  "em_events": ['E1212']
                        }
              }
     external_triggers.handle_grb_igwn_alert(alert)
-    mock_create_label.assert_called_once_with('SKYMAP_READY', 'E1212')
+    calls = [call('SKYMAP_READY', 'E1212'), call('EM_READY', 'E1212')]
+    mock_create_label.assert_has_calls(calls)
 
 
 @pytest.mark.parametrize('pipeline',
@@ -295,11 +297,11 @@ def test_handle_skymaps_ready(mock_get_superevent,
     """
     alert = {"uid": "E1212",
              "alert_type": "label_added",
-             "data": {"name": "SKYMAP_READY"},
+             "data": {"name": "EM_READY"},
              "object": {
                  "graceid": "E1212",
                  "group": "External",
-                 "labels": ["EM_COINC", "EXT_SKYMAP_READY", "SKYMAP_READY"],
+                 "labels": ["EM_COINC", "EXT_SKYMAP_READY", "EM_READY"],
                  "superevent": "S1234",
                  "pipeline": pipeline,
                  "search": "GRB"
@@ -314,7 +316,7 @@ def test_handle_skymaps_ready(mock_get_superevent,
                                                 -5, 1, 'CBC')
     if pipeline != 'Swift':
         mock_create_combined_skymap.assert_called_once_with(
-            'S1234', 'E1212')
+            'S1234', 'E1212', preferred_event='G1234')
     else:
         mock_create_combined_skymap.assert_not_called()
 
@@ -361,20 +363,28 @@ def test_handle_label_removed(mock_get_superevent,
 def _mock_get_event(graceid):
     if graceid == 'E1':
         pipeline = 'Fermi'
+        extra_labels = []
     elif graceid == 'E2':
         pipeline = 'Swift'
+        extra_labels = []
+    elif graceid == 'E3':
+        pipeline = 'Fermi'
+        extra_labels = ['SKYMAP_READY']
     return {'graceid': graceid,
             'pipeline': pipeline,
             'search': 'GRB',
             'superevent': 'S1',
-            'labels': ['EM_COINC', 'SKYMAP_READY', 'EXT_SKYMAP_READY']}
+            'labels': (['EM_COINC', 'EXT_SKYMAP_READY',
+                        'EM_READY'] + extra_labels)
+            }
 
 
 def _mock_get_superevent(graceid):
     return {'superevent_id': 'S1',
+            'preferred_event': 'G1',
             'preferred_event_data':
                 {'group': 'CBC'},
-            'em_events': ['E1', 'E2'],
+            'em_events': ['E1', 'E2', 'E3'],
             'em_type': 'E1',
             'far': 1e-5,
             'labels': ['COMBINEDSKYMAP_READY', 'RAVEN_ALERT',
@@ -382,7 +392,7 @@ def _mock_get_superevent(graceid):
 
 
 @pytest.mark.parametrize('graceid',
-                         ['S1', 'E1', 'E2'])
+                         ['S1', 'E1', 'E2', 'E3'])
 @patch('gwcelery.tasks.raven.raven_pipeline.run')
 @patch('gwcelery.tasks.external_skymaps.create_combined_skymap.run')
 @patch('gwcelery.tasks.gracedb.get_event', _mock_get_event)
@@ -407,9 +417,15 @@ def test_handle_rerun_combined_skymap(mock_create_combined_skymap,
         "object": event
     }
     external_triggers.handle_grb_igwn_alert(alert)
-    if graceid in {'S1', 'E1'}:
+    if graceid == 'S1':
+        mock_create_combined_skymap.assert_has_calls(
+            [call('S1', 'E1', preferred_event='G1'),
+             call('S1', 'E3', preferred_event=None)]
+        )
+    elif graceid in {'E1', 'E3'}:
         mock_create_combined_skymap.assert_called_once_with(
-            'S1', 'E1')
+            'S1', graceid,
+            preferred_event=('G1' if graceid == 'E1' else None))
     else:
         mock_create_combined_skymap.assert_not_called()
     if 'S' in graceid:
@@ -420,6 +436,10 @@ def test_handle_rerun_combined_skymap(mock_create_combined_skymap,
                 -1, 5, 'CBC'),
             call(
                 [_mock_get_event('E2')],
+                graceid, event,
+                -1, 5, 'CBC'),
+            call(
+                [_mock_get_event('E3')],
                 graceid, event,
                 -1, 5, 'CBC')
         ]

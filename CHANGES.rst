@@ -50,6 +50,10 @@ Changelog
 -   Add periodic SNEWS MDC events to test the corresponding IGWN alert
     listener.
 
+-   Use sky map from preferred event rather than superevent, triggering off 
+    EM_READY label instead of SKYMAP_READY. If SKYMAP_READY is applied, we 
+    will once again try to get the GW sky map from the superevent.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 

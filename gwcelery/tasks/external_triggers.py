@@ -16,8 +16,8 @@ log = get_logger(__name__)
 
 
 REQUIRED_LABELS_BY_TASK = {
-    'compare': {'SKYMAP_READY', 'EXT_SKYMAP_READY', 'EM_COINC'},
-    'combine': {'RAVEN_ALERT'},
+    # EM_READY implies preferred event sky map is available
+    'compare': {'EM_READY', 'EXT_SKYMAP_READY', 'EM_COINC'},
     'SoG': {'SKYMAP_READY', 'RAVEN_ALERT', 'ADVOK'}
 }
 """These labels should be present on an external event to consider it to
@@ -249,7 +249,7 @@ def handle_grb_igwn_alert(alert):
     * Any new event triggers a coincidence search with
       :meth:`gwcelery.tasks.raven.coincidence_search`.
     * When both a GW and GRB sky map are available during a coincidence,
-      indicated by the labels ``SKYMAP_READY`` and ``EXT_SKYMAP_READY``
+      indicated by the labels ``EM_READY`` and ``EXT_SKYMAP_READY``
       respectively on the external event, this triggers the spacetime coinc
       FAR to be calculated and a combined GW-GRB sky map is created using
       :meth:`gwcelery.tasks.external_skymaps.create_combined_skymap`.
@@ -315,13 +315,13 @@ def handle_grb_igwn_alert(alert):
             raven.coincidence_search(graceid, alert['object'],
                                      group=gw_group, searches=['GRB'],
                                      se_searches=se_searches)
-    # rerun raven pipeline and create combined sky map (if not a Swift event)
+    # re-run raven pipeline and create combined sky map (if not a Swift event)
     # when sky maps are available
     elif alert['alert_type'] == 'label_added' and \
             alert['object'].get('group') == 'External':
         if _skymaps_are_ready(alert['object'], alert['data']['name'],
                               'compare'):
-            # if both sky maps present and a coincidence, rreun RAVEN
+            # if both sky maps present and a coincidence, re-run RAVEN
             # pipeline and create combined sky maps
             ext_event = alert['object']
             superevent_id, ext_id = _get_superevent_ext_ids(
@@ -335,6 +335,8 @@ def handle_grb_igwn_alert(alert):
             se_labels = gracedb.get_labels(alert['object']['superevent'])
             if 'SKYMAP_READY' in se_labels:
                 gracedb.create_label.si('SKYMAP_READY', graceid).delay()
+            if 'EM_READY' in se_labels:
+                gracedb.create_label.si('EM_READY', graceid).delay()
     # apply labels from superevent to external event to update state
     # and trigger functionality requiring sky maps, etc.
     elif alert['alert_type'] == 'label_added' and 'S' in graceid:
@@ -343,6 +345,13 @@ def handle_grb_igwn_alert(alert):
             # at the time
             group(
                 gracedb.create_label.si('SKYMAP_READY', ext_id)
+                for ext_id in alert['object']['em_events']
+            ).delay()
+        if 'EM_READY' in alert['object']['labels']:
+            # if sky map not in superevent but in preferred event, apply label
+            # to all external events at the time
+            group(
+                gracedb.create_label.si('EM_READY', ext_id)
                 for ext_id in alert['object']['em_events']
             ).delay()
         if _skymaps_are_ready(alert['object'], alert['data']['name'], 'SoG') \
@@ -510,5 +519,8 @@ def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid):
     if ext_event['pipeline'] != 'Swift':
         # Create new updated combined sky map
         canvas |= external_skymaps.create_combined_skymap.si(
-                      superevent['superevent_id'], ext_event['graceid'])
+                      superevent['superevent_id'], ext_event['graceid'],
+                      preferred_event=(
+                          superevent['preferred_event'] if
+                          'SKYMAP_READY' not in ext_event['labels'] else None))
     canvas.delay()

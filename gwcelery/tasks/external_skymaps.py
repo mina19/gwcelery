@@ -37,12 +37,12 @@ COMBINED_SKYMAP_FILENAME_PNG = 'combined-ext.png'
 
 @app.task(shared=False,
           queue='exttrig')
-def create_combined_skymap(se_id, ext_id):
+def create_combined_skymap(se_id, ext_id, preferred_event=None):
     """Creates and uploads the combined LVK-external skymap, uploading to the
-    external trigger GraceDB page and the superevent GraceDB page if
-    indicated. The filename used for the combined sky map will be
-    'combined-ext.multiorder.fits' if the GW sky map is multi-ordered or
-    'combined-ext.fits.gz' if the GW sky map is not.
+    external trigger GraceDB page. The filename used for the combined sky map
+    will be 'combined-ext.multiorder.fits' if the GW sky map is multi-ordered
+    or 'combined-ext.fits.gz' if the GW sky map is not. Will use the GW sky map
+    in from the preferred event if given.
 
     Parameters
     ----------
@@ -50,12 +50,16 @@ def create_combined_skymap(se_id, ext_id):
         Superevent GraceDB ID
     ext_id: str
         External event GraceDB ID
+    preferred_event: str
+        Preferred event GraceDB ID. If given, use sky map from preferred event
 
     """
-    se_skymap_filename = get_skymap_filename(se_id)
-    ext_skymap_filename = get_skymap_filename(ext_id)
+    # gw_id is either superevent or preferred event graceid
+    gw_id = preferred_event if preferred_event else se_id
+    gw_skymap_filename = get_skymap_filename(gw_id, is_gw=True)
+    ext_skymap_filename = get_skymap_filename(ext_id, is_gw=False)
     # Determine whether GW sky map is multiordered or flat
-    gw_moc = '.multiorder.fits' in se_skymap_filename
+    gw_moc = '.multiorder.fits' in gw_skymap_filename
 
     new_filename = \
         (COMBINED_SKYMAP_FILENAME_MULTIORDER if gw_moc else
@@ -63,7 +67,7 @@ def create_combined_skymap(se_id, ext_id):
 
     message = \
         ('Combined LVK-external sky map using {0} and {1}, with {2} and '
-         '{3}'.format(se_id, ext_id, se_skymap_filename, ext_skymap_filename))
+         '{3}'.format(gw_id, ext_id, gw_skymap_filename, ext_skymap_filename))
     message_png = (
         'Mollweide projection of <a href="/api/events/{graceid}/files/'
         '{filename}">{filename}</a>').format(
@@ -72,7 +76,7 @@ def create_combined_skymap(se_id, ext_id):
 
     (
         _download_skymaps.si(
-            se_skymap_filename, ext_skymap_filename, se_id, ext_id
+            gw_skymap_filename, ext_skymap_filename, gw_id, ext_id
         )
         |
         combine_skymaps.s(gw_moc=gw_moc)
@@ -95,14 +99,23 @@ def create_combined_skymap(se_id, ext_id):
 @app.task(autoretry_for=(ValueError,), retry_backoff=10,
           queue='exttrig',
           retry_backoff_max=600)
-def get_skymap_filename(graceid):
+def get_skymap_filename(graceid, is_gw):
     """Get the skymap fits filename.
 
     If not available, will try again 10 seconds later, then 20, then 40, etc.
     until up to 10 minutes after initial attempt.
+
+    Parameters
+    ----------
+    graceid : str
+        GraceDB ID
+    is_gw: bool
+        If True, uses method for superevent or preferred event. Otherwise uses
+        method for external event.
+
     """
     gracedb_log = gracedb.get_log(graceid)
-    if 'S' in graceid:
+    if is_gw:
         # Try first to get a multiordered sky map
         for message in reversed(gracedb_log):
             filename = message['filename']
@@ -132,11 +145,11 @@ def get_skymap_filename(graceid):
 
 
 @app.task(shared=False, queue='exttrig')
-def _download_skymaps(se_filename, ext_filename, se_id, ext_id):
+def _download_skymaps(gw_filename, ext_filename, gw_id, ext_id):
     """Download both superevent and external sky map to be combined."""
-    se_skymap = gracedb.download(se_filename, se_id)
+    gw_skymap = gracedb.download(gw_filename, gw_id)
     ext_skymap = gracedb.download(ext_filename, ext_id)
-    return se_skymap, ext_skymap
+    return gw_skymap, ext_skymap
 
 
 def combine_skymaps_moc_flat(gw_sky, ext_sky, ext_header):

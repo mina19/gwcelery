@@ -36,12 +36,15 @@ def calculate_coincidence_far(superevent, exttrig, tl, th):
     if exttrig['pipeline'] == 'SNEWS':
         return {}
 
-    if {'EXT_SKYMAP_READY', 'SKYMAP_READY'}.issubset(exttrig['labels']):
+    if ({'EXT_SKYMAP_READY', 'SKYMAP_READY'}.issubset(exttrig['labels']) or
+            {'EXT_SKYMAP_READY', 'EM_READY'}.issubset(exttrig['labels'])):
         #  if both sky maps available, calculate spatial coinc far
+        use_preferred_event_skymap = 'SKYMAP_READY' not in exttrig['labels']
         se_skymap = external_skymaps.get_skymap_filename(
-            superevent_id)
+            (superevent['preferred_event'] if use_preferred_event_skymap
+             else superevent_id), is_gw=True)
         ext_skymap = external_skymaps.get_skymap_filename(
-            exttrig_id)
+            exttrig_id, is_gw=False)
 
         return ligo.raven.search.calc_signif_gracedb(
                    superevent_id, exttrig_id, tl, th,
@@ -51,7 +54,8 @@ def calculate_coincidence_far(superevent, exttrig, tl, th):
                    se_moc=True, ext_moc=False,
                    use_radec=True if exttrig['pipeline'] == 'Swift' else False,
                    incl_sky=True, gracedb=gracedb.client,
-                   far_grb=exttrig['far'])
+                   far_grb=exttrig['far'],
+                   use_preferred_event_skymap=use_preferred_event_skymap)
     else:
         return ligo.raven.search.calc_signif_gracedb(
                    superevent_id, exttrig_id, tl, th,
