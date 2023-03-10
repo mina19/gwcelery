@@ -51,6 +51,7 @@ has all data products required to make it ready for annotations."""
                     'cbc_mbta',
                     'burst_olib',
                     'burst_cwb',
+                    'burst_mly',
                     shared=False)
 def handle(payload):
     """Respond to IGWN alert topics from low-latency search pipelines and
@@ -230,7 +231,7 @@ def get_category(event):
 def get_ts(event):
     """Get time extent of an event, depending on pipeline-specific parameters.
 
-    *   For CWB, use the event's ``duration`` field.
+    *   For CWB and MLy, use the event's ``duration`` field.
     *   For oLIB, use the ratio of the event's ``quality_mean`` and
         ``frequency_mean`` fields.
     *   For all other pipelines, use the
@@ -263,6 +264,9 @@ def get_ts(event):
         attribs = event['extra_attributes']['LalInferenceBurst']
         d_t_start = d_t_end = (attribs['quality_mean'] /
                                attribs['frequency_mean'])
+    elif pipeline == 'mly':
+        attribs = event['extra_attributes']['MLyBurst']
+        d_t_start = d_t_end = attribs['duration']
     else:
         d_t_start = app.conf['superevent_d_t_start'].get(
             pipeline, app.conf['superevent_default_d_t_start'])
@@ -301,6 +305,9 @@ def get_snr(event):
     elif pipeline == 'olib':
         attribs = event['extra_attributes']['LalInferenceBurst']
         return attribs['omicron_snr_network']
+    elif pipeline == 'mly':
+        attribs = event['extra_attributes']['MLyBurst']
+        return attribs['SNR']
     else:
         raise NotImplementedError('SNR attribute not found')
 

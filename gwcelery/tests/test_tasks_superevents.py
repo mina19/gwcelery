@@ -883,6 +883,37 @@ def test_parse_trigger_burst_5():
         p2.assert_called_once_with('EM_Selected', 'S123456')
 
 
+def test_parse_trigger_burst_6():
+    """New less-significant MLy trigger, which is complete, no intersecting
+    superevent. New superevent created and labeled EM_Selected.
+    """
+    event_dictionary = {'graceid': 'G123456',
+                        'gpstime': 1.0,
+                        'group': 'Burst',
+                        'pipeline': 'MLy',
+                        'search': 'AllSky',
+                        'offline': False,
+                        'far': 1e-6,
+                        'instruments': 'H1,L1',
+                        'labels': ['SKYMAP_READY'],
+                        'superevent': None,
+                        'superevent_neighbours': SUPEREVENTS_NEIGHBOURS,
+                        'extra_attributes': {
+                            'MLyBurst': {
+                                'duration': 5.0,
+                                'SNR': 100.0}}}
+    payload = dict(object=event_dictionary,
+                   data=event_dictionary,
+                   alert_type='new',
+                   uid='G123456')
+    with patch('gwcelery.tasks.gracedb.create_superevent',
+               return_value='S123456') as p1, \
+            patch('gwcelery.tasks.gracedb.create_label') as p2:
+        superevents.handle(payload)
+        p1.assert_called_once()
+        p2.assert_called_once_with('EM_Selected', 'S123456')
+
+
 def test_S190421ar_spiir_scenario():    # noqa: N802
     """Test to ensure that a low FAR event with accidental high
     SNR is not promoted to the preferred event status. For example, here,
