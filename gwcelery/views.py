@@ -199,7 +199,8 @@ def _construct_igwn_alert_and_send_prelim_alert(superevent_event_list,
         'object': superevent
     }
 
-    orchestrator.earlywarning_preliminary_alert(event, alert, superevent_id)
+    orchestrator.earlywarning_preliminary_alert(event, alert, superevent_id,
+                                                initiate_voevent)
 
 
 @app.route('/send_preliminary_gcn', methods=['POST'])
