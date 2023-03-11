@@ -239,6 +239,19 @@ def change_preferred_event():
     keys = ('superevent_id', 'event_id')
     superevent_id, event_id, *_ = tuple(request.form.get(key) for key in keys)
     if superevent_id and event_id:
+        try:
+            event = gracedb.get_event(event_id)
+        except HTTPError as e:
+            flash(f'No change performed. GraceDB query for {event_id} '
+                  f'returned error code {e.response.status_code}.', 'danger')
+            return redirect(url_for('index'))
+
+        try:
+            superevent = gracedb.get_superevent(superevent_id)
+        except HTTPError as e:
+            flash(f'No change performed. GraceDB query for {superevent_id} '
+                  f'returned error code {e.response.status_code}.', 'danger')
+            return redirect(url_for('index'))
         (
             gracedb.upload.s(
                 None, None, superevent_id,
@@ -249,19 +262,93 @@ def change_preferred_event():
             gracedb.update_superevent.si(
                 superevent_id, preferred_event=event_id)
             |
-            group(
-                gracedb.get_superevent.si(superevent_id),
-
-                gracedb.get_event.si(event_id)
-            )
-            |
-            _construct_igwn_alert_and_send_prelim_alert.s(
+            _construct_igwn_alert_and_send_prelim_alert.si(
+                [superevent, event],
                 superevent_id,
                 initiate_voevent=False
             )
         ).delay()
+
+        # Update pipeline-preferred event if the new preferred event is not
+        # already the pipeline-preferred event for the pipeline that uploaded
+        # it.
+        pipeline_pref_event = \
+            superevent['pipeline_preferred_events'].get(event['pipeline'], {})
+        if pipeline_pref_event.get('graceid', '') != event_id:
+            (
+                gracedb.upload.s(
+                    None, None, superevent_id,
+                    'Manual update of preferred event triggered update of '
+                    f'{event["pipeline"]}-preferred event to {event_id}',
+                    tags=['em_follow'])
+                |
+                gracedb.add_pipeline_preferred_event.si(
+                    superevent_id, event_id)
+            ).delay()
+
         flash('Changed preferred event for {}.'.format(superevent_id),
               'success')
+    else:
+        flash('No change performed. Please fill in all fields.', 'danger')
+    return redirect(url_for('index'))
+
+
+@app.route('/change_pipeline_preferred_event', methods=['POST'])
+def change_pipeline_preferred_event():
+    """Handle submission of preliminary alert form."""
+    keys = ('superevent_id', 'pipeline', 'event_id')
+    superevent_id, pipeline, event_id, *_ = tuple(request.form.get(key) for
+                                                  key in keys)
+    if superevent_id and pipeline and event_id:
+        try:
+            event = gracedb.get_event(event_id)
+        except HTTPError as e:
+            flash(f'No change performed. GraceDB query for {event_id} '
+                  f'returned error code {e.response.status_code}.', 'danger')
+            return redirect(url_for('index'))
+
+        # Check that specified event is from specified pipeline
+        if event['pipeline'].lower() != pipeline.lower():
+            flash(f'No change performed. {event_id} was uploaded by '
+                  f'{event["pipeline"].lower()} and cannot be the '
+                  f'{pipeline.lower()}-preferred event.', 'danger')
+            return redirect(url_for('index'))
+
+        try:
+            superevent = gracedb.get_superevent(superevent_id)
+        except HTTPError as e:
+            flash(f'No change performed. GraceDB query for {superevent_id} '
+                  f'returned error code {e.response.status_code}.', 'danger')
+            return redirect(url_for('index'))
+
+        # Check that this pipeline's preferred event is not the
+        # superevent's preferred event
+        if superevent['preferred_event_data']['pipeline'].lower() == \
+                pipeline.lower():
+            flash(f'No change performed. User specified pipeline, '
+                  f'{pipeline.lower()}, is the same pipeline that '
+                  f'produced {superevent_id}\'s preferred event.', 'danger')
+            return redirect(url_for('index'))
+
+        (
+            gracedb.upload.s(
+                None, None, superevent_id,
+                'User {} queued a {} preferred event change to {}.'
+                .format(request.remote_user or '(unknown)', pipeline,
+                        event_id),
+                tags=['em_follow'])
+            |
+            gracedb.add_pipeline_preferred_event.si(
+                superevent_id, event_id)
+            |
+            _construct_igwn_alert_and_send_prelim_alert.si(
+                [superevent, event],
+                superevent_id,
+                initiate_voevent=False
+            )
+        ).delay()
+        flash(f'Changed {pipeline.lower()} preferred event for '
+              f'{superevent_id}.', 'success')
     else:
         flash('No change performed. Please fill in all fields.', 'danger')
     return redirect(url_for('index'))

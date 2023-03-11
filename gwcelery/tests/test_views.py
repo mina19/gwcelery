@@ -1,5 +1,5 @@
 import datetime
-from unittest.mock import Mock, patch, call
+from unittest.mock import MagicMock, Mock, patch, call
 
 from flask import get_flashed_messages, url_for
 from requests.exceptions import HTTPError
@@ -82,10 +82,20 @@ def test_send_preliminary_gcn_post(client, monkeypatch):
 
 
 def test_change_preferred_event_post(client, monkeypatch):
-    """Test send_update_gcn endpoint with complete form data."""
+    """Test changing preferred event with complete form data."""
     mock_update_superevent = Mock()
-    mock_event = Mock()
-    mock_superevent = Mock()
+    mock_add_pipeline_pref_event = Mock()
+    mock_event = MagicMock()
+    mock_superevent = MagicMock()
+    event_dict_spoofer = {
+        'pipeline': 'gstlal',
+    }
+    superevent_dict_spoofer = {
+        'pipeline_preferred_events': {'gstlal': {'graceid': 'M12345'}}
+    }
+    mock_event.__getitem__.side_effect = event_dict_spoofer.__getitem__
+    mock_superevent.__getitem__.side_effect = \
+        superevent_dict_spoofer.__getitem__
     mock_get_event = Mock(return_value=mock_event)
     mock_get_superevent = Mock(return_value=mock_superevent)
     mock_preliminary_alert = Mock()
@@ -101,6 +111,9 @@ def test_change_preferred_event_post(client, monkeypatch):
     monkeypatch.setattr(
         'gwcelery.views._construct_igwn_alert_and_send_prelim_alert.run',
         mock_preliminary_alert)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.add_pipeline_preferred_event.run',
+        mock_add_pipeline_pref_event)
 
     response = client.post(url_for('change_preferred_event'), data={
         'superevent_id': 'MS190208a',
@@ -111,9 +124,154 @@ def test_change_preferred_event_post(client, monkeypatch):
     mock_update_superevent.assert_called_once_with(
         'MS190208a', preferred_event='M12345')
     mock_get_event.assert_called_once_with('M12345')
+    mock_get_superevent.assert_called_once_with('MS190208a')
     mock_preliminary_alert.assert_called_once_with([mock_superevent,
                                                    mock_event], 'MS190208a',
                                                    initiate_voevent=False)
+    # This should only be called if the new preferred event is not already a
+    # pipeline preferred event
+    mock_add_pipeline_pref_event.assert_not_called()
+
+
+def test_change_preferred_event_pipeline_preferred_event_post(client,
+                                                              monkeypatch):
+    """Test changing preferred event to event that isn't a pipeline preferred
+    event with complete form data."""
+    mock_update_superevent = Mock()
+    mock_add_pipeline_pref_event = Mock()
+    mock_event = MagicMock()
+    mock_superevent = MagicMock()
+    event_dict_spoofer = {'pipeline': 'gstlal'}
+    superevent_dict_spoofer = {
+        'pipeline_preferred_events': {'gstlal': {'graceid': 'M12344'}}
+    }
+    mock_event.__getitem__.side_effect = event_dict_spoofer.__getitem__
+    mock_superevent.__getitem__.side_effect = \
+        superevent_dict_spoofer.__getitem__
+    mock_get_event = Mock(return_value=mock_event)
+    mock_get_superevent = Mock(return_value=mock_superevent)
+    mock_preliminary_alert = Mock()
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.update_superevent.run',
+        mock_update_superevent)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.get_event.run',
+        mock_get_event)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.get_superevent.run',
+        mock_get_superevent)
+    monkeypatch.setattr(
+        'gwcelery.views._construct_igwn_alert_and_send_prelim_alert.run',
+        mock_preliminary_alert)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.add_pipeline_preferred_event.run',
+        mock_add_pipeline_pref_event)
+
+    response = client.post(url_for('change_preferred_event'), data={
+        'superevent_id': 'MS190208a',
+        'event_id': 'M12345'})
+    assert HTTP_STATUS_CODES[response.status_code] == 'Found'
+    assert get_flashed_messages() == [
+        'Changed preferred event for MS190208a.']
+    mock_update_superevent.assert_called_once_with(
+        'MS190208a', preferred_event='M12345')
+    mock_get_event.assert_called_once_with('M12345')
+    mock_get_superevent.assert_called_once_with('MS190208a')
+    mock_preliminary_alert.assert_called_once_with([mock_superevent,
+                                                   mock_event], 'MS190208a',
+                                                   initiate_voevent=False)
+    # This should only be called if the new preferred event is not already a
+    # pipeline preferred event
+    mock_add_pipeline_pref_event.assert_called_once_with('MS190208a', 'M12345')
+
+
+def test_successful_change_pipeline_preferred_event_post(client, monkeypatch):
+    """Test changing pipeline preferred event with complete form data."""
+    mock_add_pipeline_pref_event = Mock()
+    mock_event = MagicMock()
+    mock_superevent = MagicMock()
+    event_dict_spoofer = {'pipeline': 'gstlal'}
+    superevent_dict_spoofer = {
+        'preferred_event_data': {'pipeline': 'mbta'},
+        'pipeline_preferred_events': {'gstlal': {'graceid': 'M12344'}}
+    }
+    mock_event.__getitem__.side_effect = event_dict_spoofer.__getitem__
+    mock_superevent.__getitem__.side_effect = \
+        superevent_dict_spoofer.__getitem__
+    mock_get_event = Mock(return_value=mock_event)
+    mock_get_superevent = Mock(return_value=mock_superevent)
+    mock_preliminary_alert = Mock()
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.get_event.run',
+        mock_get_event)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.get_superevent.run',
+        mock_get_superevent)
+    monkeypatch.setattr(
+        'gwcelery.views._construct_igwn_alert_and_send_prelim_alert.run',
+        mock_preliminary_alert)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.add_pipeline_preferred_event.run',
+        mock_add_pipeline_pref_event)
+
+    response = client.post(url_for('change_pipeline_preferred_event'), data={
+        'superevent_id': 'MS190208a',
+        'pipeline': 'gstlal',
+        'event_id': 'M12345'})
+    assert HTTP_STATUS_CODES[response.status_code] == 'Found'
+    assert get_flashed_messages() == [
+        'Changed gstlal preferred event for MS190208a.']
+    mock_get_event.assert_called_once_with('M12345')
+    mock_get_superevent.assert_called_once_with('MS190208a')
+    mock_preliminary_alert.assert_called_once_with([mock_superevent,
+                                                   mock_event], 'MS190208a',
+                                                   initiate_voevent=False)
+    mock_add_pipeline_pref_event.assert_called_once_with('MS190208a', 'M12345')
+
+
+def test_rejected_change_pipeline_preferred_event_post(client, monkeypatch):
+    """Test attempting to change a pipeline preferred event that is also the
+    superevent's preferred event with complete form data."""
+    mock_add_pipeline_pref_event = Mock()
+    mock_event = MagicMock()
+    mock_superevent = MagicMock()
+    event_dict_spoofer = {'pipeline': 'gstlal'}
+    superevent_dict_spoofer = {
+        'preferred_event_data': {'pipeline': 'gstlal'},
+        'pipeline_preferred_events': {'gstlal': {'graceid': 'M12344'}}
+    }
+    mock_event.__getitem__.side_effect = event_dict_spoofer.__getitem__
+    mock_superevent.__getitem__.side_effect = \
+        superevent_dict_spoofer.__getitem__
+    mock_get_event = Mock(return_value=mock_event)
+    mock_get_superevent = Mock(return_value=mock_superevent)
+    mock_preliminary_alert = Mock()
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.get_event.run',
+        mock_get_event)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.get_superevent.run',
+        mock_get_superevent)
+    monkeypatch.setattr(
+        'gwcelery.views._construct_igwn_alert_and_send_prelim_alert.run',
+        mock_preliminary_alert)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.add_pipeline_preferred_event.run',
+        mock_add_pipeline_pref_event)
+
+    response = client.post(url_for('change_pipeline_preferred_event'), data={
+        'superevent_id': 'MS190208a',
+        'pipeline': 'gstlal',
+        'event_id': 'M12345'})
+    assert HTTP_STATUS_CODES[response.status_code] == 'Found'
+    assert get_flashed_messages() == [
+        'No change performed. User specified pipeline, gstlal, is the same '
+        'pipeline that produced MS190208a\'s preferred event.'
+    ]
+    mock_get_event.assert_called_once_with('M12345')
+    mock_get_superevent.assert_called_once_with('MS190208a')
+    mock_preliminary_alert.assert_not_called()
+    mock_add_pipeline_pref_event.assert_not_called()
 
 
 def test_send_update_gcn_get(client):
