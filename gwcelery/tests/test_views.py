@@ -75,7 +75,7 @@ def test_send_preliminary_gcn_post(client, monkeypatch):
                                                    mock_event], 'MS190208a')
 
 
-def test_change_prefered_event_post(client, monkeypatch):
+def test_change_preferred_event_post(client, monkeypatch):
     """Test send_update_gcn endpoint with complete form data."""
     mock_update_superevent = Mock()
     mock_event = Mock()
@@ -96,12 +96,12 @@ def test_change_prefered_event_post(client, monkeypatch):
         'gwcelery.views._construct_igwn_alert_and_send_prelim_alert.run',
         mock_preliminary_alert)
 
-    response = client.post(url_for('change_prefered_event'), data={
+    response = client.post(url_for('change_preferred_event'), data={
         'superevent_id': 'MS190208a',
         'event_id': 'M12345'})
     assert HTTP_STATUS_CODES[response.status_code] == 'Found'
     assert get_flashed_messages() == [
-        'Changed prefered event for MS190208a.']
+        'Changed preferred event for MS190208a.']
     mock_update_superevent.assert_called_once_with(
         'MS190208a', preferred_event='M12345')
     mock_get_event.assert_called_once_with('M12345')

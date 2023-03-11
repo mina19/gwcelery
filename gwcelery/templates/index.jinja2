@@ -206,13 +206,13 @@
     </div>
     <div class="card mb-3">
         <div class=card-header>
-            Change Prefered Event in Superevent
+            Change Preferred Event in Superevent
         </div>
         <div class=card-body>
-            <form method=post action="{{ url_for('change_prefered_event') }}">
+            <form method=post action="{{ url_for('change_preferred_event') }}">
                 <div class=form-row>
                     <div class=form-group>
-                        <div class=form-text>Change the prefered event of a superevent. Do not send any preliminary or update GCN Notice.</div>
+                        <div class=form-text>Change the preferred event of a superevent. Do not send any preliminary or update GCN Notice.</div>
                     </div>
                 </div>
                 <div class="form-row">
@@ -229,19 +229,19 @@
                         <button type=submit id=submit-button name=submit-button class="btn btn-primary">Submit</button>                     
                     </div>
                 </div>
-                <div class="modal fade" tabindex=-1 role=dialog aria-labelledby=change-prefered-event-confirm-label>
+                <div class="modal fade" tabindex=-1 role=dialog aria-labelledby=change-preferred-event-confirm-label>
                     <div class=modal-dialog role=document>
                         <div class=modal-content>
                             <div class=modal-header>
-                                <h5 class=modal-title id=change-prefered-event-confirm-label>
-                                    Really Change Prefered Event?
+                                <h5 class=modal-title id=change-preferred-event-confirm-label>
+                                    Really Change Preferred Event?
                                 </h5>
                                 <button type=button class=close data-dismiss=modal aria-label=Close>
                                     <span aria-hidden="true">&times;</span>
                                 </button>
                             </div>
                             <div class=modal-body>
-                                Are you sure that you want to change the prefered event?
+                                Are you sure that you want to change the preferred event?
                             </div>
                             <div class=modal-footer>
                                 <button type=button class="btn btn-secondary" data-dismiss=modal>Cancel</button>                     
