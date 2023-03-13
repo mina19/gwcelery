@@ -167,12 +167,17 @@ def combine_skymaps_moc_flat(gw_sky, ext_sky, ext_header):
             gw_sky['PROBDENSITY'] * areas.value,
             gw_sky['DISTMU'], gw_sky['DISTSIGMA'])
         gw_sky.meta['distmean'], gw_sky.meta['diststd'] = distmean, diststd
+    if 'instruments' not in ext_header:
+        ext_header.update({'instruments': {'external instrument'}})
     if 'instruments' in gw_sky.meta:
         gw_sky.meta['instruments'].update(ext_header['instruments'])
     if 'HISTORY' in gw_sky.meta:
+        ext_instrument = list(ext_header['instruments'])[0]
         gw_sky.meta['HISTORY'].extend([
-            '', 'The values were reweighted by using data from {}'.format(
-                list(ext_header['instruments'])[0])])
+            '', 'The values were reweighted by using data from {0}{1}'.format(
+                ('an ' if ext_instrument == 'external instrument'
+                 else ''),
+                ext_instrument)])
     return gw_sky
 
 

@@ -129,9 +129,12 @@ def test_combine_skymaps(mock_write_sky_map,
         mock_skymap_combine_flat_flat.assert_called()
 
 
-@pytest.mark.parametrize('missing_header_values',
-                         [False, True])
-def test_create_combined_skymap_moc_flat(missing_header_values):
+@pytest.mark.parametrize('missing_header_values,instrument',
+                         [[False, 'Fermi'],
+                          [True, 'Fermi'],
+                          [False, None],
+                          [True, None]])
+def test_create_combined_skymap_moc_flat(missing_header_values, instrument):
     """Test using our internal MOC-flat sky map combination gives back the
     input using a uniform sky map, ensuring the test is giving a sane result
     and is at least running to completion.
@@ -144,14 +147,18 @@ def test_create_combined_skymap_moc_flat(missing_header_values):
         gw_sky.meta.pop('instruments')
         gw_sky.meta.pop('HISTORY')
     ext_sky = np.full(12, 1 / 12)
-    ext_header = {'instruments': set({'Fermi'}), 'nest': True}
+    if instrument:
+        ext_header = {'instruments': set({instrument}), 'nest': True}
+    else:
+        ext_header = {'nest': True}
     combined_sky = external_skymaps.combine_skymaps_moc_flat(gw_sky, ext_sky,
                                                              ext_header)
     assert all(combined_sky['PROBDENSITY'] == gw_sky['PROBDENSITY'])
     if missing_header_values:
         assert 'instruments' not in combined_sky.meta
     else:
-        assert 'Fermi' in combined_sky.meta['instruments']
+        assert ('Fermi' in combined_sky.meta['instruments'] if instrument else
+                'external instrument' in combined_sky.meta['instruments'])
 
 
 @pytest.mark.parametrize('graceid',

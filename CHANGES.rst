@@ -35,6 +35,10 @@ Changelog
 
 -   Avoid updating values in the combined sky map if missing in the GW sky map.
 
+-   Catch bug if instrument not in external sky map header. This could occur
+    if grabbing a sky map from an external URL such as from Fermi-GBM that
+    lacks this field.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 
