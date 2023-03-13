@@ -89,7 +89,7 @@ pesummary = "*"
 pygcn = ">=1.0.1"
 python-ligo-lw = "^1.8.3"
 rapid-pe = ">=0.0.4"
-rapidpe-rift-pipe = ">=0.0.7"
+rapidpe-rift-pipe = ">=0.0.8"
 RIFT = ">=0.0.15.7"
 scipy = "<1.10"  # https://github.com/astropy/astropy/issues/14230
 safe-netrc = "*"

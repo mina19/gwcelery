@@ -3884,14 +3884,14 @@ six = "*"
 
 [[package]]
 name = "rapidpe-rift-pipe"
-version = "0.0.7"
+version = "0.0.8"
 description = "Pipeline for running RapidPE and RIFT parameter estimation codes"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "rapidpe_rift_pipe-0.0.7-py3-none-any.whl", hash = "sha256:59ab082ec02f9463dc403f56aff4637f966d09d343dc2afb1eaf7ba66de69f54"},
-    {file = "rapidpe_rift_pipe-0.0.7.tar.gz", hash = "sha256:7a14796591b2e0d74aa88745bfadc24edaf547c2b6250de1b117d36819a59468"},
+    {file = "rapidpe_rift_pipe-0.0.8-py3-none-any.whl", hash = "sha256:85da7c9c0fc5d16860f4f0e42e1762915400129b32fb83885ddaf7d0c1bfd6f1"},
+    {file = "rapidpe_rift_pipe-0.0.8.tar.gz", hash = "sha256:4bc615f7380f722d25e275d0f31477b9a947efff75ffbcc75741516e0bb8d872"},
 ]
 
 [package.dependencies]
@@ -5037,4 +5037,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8,<3.11"
-content-hash = "215bfc62e98a601d50c10b1bb6dd2f8ddea84bf2acffaa104de7475167f3977b"
+content-hash = "ace2d260eb46852ced1d6c5b85a58eb77c3b5809104bec9530d83321627a7ff2"

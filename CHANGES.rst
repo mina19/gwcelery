@@ -55,6 +55,11 @@ Changelog
     make the results reproducible and set the maximum number of points to limit
     run time.
 
+-   Update rapidpe-rift-pipe to 0.0.8. This finds the initial grid region based
+    on gstlal search biases. Fixes spin components to gstlal trigger spin. Offsets
+    likelihood by 0.5*snr**2 to avoid numpy overflow. Reduced number of extrinsic
+    samples and the number of extrinsic samples that get saved.
+
 2.0.3 "Ugly Merman" (2023-02-16)
 --------------------------------
 
