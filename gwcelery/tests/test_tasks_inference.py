@@ -216,7 +216,8 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
         ans = {
             'summarypages_arguments': {'gracedb': event['graceid'],
                                        'no_ligo_skymap': True},
-            'queue': 'Online_PE'
+            'queue': 'Online_PE',
+            'accounting_user': 'soichiro.morisaki'
         }
         if mode == 'quick_bns':
             ans.update(

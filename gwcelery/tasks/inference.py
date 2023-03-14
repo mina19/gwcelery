@@ -304,7 +304,8 @@ def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
         setup_arg += ['--channel-dict', 'o3replay']
     settings = {'summarypages_arguments': {'gracedb': event['graceid'],
                                            'no_ligo_skymap': True},
-                'queue': 'Online_PE'}
+                'queue': 'Online_PE',
+                'accounting_user': 'soichiro.morisaki'}
 
     if mode == 'quick_bns':
         setup_arg += ['--cbc-likelihood-mode', 'lowspin_phenomd_narrowmc_roq']
