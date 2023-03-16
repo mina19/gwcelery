@@ -431,8 +431,6 @@ def _setup_dag_for_rapidpe(rundir, superevent_id, frametype_dict):
 
     # return path to dag
     dag = os.path.join(rundir, "event_all_iterations.dag")
-    os.chdir(os.path.dirname(dag))
-    dag = os.path.basename(dag)
     return dag
 
 
@@ -732,9 +730,6 @@ def dag_finished(rundir, superevent_id, pe_pipeline, **kwargs):
         lalinference, bilby, or rapidpe.
 
     """
-    if pe_pipeline == 'rapidpe':
-        os.chdir(os.path.expanduser("~"))
-
     if pe_pipeline == 'lalinference':
         canvas = _upload_tasks_lalinference(rundir, superevent_id)
     elif pe_pipeline == 'bilby':

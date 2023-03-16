@@ -64,6 +64,8 @@ Changelog
     likelihood by 0.5*snr**2 to avoid numpy overflow. Reduced number of extrinsic
     samples and the number of extrinsic samples that get saved.
 
+-   Do not change current directory when setting up rapidpe dag.
+
 2.0.3 "Ugly Merman" (2023-02-16)
 --------------------------------
 
