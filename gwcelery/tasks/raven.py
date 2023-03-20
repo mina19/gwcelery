@@ -358,7 +358,7 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
     gw_group = gw_group.lower()
     pipeline = ext_event['pipeline']
     trials_factor = app.conf['preliminary_alert_trials_factor'][gw_group]
-    missing_skymap = 'Swift' == pipeline
+    missing_skymap = True
     messages = []
 
     #  Since the significance of SNEWS triggers is so high, we will publish
@@ -369,6 +369,7 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
         far_threshold = app.conf['snews_gw_far_threshold']
         pass_far_threshold = gw_far * trials_factor < far_threshold
         is_ext_subthreshold = False
+        missing_skymap = False
         #  Set coinc FAR to gw FAR only for the sake of a message below
         time_coinc_far = space_coinc_far = coinc_far = None
         coinc_far_f = gw_far
@@ -440,8 +441,8 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
         messages.append(('RAVEN: Alert already triggered for {}'.format(
                             ext_id)))
     if missing_skymap:
-        messages.append('RAVEN: Will only publish Swift coincidence '
-                        'event if spatial-temporal FAR is present. '
+        messages.append('RAVEN: Will only publish GRB coincidence '
+                        'if spatial-temporal FAR is present. '
                         'Waiting for both sky maps to be available '
                         'first.')
     for message in messages:

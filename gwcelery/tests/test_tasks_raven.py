@@ -493,10 +493,16 @@ def _mock_get_event(graceid):
                 "search": 'GRB',
                 "labels": ['NOT_GRB'],
                 "group": 'External'}
-    elif graceid == 'M5':
-        return {"graceid": "M5",
+    elif graceid == 'M6':
+        return {"graceid": "M6",
                 "pipeline": 'Fermi',
                 "search": 'MDC',
+                "labels": [],
+                "group": 'External'}
+    elif graceid == 'E7':
+        return {"graceid": "E7",
+                "pipeline": 'Fermi',
+                "search": 'GRB',
                 "labels": [],
                 "group": 'External'}
     else:
@@ -537,7 +543,9 @@ def _mock_get_coinc_far(graceid):
      ['S2468', 'E5', 'CBC', False],
      ['S2468', 'E2', 'CBC', False],
      ['S2345', 'E3', 'Burst', True],
-     ['MS1111', 'M5', 'CBC', True],
+     ['MS1111', 'M6', 'CBC', True],
+     ['S5678', 'E1', 'CBC', False],
+     ['S5678', 'E7', 'CBC', False],
      ['E1', 'S9876', 'CBC', True],
      ['E1', 'S2468', 'CBC', False],
      ['E2', 'S5678', 'CBC', False],
@@ -578,7 +586,7 @@ def test_trigger_raven_alert(mock_create_label, mock_update_superevent,
     [['S2468', 'E5', True],
      ['S2468', 'E1', True],
      ['S2468', 'E2', False],
-     ['S2468', 'M5', True],
+     ['S2468', 'M6', True],
      ['S2345', 'E1', False],
      ['S2345', 'E2', False]])
 @patch('gwcelery.tasks.gracedb.create_label.run')

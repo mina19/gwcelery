@@ -42,6 +42,8 @@ Changelog
     emfollow-playground server, creating mock coincidences with a frequency
     given by the ``joint_O3_replay_freq`` variable.
 
+-   Require sky map information to publish coincidence with a GRB candidate.
+
 -   Fix collation of INTEGRAL notices by getting the GCN ID from the IVORN
     field.
 
