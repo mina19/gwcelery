@@ -219,6 +219,8 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
             'queue': 'Online_PE',
             'accounting_user': 'soichiro.morisaki'
         }
+        if host != 'gracedb.ligo.org':
+            ans['queue'] = 'Online_PE_MDC'
         if mode == 'quick_bns':
             ans.update(
                 {'sampler_kwargs': {'naccept': 10, 'nlive': 500,

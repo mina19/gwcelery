@@ -4,7 +4,7 @@ Changelog
 2.0.5 (unreleased)
 ------------------
 
--   No changes yet.
+-   Use Online_PE_MDC nodes for bilby jobs on O3-Reply injections.
 
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
