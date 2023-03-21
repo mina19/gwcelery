@@ -319,8 +319,8 @@ detchar_bit_definitions = {
 }
 """Bit definitions for detchar checks"""
 
-omegascan_durations = [0.5, 2.0, 10.0]
-"""Durations for omegascans, symmetric about t0"""
+omegascan_durations = [(0.75, 0.25), (1.5, 0.5), (7.5, 2.5)]
+"""Durations for omegascans, before and after t0"""
 
 pe_results_path = os.path.join(os.getenv('HOME'), 'public_html/online_pe')
 """Path to the results of Parameter Estimation (see

@@ -72,7 +72,7 @@ expected_path = Path(__file__).parent / 'data/llhoft/omegascan/scanme.gwf'
 
 @patch('gwcelery.tasks.detchar.create_cache', return_value=[expected_path])
 def test_make_omegascan_worked(mock_create_cache, scan_strainname):
-    durs = [1, 1, 1]
+    durs = [(1, 1), (1, 1), (1, 1)]
     t0 = 1126259463
     png = detchar.make_omegascan('H1', t0, durs)
     pngarray = plt.imread(BytesIO(png))
@@ -83,7 +83,7 @@ def test_make_omegascan_worked(mock_create_cache, scan_strainname):
 
 @patch('gwcelery.tasks.detchar.create_cache', return_value=[])
 def test_make_omegascan_failed(mock_create_cache, scan_strainname):
-    durs = [1, 1, 1]
+    durs = [(1, 1), (1, 1), (1, 1)]
     t0 = 1126259463
     png = detchar.make_omegascan('H1', t0, durs)
     pngarray = plt.imread(BytesIO(png))

@@ -110,9 +110,9 @@ def make_omegascan(ifo, t0, durs):
         'H1', 'L1', or 'V1'
     t0 : int or float
         Central time of the omegascan.
-    durs : list of floats/ints
-        List of three durations which will be scanned symmetrically about t0.
-        Example: [0.5, 2, 10]
+    durs : list of tuples
+        List of three tuples, with time before and time after t0 in seconds.
+        Example: [(0.75, 0.25), (1.5, 0.5), (7.5, 2.5)]
 
     Returns
     -------
@@ -124,8 +124,10 @@ def make_omegascan(ifo, t0, durs):
     plt.switch_backend('agg')
 
     # Collect data
-    longest = max(durs)
-    long_start, long_end = t0 - longest, t0 + longest
+    durs = np.array(durs)
+    longest_before, longest_after = durs[:, 0].max(), durs[:, 1].max()
+    # longest = max(np.array(durs).flatten())
+    long_start, long_end = t0 - longest_before, t0 + longest_after
     cache = create_cache(ifo, long_start, long_end)
     strain_name = app.conf['strain_channel_names'][ifo]
     try:
@@ -133,8 +135,9 @@ def make_omegascan(ifo, t0, durs):
                              start=long_start, end=long_end).astype('float64')
         # Do q_transforms for the different durations
         qgrams = [ts.q_transform(
-            frange=(20, 4096), gps=t0, outseg=(t0 - dur, t0 + dur), logf=True)
-            for dur in durs]
+            frange=(20, 4096), gps=t0,
+            outseg=(t0 - before, t0 + after), logf=True)
+            for before, after in durs]
     except (IndexError, FloatingPointError, ValueError):
         # data from cache can't be properly read, or data is weird
         fig = plt.figure()
@@ -142,10 +145,11 @@ def make_omegascan(ifo, t0, durs):
         plt.text(0.1, 0.45, f"Failed to create {ifo} omegascan", fontsize=17)
     else:
         fig = Plot(*qgrams,
-                   figsize=(10 * len(durs), 5),
+                   figsize=(12 * len(durs), 5),
                    geometry=(1, len(durs)),
                    yscale='log',
-                   method='pcolormesh')
+                   method='pcolormesh',
+                   cmap='viridis')
         for ax in fig.axes:
             fig.colorbar(ax=ax, label='Normalized energy', clim=(0, 30))
             ax.set_epoch(t0)
@@ -169,14 +173,16 @@ def omegascan(t0, graceid):
 
     """
     durs = app.conf['omegascan_durations']
+    durs = np.array(durs)
 
     # Delay for early warning events (ie queries for times before now)
-    if t0 + max(durs) > Time.now().gps:
+    longest_after = durs[:, 1].max()
+    if t0 + longest_after > Time.now().gps:
         log.info("Delaying omegascan because %s is in the future",
                  graceid)
-        waittime = t0 - Time.now().gps + max(durs) + 10
+        waittime = t0 - Time.now().gps + longest_after + 10
     else:
-        waittime = max(durs) + 10
+        waittime = longest_after + 10
 
     group(
         make_omegascan.s(ifo, t0, durs).set(countdown=waittime)
