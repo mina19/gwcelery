@@ -471,7 +471,7 @@ def check_vectors(event, graceid, start, end):
     # Logging iDQ to GraceDB
     if None not in idq_faps.values():
         idq_faps_readable = {k: round(v, 3) for k, v in idq_faps.items()}
-        if max(idq_faps.values()) <= app.conf['idq_fap_thresh']:
+        if min(idq_faps.values()) <= app.conf['idq_fap_thresh']:
             idq_msg = ("iDQ false alarm probability is low: "
                        "minimum FAP is {}. ").format(
                 json.dumps(idq_faps_readable)[1:-1])
