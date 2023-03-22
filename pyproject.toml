@@ -115,7 +115,7 @@ pytest-socket = {version="*", optional=true}
 doc = ["pep517", "sphinx"]
 test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socket"]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 ipython = "*"  # Include IPython for a nicer ``gwcelery shell`` experience.
 ipykernel = "*"  # Include IPython kernel for Jupyter Lab support.
 flower = ">=1.2.0"
