@@ -4,6 +4,8 @@ Changelog
 2.0.5 (unreleased)
 ------------------
 
+-   Add Mattermost channel creation feature for RRT purpose.
+
 -   Use Online_PE_MDC nodes for bilby jobs on O3-Reply injections.
 
 -   Do not remove PE run directory after the run completes or fails.

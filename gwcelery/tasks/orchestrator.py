@@ -25,6 +25,8 @@ from . import p_astro
 from . import skymaps
 from . import superevents
 
+from ligo.rrt_chat import channel_creation
+
 
 @igwn_alert.handler('superevent',
                     'mdc_superevent',
@@ -221,6 +223,9 @@ def handle_superevent(alert):
             initial_alert((None, None, None), alert)
         elif label_name == 'ADVNO':
             retraction_alert(alert)
+        elif label_name == 'ADVREQ':
+            if app.conf['create_mattermost_channel']:
+                _create_mattermost_channel.si(superevent_id).delay()
 
     # check DQV label on superevent, run check_vectors if required
     elif alert['alert_type'] == 'event_added':
@@ -430,6 +435,24 @@ def handle_posterior_samples(alert):
             'em-bright computed from "{}"'.format(info)
         )
     ).delay()
+
+
+@app.task(bind=True, shared=False)
+def _create_mattermost_channel(self, superevent_id):
+    """
+    Creates a mattermost channel when ADVREQ label is applied and
+    posts a cooresponding gracedb link of that event in the channel
+
+    Channel name : O4 RRT {superevent_id}
+
+    Parameters:
+    ------------
+    superevent_id: str
+        The superevent id
+    """
+    gracedb_url = self.app.conf['gracedb_host']
+    channel_creation.rrt_channel_creation(
+        superevent_id, gracedb_url)
 
 
 @app.task(shared=False)

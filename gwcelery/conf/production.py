@@ -21,6 +21,9 @@ igwn_alert_group = 'gracedb'
 gracedb_host = 'gracedb.ligo.org'
 """GraceDB host."""
 
+create_mattermost_channel = True
+"""Create Mattermost channel in production"""
+
 kafka_alert_config = {
     'scimma': {'url': 'kafka://kafka.scimma.org/igwn.gwalert',
                'suffix': 'avro', 'skymap_encoder': lambda _: _},

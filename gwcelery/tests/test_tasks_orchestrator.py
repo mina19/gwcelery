@@ -17,6 +17,8 @@ from . import data
     'superevent_id,superevent_labels',
     [['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
         ['H1'], 'S1234', ['EM_Selected']],
+     ['label_added', 'ADVREQ', 'CBC', 'gstlal', False, 1.e-9,
+        ['H1'], 'S1234', ['ADVREQ']],
      ['label_added', 'EM_SelectedConfident', 'CBC', 'gstlal', False, 1.e-9,
          ['H1', 'L1'], 'S1234', ['EM_Selected']],
      ['label_added', 'EM_SelectedConfident', 'CBC', 'gstlal', False, 1.e-9,
@@ -134,6 +136,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
     create_initial_circular = Mock()
     create_emcoinc_circular = Mock()
     expose = Mock()
+    rrt_channel_creation = Mock()
     annotate_fits = Mock(return_value=None)
     proceed_if_not_blocked_by = Mock(
         return_value=(
@@ -218,7 +221,9 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
     monkeypatch.setattr('gwcelery.tasks.detchar.omegascan.run', omegascan)
     monkeypatch.setattr('gwcelery.tasks.detchar.check_vectors.run',
                         check_vectors)
-
+    monkeypatch.setattr('gwcelery.tasks.orchestrator.channel_creation.'
+                        'rrt_channel_creation', rrt_channel_creation)
+    monkeypatch.setattr(app.conf, 'create_mattermost_channel', True)
     # Run function under test
     orchestrator.handle_superevent(alert)
 
@@ -299,6 +304,10 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             # no circular creation for less-significant alerts
             create_initial_circular.assert_not_called()
             create_emcoinc_circular.assert_not_called()
+    elif alert_label == 'ADVREQ':
+        rrt_channel_creation.assert_called_once_with(
+            superevent_id,
+            app.conf['gracedb_host'])
 
     if alert_type == 'new' and group == 'CBC':
         query_data.assert_called_once()

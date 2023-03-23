@@ -68,6 +68,9 @@ igwn_alert_group = 'gracedb-playground'
 gracedb_host = 'gracedb-playground.ligo.org'
 """GraceDB host."""
 
+create_mattermost_channel = False
+"""Do not create Mattermost channel."""
+
 voevent_broadcaster_address = ':5342'
 """The VOEvent broker will bind to this address to send GCNs.
 This should be a string of the form `host:port`. If `host` is empty,
