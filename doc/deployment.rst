@@ -22,25 +22,10 @@ computing cluster and that are managed in this manner:
     triggered through GitLab*. It uses the
     :mod:`gwcelery.conf.production` configuration preset.
 
-An additional test instance is available for testing:
-
-*   **Test**: The test instance is used for testing work-in-progress branches
-    that need testing in a live environment. It  uses the
-    :mod:`gwcelery.conf.test` configuration preset.
-
 When we observe that the Playground instance shows correct end-to-end behavior,
 we have the option of triggering a re-deployment to Production. Deployment to
 production should preferably occur at a release. The procedure for performing a
 release is described below.
-
-Continuous deployment using gitlab requires a valid LSC DataGrid credential.
-First generate a keytab. Instructions are given in the `IGWN Kerberos`_ documentation.
-Then base64 encode the content in a secret variable ``SSH_KEYTAB_BASE64`` in
-gitlab. Instructions for this are provided in the `ssh-kerberos`_ repository.
-Then, use ``containers.ligo.org/emfollow/ssh-kerberos`` as the image for the
-deploy stage. Examples are provided in the `ssh-kerberos`_ repository. X509 credentials,
-used for GraceDb access can be generated from the kerberos keytab, and is
-renewed on a periodic basis using :file:`renew-cert.sh` as a cron job.
 
 .. danger::
    It is possible to start an interactive session inside the GWCelery
@@ -52,30 +37,6 @@ renewed on a periodic basis using :file:`renew-cert.sh` as a cron job.
    removed from the deployment environment **will not be captured in version
    control** and may be **rolled back without warning** the next time that the
    continuous deployment is triggered.
-
-Manual deployment
------------------
-To manually install and deploy GWCelery, you need to be working on a machine where Condor
-is installed.
-
-1.  **Fetch the correct commit/tag**. Or checkout a ref if this is already done.::
-
-    $ git fetch --tags https://git.ligo.org/emfollow/gwcelery.git <SHA/TAG>
-    $ git checkout <SHA/TAG>
-
-2.  **Install dependencies from the lock file**. The dependencies can be installed
-    from the lock using::
-
-    $ pip install --no-deps -r <(poetry export --with dev)
-
-3.  **Install gwcelery**. Ignore dependency resolution via ``pip``, since the dependency
-    tree is available in the lock file::
-
-    $ pip install --no-deps .
-
-4. **Submit jobs via Condor**::
-
-    $ gwcelery condor submit
 
 Making a new release
 --------------------
@@ -187,5 +148,3 @@ change log.
 .. _`issue template`: https://docs.gitlab.com/ee/user/project/description_templates.html
 .. _`.gitlab/issue_templates`: https://git.ligo.org/emfollow/gwcelery/tree/main/.gitlab/issue_templates
 .. _`new issue`: https://git.ligo.org/emfollow/gwcelery/issues/new
-.. _ssh-kerberos: https://git.ligo.org/emfollow/ssh-kerberos/-/blob/master/README.md
-.. _`IGWN Kerberos`: https://computing.docs.ligo.org/guide/auth/kerberos/
