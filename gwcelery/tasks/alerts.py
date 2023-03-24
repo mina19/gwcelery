@@ -80,7 +80,7 @@ def _add_external_coinc_to_alert(alert_dict, superevent,
         combined_skymap = None
     alert_dict['external_coinc'] = {
         'gcn_notice_id':
-            external_event['extra_attributes']['GRB']['trigger_id'],
+            int(external_event['extra_attributes']['GRB']['trigger_id']),
         'ivorn': external_event['extra_attributes']['GRB']['ivorn'],
         'observatory': external_event['pipeline'],
         'search': external_event['search'],
