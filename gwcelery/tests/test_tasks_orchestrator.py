@@ -449,6 +449,7 @@ def test_handle_superevent_initial_alert(mock_create_initial_circular,
         ProbHasRemnant=0.0, Terrestrial=0.01, internal=False, open_alert=True,
         skymap_filename='foobar.multiorder.fits,0', skymap_type='foobar',
         raven_coinc='RAVEN_ALERT' in labels,
+        Significant=1,  # this field is true for initial alerts
         combined_skymap_filename=(combined_skymap_filename if
                                   combined_skymap_needed else None))
     mock_alerts_send.assert_called_once_with(

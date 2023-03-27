@@ -80,6 +80,8 @@ Changelog
     OpenMP and Python multiprocessing, running slowly and causing Condor job
     evictions due to excessive memory usage.
 
+-   Set the ``Significant`` field in VOEvent XML packets in addition to AVRO/JSON. 
+
 2.0.3 "Ugly Merman" (2023-02-16)
 --------------------------------
 

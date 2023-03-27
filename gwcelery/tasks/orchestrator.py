@@ -1005,6 +1005,11 @@ def earlywarning_preliminary_initial_update_alert(
     # less-significant alerts have "preliminary" voevent notice type
     alert_type_voevent = 'preliminary' if alert_type == 'less-significant' \
         else alert_type
+    # set the significant field in the VOEvent based on
+    # less-significant/significant alert.
+    # For kafka alerts the analogous field is set in alerts.py.
+    # (see comment before defining kafka_alert_canvas)
+    voevent_significance = 0 if alert_type == 'less-significant' else 1
 
     if filecontents and not combined_skymap_filename:
         skymap, em_bright, p_astro = filecontents
@@ -1015,6 +1020,7 @@ def earlywarning_preliminary_initial_update_alert(
             (em_bright, p_astro),
             superevent_id,
             alert_type_voevent,
+            Significant=voevent_significance,
             skymap_filename=skymap_filename,
             internal=False,
             open_alert=True,
@@ -1041,6 +1047,7 @@ def earlywarning_preliminary_initial_update_alert(
         voevent_canvas = _create_voevent.s(
             superevent_id,
             alert_type_voevent,
+            Significant=voevent_significance,
             skymap_filename=skymap_filename,
             internal=False,
             open_alert=True,
@@ -1069,8 +1076,6 @@ def earlywarning_preliminary_initial_update_alert(
         )
     ]
 
-    # FIXME: add significant field to voevent
-    # see https://git.ligo.org/emfollow/gwcelery/-/issues/546
     voevent_canvas |= group(
         gracedb.download.s(superevent_id)
         |
