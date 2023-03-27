@@ -1,16 +1,48 @@
+from celery import bootsteps
+from celery.concurrency import solo
+from celery.utils.log import get_logger
 from confluent_kafka.error import KafkaException
+from fastavro.schema import parse_schema
 from hop import stream
 from hop.io import list_topics
 from hop.models import AvroBlob, JSONBlob
 
-from celery import bootsteps
-from celery.concurrency import solo
-from celery.utils.log import get_logger
+from ..util import PromiseProxy, read_json
 
 
 __all__ = ('Producer',)
 
 log = get_logger(__name__)
+
+
+@PromiseProxy
+def schema():
+    # The order does not matter other than the Alert schema must be loaded last
+    # because it references the other schema. All of the schema are saved in
+    # named_schemas, but we only need to save a reference to the the Alert
+    # schema to write the packet.
+    # NOTE Specifying expand=True when calling parse_schema is okay when only
+    # one schema contains references to other schema, in our case only the
+    # alerts schema contains references to other schema. More complicated
+    # relationships between schema though can lead to behavior that does not
+    # conform to the avro spec, and a different method will need to be used to
+    # load the schema. See https://github.com/fastavro/fastavro/issues/624 for
+    # more info.
+    named_schemas = {}
+    for s in ['igwn.alerts.v1_0.ExternalCoincInfo.avsc',
+              'igwn.alerts.v1_0.EventInfo.avsc',
+              'igwn.alerts.v1_0.AlertType.avsc',
+              'igwn.alerts.v1_0.Alert.avsc']:
+        schema = parse_schema(read_json('igwn_gwalert_schema', s),
+                              named_schemas, expand=True)
+
+    return schema
+
+
+class AvroBlobWrapper(AvroBlob):
+
+    def __init__(self, payload):
+        return super().__init__([payload], schema)
 
 
 class KafkaWriter:
@@ -29,7 +61,7 @@ class KafkaWriter:
         # FIXME Drop get_payload_input method once
         # https://github.com/scimma/hop-client/pull/190 is merged
         if config['suffix'] == 'avro':
-            self.serialization_model = AvroBlob
+            self.serialization_model = AvroBlobWrapper
             self.get_payload_input = lambda payload: payload.content[0]
         elif config['suffix'] == 'json':
             self.serialization_model = JSONBlob
@@ -59,14 +91,10 @@ class KafkaWriter:
     def _delivery_cb(self, kafka_error, message):
         # FIXME Get rid of if-else logic once
         # https://github.com/scimma/hop-client/pull/190 is merged
-        if self.serialization_model == AvroBlob:
-            record = self.serialization_model.deserialize(
-                message.value()
-            ).content[0]
+        if self._config['suffix'] == 'avro':
+            record = AvroBlob.deserialize(message.value()).content[0]
         else:
-            record = self.serialization_model.deserialize(
-                message.value()
-            ).content
+            record = JSONBlob.deserialize(message.value()).content
         kafka_url = self._config['url']
         if kafka_error is None:
             self.kafka_delivery_failures = False

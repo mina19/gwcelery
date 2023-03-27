@@ -1736,6 +1736,18 @@ lint = ["flake8 (>=3.7.0)", "flake8-bandit"]
 test = ["pytest (>=3.9.1)", "pytest-cov", "requests (>=2.14)", "requests-mock", "safe-netrc (>=1.0.0)"]
 
 [[package]]
+name = "igwn-gwalert-schema"
+version = "1.0.0"
+description = "JSON and Avro Schema for gravitational-wave alerts"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "igwn-gwalert-schema-1.0.0.tar.gz", hash = "sha256:28dcd14d263df65cfceef85aa8b28c344a2d465e8f4fa4016675992f6817fc1d"},
+    {file = "igwn_gwalert_schema-1.0.0-py3-none-any.whl", hash = "sha256:18fae274d72687376b7376189d6602ac157d24f3a487e18d195ab7788153e7b6"},
+]
+
+[[package]]
 name = "imagesize"
 version = "1.4.1"
 description = "Getting image size from png/jpeg/jpeg2000/gif file"
@@ -5076,4 +5088,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8,<3.11"
-content-hash = "a476f6e791cd6801859b8f5a04bb07313d6e96a4823ca82bf4f7813206fee433"
+content-hash = "d00960ccfc19907cf073b842e995d9ebe38db7c1aa6010dd490f6403b0a10a60"

@@ -3,7 +3,6 @@ import json
 from astropy import time
 from celery import group
 from celery.utils.log import get_logger
-from hop.models import AvroBlob
 
 from ..import app
 from . import gracedb
@@ -139,11 +138,7 @@ def _send(self, alert_dict, skymap, brokerhost, combined_skymap=None):
     # Write to kafka topic
     serialization_model = \
         self.app.conf['kafka_streams'][brokerhost].serialization_model
-    # FIXME Drop logic that packs payload_dict in a list once
-    # https://github.com/scimma/hop-client/pull/190 is merged
-    payload = serialization_model(
-            [payload_dict] if serialization_model is AvroBlob else
-            payload_dict)
+    payload = serialization_model(payload_dict)
     self.app.conf['kafka_streams'][brokerhost].write(payload)
 
     return payload
