@@ -12,9 +12,11 @@ conda activate igwn-py39-20221118
 # Add user site directory to the PATH. On Linux, this is usuall ~/.local/bin.
 export PATH="$(python -m site --user-base)/bin${PATH+:${PATH}}"
 
-# Disable OpenMP threading by default.
-# In this environmnet, it will be enabled selectively by processes that use it.
+# Disable OpenMP, MKL, and OpenBLAS threading by default.
+# In this environment, it will be enabled selectively by processes that use it.
 export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
 
 # Use mpich for parameter estimation.
 module load mpi/mpich-x86_64

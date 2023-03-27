@@ -128,13 +128,14 @@ Quick Start`_ instructions to build redis from source and start a server::
 Start GWCelery components manually
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-GWCelery itself consists of five :ref:`Celery workers <celery:guide-workers>`
+GWCelery itself consists of six :ref:`Celery workers <celery:guide-workers>`
 and one `Flask`_ web application. Start them all by running each of the
 following commands::
 
     $ gwcelery worker -l info -n gwcelery-worker -Q celery -B --igwn-alert
     $ gwcelery worker -l info -n gwcelery-exttrig-worker -Q exttrig -c 1
     $ gwcelery worker -l info -n gwcelery-openmp-worker -Q openmp -c 1
+    $ OMP_NUM_THREADS=1 gwcelery worker -l info -n gwcelery-multiprocessing-worker -Q multiprocessing -c 1
     $ gwcelery worker -l info -n gwcelery-superevent-worker -Q superevent -c 1
     $ gwcelery worker -l info -n gwcelery-voevent-worker -Q voevent -P solo
     $ gwcelery flask run

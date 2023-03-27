@@ -256,7 +256,19 @@ of several processes:
     *  :meth:`gwcelery.tasks.bayestar.localize`
     *  :meth:`gwcelery.tasks.skymaps.plot_volume`
 
-5.  **Superevent Worker**
+5.  **Multiprocessing Worker**
+
+    A Celery worker that has been configured to accept only computationally
+    intensive tasks that use Python :doc:`python:multiprocessing` parallelism.
+    To route a task to the multiprocessing worker, pass the keyword argument
+    ``queue='multiprocessing'`` to the ``@app.task`` decorator when you declare
+    it.
+
+    There is one task that run in the multiprocessing queue:
+
+    *  :meth:`gwcelery.tasks.skymaps.skymap_from_samples`
+
+6.  **Superevent Worker**
 
     A Celery worker that is dedicated to serially process triggers from low
     latency pipelines and create/modify superevents in GraceDB. There is only
@@ -264,7 +276,7 @@ of several processes:
 
     *  :meth:`gwcelery.tasks.superevents.handle`
 
-6.  **External Trigger Worker**
+7.  **External Trigger Worker**
 
     A Celery worker that is dedicated to serially process external triggers
     from GRB alerts received from Fermi, Swift, Integral, Agile MCAL and
@@ -273,7 +285,7 @@ of several processes:
 
     *  :meth:`gwcelery.tasks.external_triggers.handle_gcn`
 
-7.  **VOEvent Worker**
+8.  **VOEvent Worker**
 
     A Celery worker that is dedicated to sending and receiving VOEvents. It
     runs an embedded instance of the :doc:`comet:index` VOEvent broker, which
@@ -282,13 +294,13 @@ of several processes:
     with the ``--pool=solo`` option so that tasks are executed in the same
     Python process that is running the VOEvent broker.
 
-8.  **General-Purpose Worker**
+9.  **General-Purpose Worker**
 
     A Celery worker that accepts all other tasks. This worker also runs an
     :doc:`embedded IGWN Alert listener service <gwcelery.igwn_alert>` that is started
     and stopped as a bootstep.
 
-9.  **Flask Web Application**
+10. **Flask Web Application**
 
     A web application that provides forms to manually initiate certain tasks,
     including sending an update alert or creating a mock event.

@@ -179,7 +179,7 @@ def unflatten(filecontents, filename):
         return open(outfilename, 'rb').read()
 
 
-@app.task(shared=False, queue='openmp')
+@app.task(shared=False, queue='multiprocessing')
 def skymap_from_samples(samplefilecontents):
     """Generate multi-resolution fits file from samples."""
     with NamedTemporaryFile(content=samplefilecontents) as samplefile, \
