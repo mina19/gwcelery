@@ -62,6 +62,10 @@ def _create_base_alert_dict(classification, superevent, alert_type):
         'classification': classification
     }
 
+    # FIXME Need to populate these fields for burst events
+    alert_dict['event']['duration'] = None
+    alert_dict['event']['central_frequency'] = None
+
     return alert_dict
 
 
