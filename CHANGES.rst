@@ -44,6 +44,9 @@ Changelog
 -   Only plot skymap overlap with prefered external event when RAVEN_ALERT label
     is applied.
 
+-   Populate the duration and central_frequency fields in Kafka notices about
+    burst events.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 

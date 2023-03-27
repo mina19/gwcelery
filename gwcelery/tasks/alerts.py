@@ -3,6 +3,7 @@ import json
 from astropy import time
 from celery import group
 from celery.utils.log import get_logger
+import numpy as np
 
 from ..import app
 from . import gracedb
@@ -45,6 +46,43 @@ def _create_base_alert_dict(classification, superevent, alert_type):
     else:
         classification = {}
 
+    duration = None
+    central_frequency = None
+
+    if superevent['preferred_event_data']['group'] == 'Burst':
+        if superevent['preferred_event_data']['pipeline'].lower() == 'cwb':
+            duration = \
+                superevent['preferred_event_data']['extra_attributes'].get(
+                    'MultiBurst', {}).get('duration', None)
+            central_frequency = \
+                superevent['preferred_event_data']['extra_attributes'].get(
+                    'MultiBurst', {}).get('central_freq', None)
+        elif superevent['preferred_event_data']['pipeline'].lower() == 'mly':
+            duration = \
+                superevent['preferred_event_data']['extra_attributes'].get(
+                    'MLyBurst', {}).get('duration', None)
+            central_frequency = \
+                superevent['preferred_event_data']['extra_attributes'].get(
+                    'MLyBurst', {}).get('central_freq', None)
+        elif superevent['preferred_event_data']['pipeline'].lower() == 'olib':
+            quality_mean = \
+                superevent['preferred_event_data']['extra_attributes'].get(
+                     'LalInferenceBurst', {}).get('quality_mean', None)
+            frequency_mean = \
+                superevent['preferred_event_data']['extra_attributes'].get(
+                     'LalInferenceBurst', {}).get('frequency_mean', None)
+            central_frequency = \
+                superevent['preferred_event_data']['extra_attributes'].get(
+                     'LalInferenceBurst', {}).get('frequency_mean', None)
+            duration = quality_mean / (2 * np.pi * frequency_mean)
+        else:
+            raise NotImplementedError(
+                'Duration and central_frequency not implemented for Burst '
+                'pipeline {}'.format(
+                    superevent['preferred_event_data']['pipeline'].lower()
+                )
+            )
+
     alert_dict['event'] = {
         # set 'significant' field based on
         # https://dcc.ligo.org/LIGO-G2300151/public
@@ -58,12 +96,10 @@ def _create_base_alert_dict(classification, superevent, alert_type):
         'pipeline': superevent['preferred_event_data']['pipeline'],
         'search': superevent['preferred_event_data']['search'],
         'properties': properties,
-        'classification': classification
+        'classification': classification,
+        'duration': duration,
+        'central_frequency': central_frequency
     }
-
-    # FIXME Need to populate these fields for burst events
-    alert_dict['event']['duration'] = None
-    alert_dict['event']['central_frequency'] = None
 
     return alert_dict
 

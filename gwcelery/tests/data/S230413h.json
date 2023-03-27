@@ -1,0 +1,196 @@
+{
+    "superevent_id": "S230413h",
+    "gw_id": null,
+    "category": "Production",
+    "created": "2023-04-13 21:12:37 UTC",
+    "submitter": "emfollow",
+    "preferred_event": "G435610",
+    "em_type": null,
+    "t_start": 1365455572.051706,
+    "t_0": 1365455572.195941,
+    "t_end": 1365455572.340176,
+    "gw_events": [
+        "G435610"
+    ],
+    "em_events": [],
+    "far": 4.3978419930144364e-07,
+    "time_coinc_far": null,
+    "space_coinc_far": null,
+    "labels": [
+        "EM_READY",
+        "ADVREQ",
+        "EM_Selected",
+        "SKYMAP_READY",
+        "DQOK",
+        "GCN_PRELIM_SENT",
+        "DQR_REQUEST",
+        "EM_SelectedConfident"
+    ],
+    "links": {
+        "events": "https://gracedb-test.ligo.org/api/superevents/S230413h/events/",
+        "labels": "https://gracedb-test.ligo.org/api/superevents/S230413h/labels/",
+        "logs": "https://gracedb-test.ligo.org/api/superevents/S230413h/logs/",
+        "files": "https://gracedb-test.ligo.org/api/superevents/S230413h/files/",
+        "self": "https://gracedb-test.ligo.org/api/superevents/S230413h/",
+        "voevents": "https://gracedb-test.ligo.org/api/superevents/S230413h/voevents/",
+        "emobservations": "https://gracedb-test.ligo.org/api/superevents/S230413h/emobservations/"
+    },
+    "preferred_event_data": {
+        "submitter": "cody.messick@ligo.org",
+        "created": "2023-04-13 21:12:35 UTC",
+        "group": "Burst",
+        "graceid": "G435610",
+        "pipeline": "oLIB",
+        "gpstime": 1365455572.195941,
+        "reporting_latency": 1.673429,
+        "instruments": "H1,L1",
+        "nevents": 1,
+        "offline": false,
+        "search": "AllSky",
+        "far": 4.3978419930144364e-07,
+        "far_is_upper_limit": false,
+        "likelihood": null,
+        "labels": [
+            "SKYMAP_READY"
+        ],
+        "extra_attributes": {
+            "LalInferenceBurst": {
+                "bci": 4.079,
+                "bsn": 4.978980846912236,
+                "quality_mean": 6.574701487686878,
+                "quality_median": 6.574701487686878,
+                "omicron_snr_network": 9.166531514155176,
+                "omicron_snr_H1": 6.77,
+                "omicron_snr_L1": 6.18,
+                "omicron_snr_V1": null,
+                "hrss_mean": 1.0917592907903926e-22,
+                "hrss_median": 1.0917592907903926e-22,
+                "frequency_mean": 45.58331038957203,
+                "frequency_median": 45.58331038957203
+            }
+        },
+        "superevent": "S230413h",
+        "superevent_neighbours": {
+            "S230413h": {
+                "superevent_id": "S230413h",
+                "gw_events": [
+                    "G435610"
+                ],
+                "preferred_event": "G435610",
+                "preferred_event_data": {
+                    "submitter": "cody.messick@ligo.org",
+                    "created": "2023-04-13 21:12:35 UTC",
+                    "group": "Burst",
+                    "graceid": "G435610",
+                    "pipeline": "oLIB",
+                    "gpstime": 1365455572.195941,
+                    "reporting_latency": 1.673429,
+                    "instruments": "H1,L1",
+                    "nevents": 1,
+                    "offline": false,
+                    "search": "AllSky",
+                    "far": 4.3978419930144364e-07,
+                    "far_is_upper_limit": false,
+                    "likelihood": null,
+                    "labels": [
+                        "SKYMAP_READY"
+                    ],
+                    "extra_attributes": {
+                        "LalInferenceBurst": {
+                            "bci": 4.079,
+                            "bsn": 4.978980846912236,
+                            "quality_mean": 6.574701487686878,
+                            "quality_median": 6.574701487686878,
+                            "omicron_snr_network": 9.166531514155176,
+                            "omicron_snr_H1": 6.77,
+                            "omicron_snr_L1": 6.18,
+                            "omicron_snr_V1": null,
+                            "hrss_mean": 1.0917592907903926e-22,
+                            "hrss_median": 1.0917592907903926e-22,
+                            "frequency_mean": 45.58331038957203,
+                            "frequency_median": 45.58331038957203
+                        }
+                    }
+                },
+                "pipeline_preferred_events": {
+                    "oLIB": {
+                        "submitter": "cody.messick@ligo.org",
+                        "created": "2023-04-13 21:12:35 UTC",
+                        "group": "Burst",
+                        "graceid": "G435610",
+                        "pipeline": "oLIB",
+                        "gpstime": 1365455572.195941,
+                        "reporting_latency": 1.673429,
+                        "instruments": "H1,L1",
+                        "nevents": 1,
+                        "offline": false,
+                        "search": "AllSky",
+                        "far": 4.3978419930144364e-07,
+                        "far_is_upper_limit": false,
+                        "likelihood": null
+                    }
+                },
+                "far": 4.3978419930144364e-07,
+                "t_start": 1365455572.051706,
+                "t_0": 1365455572.195941,
+                "t_end": 1365455572.340176,
+                "labels": [
+                    "EM_READY",
+                    "ADVREQ",
+                    "EM_Selected",
+                    "SKYMAP_READY",
+                    "DQOK",
+                    "GCN_PRELIM_SENT",
+                    "DQR_REQUEST",
+                    "EM_SelectedConfident"
+                ]
+            }
+        },
+        "links": {
+            "neighbors": "https://gracedb-test.ligo.org/api/events/G435610/neighbors/",
+            "log": "https://gracedb-test.ligo.org/api/events/G435610/log/",
+            "emobservations": "https://gracedb-test.ligo.org/api/events/G435610/emobservation/",
+            "files": "https://gracedb-test.ligo.org/api/events/G435610/files/",
+            "labels": "https://gracedb-test.ligo.org/api/events/G435610/labels/",
+            "self": "https://gracedb-test.ligo.org/api/events/G435610",
+            "tags": "https://gracedb-test.ligo.org/api/events/G435610/tag/"
+        }
+    },
+    "pipeline_preferred_events": {
+        "oLIB": {
+            "submitter": "cody.messick@ligo.org",
+            "created": "2023-04-13 21:12:35 UTC",
+            "group": "Burst",
+            "graceid": "G435610",
+            "pipeline": "oLIB",
+            "gpstime": 1365455572.195941,
+            "reporting_latency": 1.673429,
+            "instruments": "H1,L1",
+            "nevents": 1,
+            "offline": false,
+            "search": "AllSky",
+            "far": 4.3978419930144364e-07,
+            "far_is_upper_limit": false,
+            "likelihood": null,
+            "labels": [
+                "SKYMAP_READY"
+            ],
+            "extra_attributes": {
+                "LalInferenceBurst": {
+                    "bci": 4.079,
+                    "bsn": 4.978980846912236,
+                    "quality_mean": 6.574701487686878,
+                    "quality_median": 6.574701487686878,
+                    "omicron_snr_network": 9.166531514155176,
+                    "omicron_snr_H1": 6.77,
+                    "omicron_snr_L1": 6.18,
+                    "omicron_snr_V1": null,
+                    "hrss_mean": 1.0917592907903926e-22,
+                    "hrss_median": 1.0917592907903926e-22,
+                    "frequency_mean": 45.58331038957203,
+                    "frequency_median": 45.58331038957203
+                }
+            }
+        }
+    }
+}

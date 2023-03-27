@@ -1,0 +1,214 @@
+{
+    "superevent_id": "S230413b",
+    "gw_id": null,
+    "category": "Production",
+    "created": "2023-04-13 19:53:35 UTC",
+    "submitter": "emfollow",
+    "preferred_event": "G435582",
+    "em_type": null,
+    "t_start": 1365450831.881784,
+    "t_0": 1365450831.8996,
+    "t_end": 1365450831.917416,
+    "gw_events": [
+        "G435582"
+    ],
+    "em_events": [],
+    "far": 6.94635e-10,
+    "time_coinc_far": null,
+    "space_coinc_far": null,
+    "labels": [
+        "EM_READY",
+        "ADVREQ",
+        "EM_Selected",
+        "SKYMAP_READY",
+        "DQOK",
+        "GCN_PRELIM_SENT",
+        "DQR_REQUEST",
+        "EM_SelectedConfident"
+    ],
+    "links": {
+        "events": "https://gracedb-test.ligo.org/api/superevents/S230413b/events/",
+        "labels": "https://gracedb-test.ligo.org/api/superevents/S230413b/labels/",
+        "logs": "https://gracedb-test.ligo.org/api/superevents/S230413b/logs/",
+        "files": "https://gracedb-test.ligo.org/api/superevents/S230413b/files/",
+        "self": "https://gracedb-test.ligo.org/api/superevents/S230413b/",
+        "voevents": "https://gracedb-test.ligo.org/api/superevents/S230413b/voevents/",
+        "emobservations": "https://gracedb-test.ligo.org/api/superevents/S230413b/emobservations/"
+    },
+    "preferred_event_data": {
+        "submitter": "cody.messick@ligo.org",
+        "created": "2023-04-13 19:53:35 UTC",
+        "group": "Burst",
+        "graceid": "G435582",
+        "pipeline": "CWB",
+        "gpstime": 1365450831.8996,
+        "reporting_latency": 1.170914,
+        "instruments": "H1,L1",
+        "nevents": null,
+        "offline": false,
+        "search": "BBH",
+        "far": 6.94635e-10,
+        "far_is_upper_limit": false,
+        "likelihood": 303.1611,
+        "labels": [
+            "SKYMAP_READY",
+            "PASTRO_READY"
+        ],
+        "extra_attributes": {
+            "MultiBurst": {
+                "ifos": "H1,L1",
+                "single_ifo_times": "1365450831.9004,1365450831.8996",
+                "start_time": 1365450831,
+                "start_time_ns": 747700000,
+                "duration": 0.017816,
+                "peak_time": null,
+                "peak_time_ns": null,
+                "central_freq": 61.417622,
+                "bandwidth": 14.25636,
+                "amplitude": 17.919914,
+                "snr": 17.411522047196218,
+                "confidence": null,
+                "false_alarm_rate": null,
+                "ligo_axis_ra": 347.116089,
+                "ligo_axis_dec": 37.1689,
+                "ligo_angle": null,
+                "ligo_angle_sig": null
+            }
+        },
+        "superevent": "S230413b",
+        "superevent_neighbours": {
+            "S230413b": {
+                "superevent_id": "S230413b",
+                "gw_events": [
+                    "G435582"
+                ],
+                "preferred_event": "G435582",
+                "preferred_event_data": {
+                    "submitter": "cody.messick@ligo.org",
+                    "created": "2023-04-13 19:53:35 UTC",
+                    "group": "Burst",
+                    "graceid": "G435582",
+                    "pipeline": "CWB",
+                    "gpstime": 1365450831.8996,
+                    "reporting_latency": 1.170914,
+                    "instruments": "H1,L1",
+                    "nevents": null,
+                    "offline": false,
+                    "search": "BBH",
+                    "far": 6.94635e-10,
+                    "far_is_upper_limit": false,
+                    "likelihood": 303.1611,
+                    "labels": [
+                        "SKYMAP_READY",
+                        "PASTRO_READY"
+                    ],
+                    "extra_attributes": {
+                        "MultiBurst": {
+                            "ifos": "H1,L1",
+                            "single_ifo_times": "1365450831.9004,1365450831.8996",
+                            "start_time": 1365450831,
+                            "start_time_ns": 747700000,
+                            "duration": 0.017816,
+                            "peak_time": null,
+                            "peak_time_ns": null,
+                            "central_freq": 61.417622,
+                            "bandwidth": 14.25636,
+                            "amplitude": 17.919914,
+                            "snr": 17.411522047196218,
+                            "confidence": null,
+                            "false_alarm_rate": null,
+                            "ligo_axis_ra": 347.116089,
+                            "ligo_axis_dec": 37.1689,
+                            "ligo_angle": null,
+                            "ligo_angle_sig": null
+                        }
+                    }
+                },
+                "pipeline_preferred_events": {
+                    "CWB": {
+                        "submitter": "cody.messick@ligo.org",
+                        "created": "2023-04-13 19:53:35 UTC",
+                        "group": "Burst",
+                        "graceid": "G435582",
+                        "pipeline": "CWB",
+                        "gpstime": 1365450831.8996,
+                        "reporting_latency": 1.170914,
+                        "instruments": "H1,L1",
+                        "nevents": null,
+                        "offline": false,
+                        "search": "BBH",
+                        "far": 6.94635e-10,
+                        "far_is_upper_limit": false,
+                        "likelihood": 303.1611
+                    }
+                },
+                "far": 6.94635e-10,
+                "t_start": 1365450831.881784,
+                "t_0": 1365450831.8996,
+                "t_end": 1365450831.917416,
+                "labels": [
+                    "EM_READY",
+                    "ADVREQ",
+                    "EM_Selected",
+                    "SKYMAP_READY",
+                    "DQOK",
+                    "GCN_PRELIM_SENT",
+                    "DQR_REQUEST",
+                    "EM_SelectedConfident"
+                ]
+            }
+        },
+        "links": {
+            "neighbors": "https://gracedb-test.ligo.org/api/events/G435582/neighbors/",
+            "log": "https://gracedb-test.ligo.org/api/events/G435582/log/",
+            "emobservations": "https://gracedb-test.ligo.org/api/events/G435582/emobservation/",
+            "files": "https://gracedb-test.ligo.org/api/events/G435582/files/",
+            "labels": "https://gracedb-test.ligo.org/api/events/G435582/labels/",
+            "self": "https://gracedb-test.ligo.org/api/events/G435582",
+            "tags": "https://gracedb-test.ligo.org/api/events/G435582/tag/"
+        }
+    },
+    "pipeline_preferred_events": {
+        "CWB": {
+            "submitter": "cody.messick@ligo.org",
+            "created": "2023-04-13 19:53:35 UTC",
+            "group": "Burst",
+            "graceid": "G435582",
+            "pipeline": "CWB",
+            "gpstime": 1365450831.8996,
+            "reporting_latency": 1.170914,
+            "instruments": "H1,L1",
+            "nevents": null,
+            "offline": false,
+            "search": "BBH",
+            "far": 6.94635e-10,
+            "far_is_upper_limit": false,
+            "likelihood": 303.1611,
+            "labels": [
+                "SKYMAP_READY",
+                "PASTRO_READY"
+            ],
+            "extra_attributes": {
+                "MultiBurst": {
+                    "ifos": "H1,L1",
+                    "single_ifo_times": "1365450831.9004,1365450831.8996",
+                    "start_time": 1365450831,
+                    "start_time_ns": 747700000,
+                    "duration": 0.017816,
+                    "peak_time": null,
+                    "peak_time_ns": null,
+                    "central_freq": 61.417622,
+                    "bandwidth": 14.25636,
+                    "amplitude": 17.919914,
+                    "snr": 17.411522047196218,
+                    "confidence": null,
+                    "false_alarm_rate": null,
+                    "ligo_axis_ra": 347.116089,
+                    "ligo_axis_dec": 37.1689,
+                    "ligo_angle": null,
+                    "ligo_angle_sig": null
+                }
+            }
+        }
+    }
+}

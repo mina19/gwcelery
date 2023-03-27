@@ -1,0 +1,188 @@
+{
+    "superevent_id": "S230413g",
+    "gw_id": null,
+    "category": "Production",
+    "created": "2023-04-13 20:50:08 UTC",
+    "submitter": "emfollow",
+    "preferred_event": "G435605",
+    "em_type": null,
+    "t_start": 1365454224.022609,
+    "t_0": 1365454224.265423,
+    "t_end": 1365454224.508237,
+    "gw_events": [
+        "G435605"
+    ],
+    "em_events": [],
+    "far": 7.048312890496537e-07,
+    "time_coinc_far": null,
+    "space_coinc_far": null,
+    "labels": [
+        "EM_READY",
+        "ADVREQ",
+        "EM_Selected",
+        "SKYMAP_READY",
+        "GCN_PRELIM_SENT",
+        "DQR_REQUEST",
+        "EM_SelectedConfident"
+    ],
+    "links": {
+        "events": "https://gracedb-test.ligo.org/api/superevents/S230413g/events/",
+        "labels": "https://gracedb-test.ligo.org/api/superevents/S230413g/labels/",
+        "logs": "https://gracedb-test.ligo.org/api/superevents/S230413g/logs/",
+        "files": "https://gracedb-test.ligo.org/api/superevents/S230413g/files/",
+        "self": "https://gracedb-test.ligo.org/api/superevents/S230413g/",
+        "voevents": "https://gracedb-test.ligo.org/api/superevents/S230413g/voevents/",
+        "emobservations": "https://gracedb-test.ligo.org/api/superevents/S230413g/emobservations/"
+    },
+    "preferred_event_data": {
+        "submitter": "cody.messick@ligo.org",
+        "created": "2023-04-13 20:50:07 UTC",
+        "group": "Burst",
+        "graceid": "G435605",
+        "pipeline": "MLy",
+        "gpstime": 1365454224.265423,
+        "reporting_latency": 1.35665,
+        "instruments": "['H1', 'L1', 'V1']",
+        "nevents": null,
+        "offline": false,
+        "search": "AllSky",
+        "far": 7.048312890496537e-07,
+        "far_is_upper_limit": false,
+        "likelihood": null,
+        "labels": [
+            "SKYMAP_READY"
+        ],
+        "extra_attributes": {
+            "MLyBurst": {
+                "bandwidth": 10.23788070678711,
+                "central_freq": 367.1429748535156,
+                "central_time": 1362232711.0325558,
+                "duration": 0.24281376600265503,
+                "SNR": 4353838.478199126,
+                "scores": {
+                    "coherency": 1.0,
+                    "coincidence": 0.9444535374641418,
+                    "combined": 0.9444535374641418
+                }
+            }
+        },
+        "superevent": "S230413g",
+        "superevent_neighbours": {
+            "S230413g": {
+                "superevent_id": "S230413g",
+                "gw_events": [
+                    "G435605"
+                ],
+                "preferred_event": "G435605",
+                "preferred_event_data": {
+                    "submitter": "cody.messick@ligo.org",
+                    "created": "2023-04-13 20:50:07 UTC",
+                    "group": "Burst",
+                    "graceid": "G435605",
+                    "pipeline": "MLy",
+                    "gpstime": 1365454224.265423,
+                    "reporting_latency": 1.35665,
+                    "instruments": "['H1', 'L1', 'V1']",
+                    "nevents": null,
+                    "offline": false,
+                    "search": "AllSky",
+                    "far": 7.048312890496537e-07,
+                    "far_is_upper_limit": false,
+                    "likelihood": null,
+                    "labels": [
+                        "SKYMAP_READY"
+                    ],
+                    "extra_attributes": {
+                        "MLyBurst": {
+                            "bandwidth": 10.23788070678711,
+                            "central_freq": 367.1429748535156,
+                            "central_time": 1362232711.0325558,
+                            "duration": 0.24281376600265503,
+                            "SNR": 4353838.478199126,
+                            "scores": {
+                                "coherency": 1.0,
+                                "coincidence": 0.9444535374641418,
+                                "combined": 0.9444535374641418
+                            }
+                        }
+                    }
+                },
+                "pipeline_preferred_events": {
+                    "MLy": {
+                        "submitter": "cody.messick@ligo.org",
+                        "created": "2023-04-13 20:50:07 UTC",
+                        "group": "Burst",
+                        "graceid": "G435605",
+                        "pipeline": "MLy",
+                        "gpstime": 1365454224.265423,
+                        "reporting_latency": 1.35665,
+                        "instruments": "['H1', 'L1', 'V1']",
+                        "nevents": null,
+                        "offline": false,
+                        "search": "AllSky",
+                        "far": 7.048312890496537e-07,
+                        "far_is_upper_limit": false,
+                        "likelihood": null
+                    }
+                },
+                "far": 7.048312890496537e-07,
+                "t_start": 1365454224.022609,
+                "t_0": 1365454224.265423,
+                "t_end": 1365454224.508237,
+                "labels": [
+                    "EM_READY",
+                    "ADVREQ",
+                    "EM_Selected",
+                    "SKYMAP_READY",
+                    "GCN_PRELIM_SENT",
+                    "DQR_REQUEST",
+                    "EM_SelectedConfident"
+                ]
+            }
+        },
+        "links": {
+            "neighbors": "https://gracedb-test.ligo.org/api/events/G435605/neighbors/",
+            "log": "https://gracedb-test.ligo.org/api/events/G435605/log/",
+            "emobservations": "https://gracedb-test.ligo.org/api/events/G435605/emobservation/",
+            "files": "https://gracedb-test.ligo.org/api/events/G435605/files/",
+            "labels": "https://gracedb-test.ligo.org/api/events/G435605/labels/",
+            "self": "https://gracedb-test.ligo.org/api/events/G435605",
+            "tags": "https://gracedb-test.ligo.org/api/events/G435605/tag/"
+        }
+    },
+    "pipeline_preferred_events": {
+        "MLy": {
+            "submitter": "cody.messick@ligo.org",
+            "created": "2023-04-13 20:50:07 UTC",
+            "group": "Burst",
+            "graceid": "G435605",
+            "pipeline": "MLy",
+            "gpstime": 1365454224.265423,
+            "reporting_latency": 1.35665,
+            "instruments": "['H1', 'L1', 'V1']",
+            "nevents": null,
+            "offline": false,
+            "search": "AllSky",
+            "far": 7.048312890496537e-07,
+            "far_is_upper_limit": false,
+            "likelihood": null,
+            "labels": [
+                "SKYMAP_READY"
+            ],
+            "extra_attributes": {
+                "MLyBurst": {
+                    "bandwidth": 10.23788070678711,
+                    "central_freq": 367.1429748535156,
+                    "central_time": 1362232711.0325558,
+                    "duration": 0.24281376600265503,
+                    "SNR": 4353838.478199126,
+                    "scores": {
+                        "coherency": 1.0,
+                        "coincidence": 0.9444535374641418,
+                        "combined": 0.9444535374641418
+                    }
+                }
+            }
+        }
+    }
+}
