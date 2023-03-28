@@ -42,7 +42,12 @@ def schema():
 class AvroBlobWrapper(AvroBlob):
 
     def __init__(self, payload):
-        return super().__init__([payload], schema)
+        # NOTE fastavro appears to not like something about this PromiseProxy
+        # object. Returning a copy of the object is the only workaround I could
+        # find.
+        # FIXME Understand this behavior and write a less hacky fix. Possibly
+        # switch to using functools.cache once python3.8 support is dropped
+        return super().__init__([payload], schema.copy())
 
 
 class KafkaWriter:
