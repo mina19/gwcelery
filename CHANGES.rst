@@ -1,13 +1,13 @@
 Changelog
 =========
 
-2.0.4 (unreleased)
+2.0.4 "Skunk Ape" (2023-03-28)
 ------------------
 
 -   Add dashboard button to download sky map from a URL and upload to an
     external event.
 
--   Set pipeline preferred events.
+-   Set pipeline preferred events after revising preferred event. Provide dashboard to set them.
 
 -   Remove the ``prelimimary_alert_timeout`` variable and workflow, since the
     value is set to zero, and the pathway is no longer used.
@@ -57,6 +57,8 @@ Changelog
     available. Also copy over to the superevent if an alert has already been
     sent out.
 
+-   Integrate MLy into superevent manager.
+
 -   Update bilby to 2.0.0 and bilby_pipe to 1.0.8. Use ROQ bases dedicated for
     BNS mass region for low-mass signal. Switch to acceptance-walk method for
     dynesty sampling, and use naccept=10, nlive=500, and nparallel=2 for
@@ -67,12 +69,27 @@ Changelog
     make the results reproducible and set the maximum number of points to limit
     run time.
 
+-   Add condor accounting user tag to PE jobs.
+
 -   Update rapidpe-rift-pipe to 0.0.8. This finds the initial grid region based
     on gstlal search biases. Fixes spin components to gstlal trigger spin. Offsets
     likelihood by 0.5*snr**2 to avoid numpy overflow. Reduced number of extrinsic
     samples and the number of extrinsic samples that get saved.
 
+-   Pin redis<4.5.2 due to a potential bug discovered in redis 4.5.2.
+
+-   Force omegascan plots to all use the same color scheme.
+
+-   Plot longer timespan before event and shorter timespan after event in
+    omegascans.
+
+-   Take the minimum false alarm probability instead of the maximum when
+    checking if iDQ false alarm probabilities pass the iDQ
+    false-alarm-probability threshold.
+
 -   Do not change current directory when setting up rapidpe dag.
+
+-   Update condor memory request and accounting tag for sky map jobs.
 
 -   Add a dedicated Celery worker for tasks that use Python multiprocessing for
     parallelism, separate from the queue for OpenMP parallelism. This should
@@ -80,7 +97,12 @@ Changelog
     OpenMP and Python multiprocessing, running slowly and causing Condor job
     evictions due to excessive memory usage.
 
--   Set the ``Significant`` field in VOEvent XML packets in addition to AVRO/JSON. 
+-   Add duration and central_frequency fields to Kafka notices. The fields are
+    set to None for now.
+
+-   Set the ``Significant`` field in VOEvent XML packets and Kafka notices.
+
+-   Import Kafka notice schema from the new igwn-gwalert-schema library.
 
 2.0.3 "Ugly Merman" (2023-02-16)
 --------------------------------
