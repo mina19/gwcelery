@@ -1,15 +1,10 @@
 """Flask web application views."""
 import datetime
+from importlib import metadata
 import platform
 import re
 import socket
 import sys
-
-try:
-    from importlib import metadata
-except ImportError:
-    # FIXME Remove when we drop support for Python < 3.8
-    import importlib_metadata as metadata
 
 from astropy.time import Time
 from celery import group

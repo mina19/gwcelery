@@ -109,6 +109,8 @@ Changelog
 
 -   Import Kafka notice schema from the new igwn-gwalert-schema library.
 
+-   Drop support for Python 3.8.
+
 2.0.3 "Ugly Merman" (2023-02-16)
 --------------------------------
 
