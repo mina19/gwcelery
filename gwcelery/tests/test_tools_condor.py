@@ -36,7 +36,7 @@ def test_condor_submit_not_yet_running(mock_execvp, mock_check_output):
         ('condor_q', '-xml', *condor.get_constraints()))
     mock_execvp.assert_called_once_with(
         'condor_submit', ('condor_submit',
-                          'accounting_group=ligo.dev.o3.cbc.pe.bayestar',
+                          'accounting_group=ligo.dev.o4.cbc.pe.bayestar',
                           condor.SUBMIT_FILE))
 
 
@@ -98,5 +98,5 @@ def test_condor_resubmit_succeeds(mock_execvp, mock_check_call, _):
     mock_check_call.assert_not_called()
     mock_execvp.assert_called_once_with(
         'condor_submit', ('condor_submit',
-                          'accounting_group=ligo.dev.o3.cbc.pe.bayestar',
+                          'accounting_group=ligo.dev.o4.cbc.pe.bayestar',
                           condor.SUBMIT_FILE))

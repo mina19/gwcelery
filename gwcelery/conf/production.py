@@ -8,7 +8,7 @@ from base64 import b64encode
 
 from . import *  # noqa: F401, F403
 
-condor_accounting_group = 'ligo.prod.o3.cbc.pe.bayestar'
+condor_accounting_group = 'ligo.prod.o4.cbc.pe.bayestar'
 """HTCondor accounting group for Celery workers launched with condor_submit."""
 
 expose_to_public = True

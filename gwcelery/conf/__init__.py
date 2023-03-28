@@ -49,7 +49,7 @@ worker_log_format = "[%(asctime)s: %(levelname)s/%(processName)s/%(threadName)s]
 
 # GWCelery-specific settings.
 
-condor_accounting_group = 'ligo.dev.o3.cbc.pe.bayestar'
+condor_accounting_group = 'ligo.dev.o4.cbc.pe.bayestar'
 """HTCondor accounting group for Celery workers launched with condor_submit."""
 
 expose_to_public = False
