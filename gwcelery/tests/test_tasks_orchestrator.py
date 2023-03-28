@@ -713,3 +713,25 @@ def test_parameter_estimation(monkeypatch, far, event):
             assert mock_start_pe.call_count == 1
     else:
         mock_upload.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "superevent_labels,block_by_labels",
+    [
+        [["EM_Selected"], set()],
+        [["EM_Selected"], {"ADVOK", "ADVNO"}],
+        [["EM_SelectedConfident", "ADVOK"], {"ADVOK", "ADVNO"}]
+    ]
+)
+def test_blocking_labels(superevent_labels, block_by_labels):
+    with patch('gwcelery.tasks.gracedb.get_labels',
+               return_value=superevent_labels):
+        r = orchestrator._proceed_if_not_blocked_by(
+            ('bayestar', 'em-bright', 'p-astro'),
+            'S123456',
+            block_by_labels
+        )
+    if "ADVOK" in superevent_labels:
+        assert r is None  # blocked
+    else:
+        assert r == ('bayestar', 'em-bright', 'p-astro')  # passed

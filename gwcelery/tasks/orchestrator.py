@@ -780,7 +780,7 @@ def earlywarning_preliminary_alert(event, alert, alert_type='preliminary',
             {'ADVOK', 'ADVNO'} if alert_type == 'preliminary'
             else {superevents.SIGNIFICANT_LABEL, 'ADVOK', 'ADVNO'}
             if alert_type in ['less-significant', 'earlywarning']
-            else {}
+            else set()
         )
         canvas |= (
             _proceed_if_not_blocked_by.s(superevent_id, blocking_labels)
