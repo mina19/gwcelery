@@ -1,8 +1,13 @@
 Changelog
 =========
 
-2.0.4 "Skunk Ape" (2023-03-28)
+2.0.5 (unreleased)
 ------------------
+
+-   No changes yet.
+
+2.0.4 "Skunk Ape" (2023-03-28)
+------------------------------
 
 -   Add dashboard button to download sky map from a URL and upload to an
     external event.
