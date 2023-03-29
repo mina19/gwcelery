@@ -14,6 +14,8 @@ Changelog
 -   Increase test coverage for views.py and fix manual mock coincidence
     injections.
 
+-   Bump ligo.em-bright version to v1.1.1.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 
