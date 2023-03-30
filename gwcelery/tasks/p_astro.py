@@ -171,12 +171,15 @@ def handle(alert):
     """LVAlert handler to plot and upload a visualization of every
     ``*.p_astro.json`` file that is added to a superevent.
     """
+    if alert['alert_type'] != 'log':
+        return
+
     graceid = alert['uid']
     filename = alert['data'].get('filename')
     p_astro_filenames = {f'{pipeline}.p_astro.json' for pipeline in
                          ['gstlal', 'mbta', 'pycbc', 'spiir']}
 
-    if alert['alert_type'] == 'log' and filename in p_astro_filenames:
+    if filename in p_astro_filenames:
         (
             gracedb.download.s(filename, graceid)
             |
