@@ -13,6 +13,7 @@ from ..util import read_json
 @pytest.mark.parametrize('pipeline, path',
                          [['Fermi', 'fermi_grb_gcn.xml'],
                           ['INTEGRAL', 'integral_grb_gcn.xml'],
+                          ['INTEGRAL_MDC', 'integral_mdc_gcn.xml'],
                           ['AGILE', 'agile_grb_gcn.xml']])
 @patch('gwcelery.tasks.external_skymaps.create_upload_external_skymap.run')
 @patch('gwcelery.tasks.external_skymaps.get_upload_external_skymap.run')
@@ -39,11 +40,12 @@ def test_handle_create_grb_event(mock_create_event,
     else:
         text = resources.read_binary(data, path)
     external_triggers.handle_grb_gcn(payload=text)
-    mock_create_event.assert_called_once_with(filecontents=text,
-                                              search='GRB',
-                                              pipeline=pipeline,
-                                              group='External',
-                                              labels=None)
+    mock_create_event.assert_called_once_with(
+        filecontents=text,
+        search='GRB',
+        pipeline='INTEGRAL' if pipeline == 'INTEGRAL_MDC' else pipeline,
+        group='External',
+        labels=None)
     calls = [
         call(
             '"dqrjson"', 'gwcelerydetcharcheckvectors-E1.json', 'E1',
@@ -65,9 +67,11 @@ def test_handle_create_grb_event(mock_create_event,
             ['data_quality'])
     ]
     mock_upload.assert_has_calls(calls, any_order=True)
-    gcn_type_dict = {'Fermi': 115, 'INTEGRAL': 53, 'AGILE': 105}
+    gcn_type_dict = {'Fermi': 115, 'INTEGRAL': 53, 'INTEGRAL_MDC': 53,
+                     'AGILE': 105}
     time_dict = {'Fermi': '2018-05-24T18:35:45',
                  'INTEGRAL': '2017-02-03T19:00:05',
+                 'INTEGRAL_MDC': '2023-04-04T06:31:24',
                  'AGILE': '2019-03-19T19:40:49'}
     mock_create_upload_external_skymap.assert_called_once_with(
         {'graceid': 'E1',

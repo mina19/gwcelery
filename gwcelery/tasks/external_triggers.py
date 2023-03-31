@@ -109,9 +109,11 @@ def handle_grb_gcn(payload):
     event_observatory = stream_obsv_dict[stream_path]
 
     #  Get TrigID
-    if event_observatory == 'INTEGRAL':
+    if event_observatory == 'INTEGRAL' and \
+            not any([x in u.fragment for x in ['O3-replay', 'MDC-test']]):
         #  FIXME: revert all this if INTEGRAL fixes their GCN notices
-        #  If INTGRAL, get trigger ID from ivorn rather than the TrigID field
+        #  If INTEGRAL, get trigger ID from ivorn rather than the TrigID field
+        #  unless O3 replay or MDC event
         trig_id = u.fragment.split('_')[-1].split('-')[0]
         #  Modify the TrigID field so GraceDB has the correct value
         root.find("./What/Param[@name='TrigID']").attrib['value'] = \

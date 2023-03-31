@@ -27,6 +27,8 @@ Changelog
     ligo.dev.o4.cbc.pe.lalinferencerapid and added accouting_group_user. Added an 
     option to map the events to an injection.
 
+-   Prevent alternative collating method for O3 replay and MDC events with INTEGRAL.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 
