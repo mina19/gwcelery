@@ -369,6 +369,8 @@ def mock_get_event(graceid):
             pipeline, search, labels = 'SNEWS', 'Supernova', []
         elif graceid == "E4":
             pipeline, search, labels = 'Fermi', 'GRB', []
+        elif graceid == "E5":
+            pipeline, search, labels = 'Fermi', 'GRB', ['RAVEN_ALERT']
         return {'superevent_id': graceid.replace('E', 'S'),
                 'graceid': graceid,
                 'pipeline': pipeline,
@@ -384,12 +386,17 @@ def mock_get_event(graceid):
 
 @pytest.mark.parametrize(
     'superevent_id,ext_event_id_old,ext_event_id_new,result',
-    # NOT_GRB should not supersede NOT_GRB
+    # NOT_GRB should not supersede real GRB
     [['S1', 'E1', 'E2', False],
      # Real GRB should supersede NOT_GRB
      ['S2', 'E2', 'E1', True],
      # SNEWS event should not be overwritten by GRB
-     ['S3', 'E3', 'E1', False]])
+     ['S3', 'E3', 'E1', False],
+     # RAVEN_ALERT should supersede subthreshold joint candidate
+     ['S4', 'E4', 'E5', True],
+     # Subthreshold joint candidate should not overwrite RAVEN_ALERT
+     ['S5', 'E5', 'E4', False]]
+)
 @patch('gwcelery.tasks.gracedb.update_superevent')
 @patch('gwcelery.tasks.gracedb.get_event', mock_get_event)
 @patch('gwcelery.tasks.gracedb.get_superevent', mock_get_event)

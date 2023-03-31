@@ -29,6 +29,9 @@ Changelog
 
 -   Prevent alternative collating method for O3 replay and MDC events with INTEGRAL.
 
+-   Pick RAVEN_ALERT preferred external event over one that doesn't pass the joint
+    alert publishing criteria.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 

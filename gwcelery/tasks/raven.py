@@ -78,6 +78,10 @@ def coincidence_search(gracedb_id, alert_object, group=None, pipelines=[],
         Burst or CBC
     pipelines: list
         list of external trigger pipeline names
+    searches: list
+        list of external trigger searches
+    se_searches: list
+        list of superevent searches
 
     """
     tl, th = _time_window(gracedb_id, group, pipelines, searches)
@@ -102,7 +106,9 @@ def _time_window(gracedb_id, group, pipelines, searches):
     pipelines: list
         list of external trigger pipeline names
     searches: list
-        list of external trigger search names
+        list of external trigger searches
+    se_searches: list
+        list of superevent searches
 
     """
     tl_cbc, th_cbc = app.conf['raven_coincidence_windows']['GRB_CBC']
@@ -156,6 +162,10 @@ def search(gracedb_id, alert_object, tl=-5, th=5, group=None,
     pipelines: list
         list of external trigger pipelines for performing coincidence search
         against
+    searches: list
+        list of external trigger searches
+    se_searches: list
+        list of superevent searches
 
     Returns
     -------
@@ -301,10 +311,15 @@ def update_coinc_far(coinc_far_dict, superevent, ext_event):
         is_old_grb_real, is_new_grb_real = \
             ('NOT_GRB' not in emtype_event['labels'],
              'NOT_GRB' not in ext_event['labels'])
-        #  Use new event if real
-        is_event_improved = is_new_grb_real
+        is_old_raven_alert, is_new_raven_alert = \
+            ('RAVEN_ALERT' in emtype_event['labels'],
+             'RAVEN_ALERT' in ext_event['labels'])
+        #  Use new event only if it is better old event information
+        is_event_improved = ((is_new_grb_real and not is_old_grb_real) or
+                             (is_new_raven_alert and not is_old_raven_alert))
         #  if both real or both not, use FAR to differentiate
-        if is_old_grb_real == is_new_grb_real:
+        if is_old_grb_real == is_new_grb_real \
+                and is_old_raven_alert == is_new_raven_alert:
             is_event_improved = is_far_improved
     else:
         snews_to_grb = False
@@ -328,7 +343,7 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
     All of the following conditions must be true for a preliminary alert:
 
     *   The external event must be a threshold GRB or SNEWS event.
-    *   If triggered on a SNEW event, the GW false alarm rate must pass
+    *   If triggered on a SNEWS event, the GW false alarm rate must pass
         :obj:`~gwcelery.conf.snews_gw_far_threshold`.
     *   The event's RAVEN coincidence false alarm rate, weighted by the
         group-specific trials factor as specified by the
