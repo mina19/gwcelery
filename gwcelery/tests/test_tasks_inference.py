@@ -321,7 +321,6 @@ def test_setup_dag_for_failure(monkeypatch, tmp_path, pipeline):
                 (b'psd'), rundir, event, 'S1234', 'production')
         elif pipeline == 'rapidpe':
             inference._setup_dag_for_rapidpe(rundir, 'S1234', {})
-    assert not os.path.exists(rundir)
     if pipeline == 'bilby':
         assert upload.call_count == 1
     else:
@@ -477,7 +476,6 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
         else:
             create_label.assert_not_called()
 
-        assert not os.path.exists(rundir)
     else:
         with pytest.raises(NotImplementedError):
             inference.dag_finished(rundir, sid, pipeline)

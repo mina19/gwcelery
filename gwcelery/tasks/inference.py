@@ -4,7 +4,6 @@ from distutils.dir_util import mkpath
 import glob
 import json
 import os
-import shutil
 import subprocess
 import urllib
 
@@ -248,7 +247,6 @@ def _setup_dag_for_lalinference(coinc, rundir, event, superevent_id,
             graceid=superevent_id,
             message='Failed to prepare DAG for lalinference', tags='pe'
         )
-        shutil.rmtree(rundir)
         raise
 
     return os.path.join(rundir, 'multidag.dag')
@@ -353,7 +351,6 @@ def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
             graceid=superevent_id,
             message=f'Failed to prepare DAG for {mode} bilby', tags='pe'
         )
-        shutil.rmtree(rundir)
         raise
     else:
         # Uploads bilby ini file to GraceDB
@@ -430,7 +427,6 @@ def _setup_dag_for_rapidpe(rundir, superevent_id, frametype_dict):
             graceid=superevent_id,
             message='Failed to prepare DAG for Rapid PE', tags='pe'
         )
-        shutil.rmtree(rundir)
         raise
 
     # return path to dag
@@ -571,19 +567,6 @@ def job_error_notification(request, exc, traceback,
     canvas.delay()
 
 
-@app.task(ignore_result=True, shared=False)
-def clean_up(rundir):
-    """Clean up a run directory.
-
-    Parameters
-    ----------
-    rundir : str
-        The path to a run directory where the DAG file exits
-
-    """
-    shutil.rmtree(rundir)
-
-
 def _upload_tasks_lalinference(rundir, superevent_id):
     """Return canvas of tasks to upload LALInference results
 
@@ -721,7 +704,7 @@ def _upload_tasks_bilby(rundir, superevent_id, mode):
 
 @app.task(ignore_result=True, shared=False)
 def dag_finished(rundir, superevent_id, pe_pipeline, **kwargs):
-    """Upload PE results and clean up run directory
+    """Upload PE results
 
     Parameters
     ----------
@@ -747,7 +730,6 @@ def dag_finished(rundir, superevent_id, pe_pipeline, **kwargs):
     else:
         raise NotImplementedError(f'Unknown PE pipeline {pe_pipeline}.')
 
-    canvas = canvas | clean_up.si(rundir)
     canvas.delay()
 
     if pe_pipeline == 'bilby':
