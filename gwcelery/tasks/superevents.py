@@ -390,7 +390,7 @@ def select_pipeline_preferred_event(events):
         pipeline, graceid pairs
     """
     g_events = list(
-        filterfalse(lambda x: x['graceid'].startswith('E'), events))
+        filterfalse(lambda x: x['group'] == "External", events))
     g_events_by_pipeline = groupby(
         sorted(g_events, key=lambda x: x['pipeline']),
         key=lambda x: x['pipeline']
@@ -411,9 +411,8 @@ def select_preferred_event(events):
         list of event dictionaries
 
     """
-    # FIXME: Requires robust determination of an External event
     g_events = list(
-        filterfalse(lambda x: x['graceid'].startswith('E'), events))
+        filterfalse(lambda x: x['group'] == "External", events))
     return max(g_events, key=keyfunc)
 
 

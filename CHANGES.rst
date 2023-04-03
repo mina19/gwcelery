@@ -8,6 +8,9 @@ Changelog
 
 -   Do not remove PE run directory after the run completes or fails.
 
+-   Filter external events based on ``External`` group in ``superevents.py``,
+    instead of logic based on substring matching.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 
