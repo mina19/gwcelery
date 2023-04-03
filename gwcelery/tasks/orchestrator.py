@@ -77,11 +77,15 @@ def handle_superevent(alert):
 
         # launch less-significant preliminary alerts on EM_Selected
         if label_name == superevents.FROZEN_LABEL:
-            # don't launch if EM_SelectedConfident is present
-            if superevents.SIGNIFICANT_LABEL in alert['object']['labels']:
+            # don't launch if EARLY_WARNING or EM_SelectedConfident is present
+            skipping_labels = {
+                superevents.SIGNIFICANT_LABEL,
+                superevents.EARLY_WARNING_LABEL
+            }.intersection(alert['object']['labels'])
+            if skipping_labels:
                 gracedb.upload.delay(
                     None, None, superevent_id,
-                    "The superevent already has a significant event, "
+                    "The superevent already has a significant/EW event, "
                     "skipping launching less-significant alert"
                 )
                 return
@@ -774,13 +778,20 @@ def earlywarning_preliminary_alert(event, alert, alert_type='preliminary',
     # Send notice and upload GCN circular draft for online events.
     if is_publishable and initiate_voevent:
         # presence of advocate action blocks significant prelim alert
-        # presence of adv action + significant event blocks less-significant
-        # prelim, or EW alert
+        # presence of adv action or significant event blocks EW alert
+        # presence of adv action or significant event or EW event blocks
+        # less significant alert
         blocking_labels = (
             {'ADVOK', 'ADVNO'} if alert_type == 'preliminary'
-            else {superevents.SIGNIFICANT_LABEL, 'ADVOK', 'ADVNO'}
-            if alert_type in ['less-significant', 'earlywarning']
-            else set()
+            else
+            {superevents.SIGNIFICANT_LABEL, 'ADVOK', 'ADVNO'}
+            if alert_type == 'earlywarning'
+            else
+            {superevents.EARLY_WARNING_LABEL, superevents.SIGNIFICANT_LABEL,
+             'ADVOK', 'ADVNO'}
+            if alert_type == 'less-significant'
+            else
+            set()
         )
         canvas |= (
             _proceed_if_not_blocked_by.s(superevent_id, blocking_labels)

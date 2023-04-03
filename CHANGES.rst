@@ -18,6 +18,10 @@ Changelog
 
 -   Also update the preferred external event when issuing a manual RAVEN alert.
 
+-   Skip less significant alert workflow in case of both significant and EW triggers.
+    Existing workflow only accounted for blocking only in presence of significant
+    events.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 

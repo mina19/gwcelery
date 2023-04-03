@@ -35,6 +35,8 @@ from . import data
          ['H1', 'L1', 'V1'], 'S1234', ['EM_SelectedConfident']],
      ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
          ['H1', 'L1', 'V1'], 'S1234', []],
+     ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-10,
+         ['H1', 'L1', 'V1'], 'S1234', ['EARLY_WARNING']],
      ['new', '', 'CBC', 'gstlal', False, 1.e-9, ['H1', 'L1'], 'S1234',
          ['EM_Selected']]])
 def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
@@ -283,7 +285,8 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                 any_order=True
             )
     elif alert_label == 'EM_Selected':
-        if 'EM_SelectedConfident' in superevent_labels:
+        if ('EM_SelectedConfident' in superevent_labels) or \
+                ('EARLY_WARNING' in superevent_labels):
             expose.assert_not_called()
             alerts_send.assert_not_called()
             gcn_send.assert_not_called()
