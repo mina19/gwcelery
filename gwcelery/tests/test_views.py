@@ -58,7 +58,7 @@ def test_send_preliminary_gcn_post(client, monkeypatch):
         'gwcelery.tasks.gracedb.get_superevent.run',
         mock_get_superevent)
     monkeypatch.setattr(
-        'gwcelery.views._construct_igwn_alert_and_send_prelim_alert.run',
+        'gwcelery.tasks.orchestrator.earlywarning_preliminary_alert.run',
         mock_preliminary_alert)
 
     response = client.post(url_for('send_preliminary_gcn'), data={
@@ -71,8 +71,14 @@ def test_send_preliminary_gcn_post(client, monkeypatch):
         'MS190208a', preferred_event='M12345')
     mock_get_event.assert_called_once_with('M12345')
     mock_get_superevent.assert_called_once_with('MS190208a')
-    mock_preliminary_alert.assert_called_once_with([mock_superevent,
-                                                   mock_event], 'MS190208a')
+
+    alert = {
+        'uid': 'MS190208a',
+        'object': mock_superevent
+    }
+    mock_preliminary_alert.assert_called_once_with(mock_event, alert,
+                                                   alert_type='preliminary',
+                                                   initiate_voevent=True)
 
 
 def test_change_preferred_event_post(client, monkeypatch):
