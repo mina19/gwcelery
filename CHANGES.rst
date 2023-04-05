@@ -33,6 +33,8 @@ Changelog
 -   Pick RAVEN_ALERT preferred external event over one that doesn't pass the joint
     alert publishing criteria.
 
+-   Avoid updating values in the combined sky map if missing in the GW sky map.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 

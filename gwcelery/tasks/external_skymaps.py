@@ -161,15 +161,18 @@ def combine_skymaps_moc_flat(gw_sky, ext_sky, ext_header):
     gw_sky['PROBDENSITY'] *= ext_sky[ext_ind]
     gw_sky['PROBDENSITY'] /= \
         np.sum(gw_sky['PROBDENSITY'] * areas).value
-    #  Modify GW sky map with new data
-    distmean, diststd = parameters_to_marginal_moments(
-        gw_sky['PROBDENSITY'] * areas.value,
-        gw_sky['DISTMU'], gw_sky['DISTSIGMA'])
-    gw_sky.meta['distmean'], gw_sky.meta['diststd'] = distmean, diststd
-    gw_sky.meta['instruments'].update(ext_header['instruments'])
-    gw_sky.meta['HISTORY'].extend([
-        '', 'The values were reweighted by using data from {}'.format(
-            list(ext_header['instruments'])[0])])
+    #  Modify GW sky map with new data, ensuring they exist first
+    if 'DISTMU' in gw_sky.keys() and 'DISTSIGMA' in gw_sky.keys():
+        distmean, diststd = parameters_to_marginal_moments(
+            gw_sky['PROBDENSITY'] * areas.value,
+            gw_sky['DISTMU'], gw_sky['DISTSIGMA'])
+        gw_sky.meta['distmean'], gw_sky.meta['diststd'] = distmean, diststd
+    if 'instruments' in gw_sky.meta:
+        gw_sky.meta['instruments'].update(ext_header['instruments'])
+    if 'HISTORY' in gw_sky.meta:
+        gw_sky.meta['HISTORY'].extend([
+            '', 'The values were reweighted by using data from {}'.format(
+                list(ext_header['instruments'])[0])])
     return gw_sky
 
 
