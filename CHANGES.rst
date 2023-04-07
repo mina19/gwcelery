@@ -22,6 +22,11 @@ Changelog
     Existing workflow only accounted for blocking only in presence of significant
     events.
 
+-   Update rapidpe-rift-pipe to 0.0.12. Using mchirp and q as the coordinates for 
+    the rectilinear intrinsic grid. Updated accounting_group to 
+    ligo.dev.o4.cbc.pe.lalinferencerapid and added accouting_group_user. Added an 
+    option to map the events to an injection.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 

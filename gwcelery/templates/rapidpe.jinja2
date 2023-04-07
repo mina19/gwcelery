@@ -15,7 +15,8 @@ n_iterations_per_job=2
 
 #You need to specify an accounting group when submitting jobs to condor. Use this link to determine your accounting tag: https://ldas-gridmon.ligo.caltech.edu/ldg_accounting/user
 #accounting_group=cgca.sim.o3.cbc.pe.lalinferencerapid
-accounting_group=ligo.dev.o4.cbc.pe.rift
+accounting_group=ligo.dev.o4.cbc.pe.lalinferencerapid
+accounting_group_user=soichiro.morisaki
 
 #If the candidate output sub_directory, under the parent directory, it will not be overwritten by default. But if you're just testing things and not making submissions, you can force the overwrite with this option. default=0
 overwrite_existing_event_dag=1
@@ -52,7 +53,8 @@ web_dir={{ webdir }}
 [Event]
 superevent_id={{ superevent_id }}
 frame_data_types={{ frame_data_types | tojson }}
-
+mdc_event_injection_file =/home/vinaya.valsan/rapidPE/RapidPE_RIFT_Developments/RapidPE-RIFT_fork/gracedb_playground_events/injection_campaign_studies/lowlatency-replay-distributions/minSNR-4/injections-minSNR-4.xml.gz
+mdc_time_offset=101760000
 #Anything specified in this section is passed verbatim to rapidpe_compute_intrinsic_grid in generate_initial_grid_based_of_gstlal_O2_overlaps.py
 [InitialGridOnly]
 #mc-min = 5
@@ -66,7 +68,7 @@ points-per-side=5
 [GridRefine]
 no-exact-match=
 #distance-coordinates=tau0_tau3
-distance-coordinates=mchirp_eta
+distance-coordinates=mchirp_q
 #distance-coordinates=mchirp_q
 overlap-thresh=0.99
 verbose=

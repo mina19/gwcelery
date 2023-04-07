@@ -3888,14 +3888,14 @@ cffi = {version = "*", markers = "implementation_name == \"pypy\""}
 
 [[package]]
 name = "rapid-pe"
-version = "0.0.5"
+version = "0.0.6"
 description = "RapidPE: The original low-latency gravitational wave parameter estimation code."
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "rapid_pe-0.0.5-py3-none-any.whl", hash = "sha256:b7ef2f2244e3a1c0eb3d1b1f6b2304429184d8644d6b3004d18e3d7218cf134a"},
-    {file = "rapid_pe-0.0.5.tar.gz", hash = "sha256:0b44262dcd45715e23fd6fd50b4d77a4456524be2bc4fc03ec084606485b22a6"},
+    {file = "rapid_pe-0.0.6-py3-none-any.whl", hash = "sha256:90813511f9160de9ace6b5dcf8d1c2c7d2f946a3768c6c2e5bf6c1440ec72211"},
+    {file = "rapid_pe-0.0.6.tar.gz", hash = "sha256:75912c695c9f9e1f9dc6492b2002703b194c98c17ffc2faeefb3436dfcb69523"},
 ]
 
 [package.dependencies]
@@ -3914,23 +3914,24 @@ six = "*"
 
 [[package]]
 name = "rapidpe-rift-pipe"
-version = "0.0.9"
+version = "0.0.12"
 description = "Pipeline for running RapidPE and RIFT parameter estimation codes"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "rapidpe_rift_pipe-0.0.9-py3-none-any.whl", hash = "sha256:151485d8bbf5c44ce0a808c918af1419aa815979cfd00d90c2f596d66ed6148f"},
-    {file = "rapidpe_rift_pipe-0.0.9.tar.gz", hash = "sha256:8bdf1462ca9249341024a9c323655085c7e1f071715af408d4644078d47a4080"},
+    {file = "rapidpe_rift_pipe-0.0.12-py3-none-any.whl", hash = "sha256:ddb6917d2148675034557207accd7cbb1cdab16447196a1d115e42cd79659b5e"},
+    {file = "rapidpe_rift_pipe-0.0.12.tar.gz", hash = "sha256:16e31facbd2caf78563e74177f045a2cfef281a273156f109aef6e4ab0c05189"},
 ]
 
 [package.dependencies]
+astropy = "*"
 h5py = "*"
 lalsuite = "*"
 matplotlib = "*"
 numpy = "*"
-rapid-pe = "0.0.5"
-rift = "0.0.15.7"
+rapid-pe = "0.0.6"
+rift = ">=0.0.15.7,<0.0.15.9"
 tabulate = "*"
 
 [[package]]
@@ -5062,4 +5063,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.11"
-content-hash = "8207423f1ee6167c816c88e8fc00c1629d70b67a576eb5a7ddf0e50cf1a35516"
+content-hash = "52c5464581ffb763286febf8bc36cffd407320c5caf63c8a46f0478bf078a337"
