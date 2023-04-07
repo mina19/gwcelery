@@ -1,3 +1,5 @@
+from functools import cache
+
 from celery import bootsteps
 from celery.concurrency import solo
 from celery.utils.log import get_logger
@@ -7,7 +9,7 @@ from hop import stream
 from hop.io import list_topics
 from hop.models import AvroBlob, JSONBlob
 
-from ..util import PromiseProxy, read_json
+from ..util import read_json
 
 
 __all__ = ('Producer',)
@@ -15,7 +17,7 @@ __all__ = ('Producer',)
 log = get_logger(__name__)
 
 
-@PromiseProxy
+@cache
 def schema():
     # The order does not matter other than the Alert schema must be loaded last
     # because it references the other schema. All of the schema are saved in
@@ -42,12 +44,7 @@ def schema():
 class AvroBlobWrapper(AvroBlob):
 
     def __init__(self, payload):
-        # NOTE fastavro appears to not like something about this PromiseProxy
-        # object. Returning a copy of the object is the only workaround I could
-        # find.
-        # FIXME Understand this behavior and write a less hacky fix. Possibly
-        # switch to using functools.cache once python3.8 support is dropped
-        return super().__init__([payload], schema.copy())
+        return super().__init__([payload], schema())
 
 
 class KafkaWriter:

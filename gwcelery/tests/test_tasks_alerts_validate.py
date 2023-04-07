@@ -11,29 +11,19 @@ from . import data
 from ..kafka.bootsteps import AvroBlobWrapper, schema
 
 
-@pytest.fixture
-def copied_schema():
-    # NOTE The unit test appears to not like something about this PromiseProxy
-    # object. Returning a copy of the object is the only workaround I could
-    # find.
-    # FIXME Understand this behavior and write a less hacky fix
-    return schema.copy()
-
-
 @patch('gwcelery.tasks.alerts._upload_notice.run')
 @patch('gwcelery.tasks.gracedb.download._orig_run',
        return_value=resources.read_binary(
            data,
            'MS220722v_bayestar.multiorder.fits'
        ))
-def test_validate_alert(mock_download, mock_upload, copied_schema,
-                        monkeypatch):
+def test_validate_alert(mock_download, mock_upload, monkeypatch):
     """Validate public alerts against the schema from the userguide.
     """
     def _validate_alert(public_alert_avro_blob):
         assert len(public_alert_avro_blob.content) == 1
         fastavro.validation.validate(public_alert_avro_blob.content[0],
-                                     copied_schema, strict=True)
+                                     schema(), strict=True)
 
     # Replace the stream object with a mock object with _validiate_alert as its
     # write attribute
