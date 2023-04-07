@@ -30,7 +30,7 @@ def test_handle_em_bright_json(mock_plot, mock_upload, mock_download):
     mock_upload.assert_called_once()
 
 
-def test_classifier():
+def test_classifier(socket_enabled):
     res = json.loads(em_bright.source_properties(
         1.355607, 1.279483, 0.0, 0.0, 15.6178))
     assert res['HasNS'] == pytest.approx(1.0, abs=1e-3)
@@ -47,7 +47,7 @@ def test_classifier():
            (22.0, 11.5, 0.80, 0.00, 250.0, 0.0, 0.0),
            (21.0, 10.0, 0.0, 0.0, 250, 0.0, 0.0)],
           {'HasNS': 0.0, 'HasRemnant': 0.0, 'HasMassGap': 0.0}]])
-def test_posterior_samples(posterior_samples, embright):
+def test_posterior_samples(posterior_samples, embright, socket_enabled):
     with NamedTemporaryFile() as f:
         filename = f.name
         with h5py.File(f, 'r+') as tmp_h5:

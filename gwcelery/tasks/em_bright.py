@@ -3,8 +3,6 @@ import io
 import json
 from matplotlib import pyplot as plt
 
-from ligo.em_bright import em_bright
-
 from celery.utils.log import get_task_logger
 
 from ..import app
@@ -107,6 +105,7 @@ def em_bright_posterior_samples(posterior_file_content):
     {"HasNS": 0.014904901243599122, "HasRemnant": 0.0, "HasMassGap": 0.0}
 
     """
+    from ligo.em_bright import em_bright
     with NamedTemporaryFile(content=posterior_file_content) as samplefile:
         filename = samplefile.name
         has_ns, has_remnant, has_massgap = em_bright.source_classification_pe(
@@ -150,6 +149,7 @@ def source_properties(mass1, mass2, spin1z, spin2z, snr):
     >>> em_bright.source_properties(2.0, 1.0, 0.0, 0.0, 10.)
     '{"HasNS": 1.0, "HasRemnant": 1.0, "HasMassGap"}'
     """
+    from ligo.em_bright import em_bright
     p_ns, p_em, p_mg = em_bright.source_classification(
         mass1, mass2, spin1z, spin2z, snr
     )
