@@ -25,7 +25,8 @@ Changelog
 -   Update rapidpe-rift-pipe to 0.0.12. Using mchirp and q as the coordinates for 
     the rectilinear intrinsic grid. Updated accounting_group to 
     ligo.dev.o4.cbc.pe.lalinferencerapid and added accouting_group_user. Added an 
-    option to map the events to an injection.
+    option to map the events to an injection. Uploading only  a selected set of log files 
+    to gracedb. 
 
 -   Prevent alternative collating method for O3 replay and MDC events with INTEGRAL.
 

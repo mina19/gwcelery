@@ -545,8 +545,14 @@ def job_error_notification(request, exc, traceback,
             message=f'The {analysis} condor job failed.'
         )
 
-    # upload all the .log, .err, and .out files
-    for filename in ['*.log', '*.err', '*.out']:
+    if analysis == "rapidpe":
+        to_upload = [
+            'event_all_iterations.dag.lib.err',
+            'marginalize_extrinsic_parameters_iteration_*.dag.lib.err'
+        ]
+    else:
+        to_upload = ['*.log', '*.err', '*.out']
+    for filename in to_upload:
         tasks = []
         for path in _find_paths_from_name(rundir, filename):
             with open(path, 'rb') as f:
