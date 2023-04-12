@@ -56,6 +56,7 @@ astropy = ">=4.3.1"  # https://github.com/astropy/astropy/issues/11879
 bilby = ">=2.0.0"
 bilby-pipe = ">=1.0.8"
 celery = {version = ">=5.1", extras = ["redis"]}
+ciecplib = {version = "*", extras = ["kerberos"]}  # for renew-cert.sh
 click = ">=7"
 comet = "*"
 confluent-kafka = "^1.9.2"
