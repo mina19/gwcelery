@@ -39,6 +39,10 @@ from . import data
          ['H1', 'L1', 'V1'], 'S1234', []],
      ['label_added', 'LOW_SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-10,
          ['H1', 'L1', 'V1'], 'S1234', ['EARLY_WARNING']],
+     ['label_added', 'LOW_SIGNIF_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-9,
+         ['H1', 'L1', 'V1'], 'S1234', ['EM_SelectedConfident']],
+     ['label_added', 'LOW_SIGNIF_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-7,
+         ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
      ['new', '', 'CBC', 'gstlal', False, 1.e-9, ['H1', 'L1'], 'S1234',
          ['LOW_SIGNIF_LOCKED']]])
 def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
@@ -138,12 +142,14 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
     expose = Mock()
     rrt_channel_creation = Mock()
     annotate_fits = Mock(return_value=None)
-    proceed_if_not_blocked_by = Mock(
-        return_value=(
-            ('skymap', 'skymap-filename'),
-            ('em-bright', 'em-bright-filename'),
-            ('p-astro', 'p-astro-filename'))
-    )
+    # FIXME: remove logic of mocking return value
+    # when live worker testing is enabled
+    proceed_if_not_blocked_by = Mock(return_value=None) if \
+        alert_label == 'LOW_SIGNIF_PRELIM_SENT' and \
+        'EM_SelectedConfident' in superevent_labels else \
+        Mock(return_value=(('skymap', 'skymap-filename'),
+                           ('em-bright', 'em-bright-filename'),
+                           ('p-astro', 'p-astro-filename')))
     gcn_send = Mock()
     alerts_send = Mock()
     query_data = Mock()
@@ -308,6 +314,17 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         rrt_channel_creation.assert_called_once_with(
             superevent_id,
             app.conf['gracedb_host'])
+    elif alert_label == 'LOW_SIGNIF_PRELIM_SENT':
+        if 'EM_SelectedConfident' in superevent_labels:
+            expose.assert_not_called()
+            alerts_send.assert_not_called()
+            gcn_send.assert_not_called()
+            create_tag.assert_not_called()
+            create_initial_circular.assert_not_called()
+        else:
+            # check alert type is less-significant
+            _files, _superevent, _alert_type = alerts_send.call_args.args
+            assert _alert_type == 'less-significant'
 
     if alert_type == 'new' and group == 'CBC':
         query_data.assert_called_once()

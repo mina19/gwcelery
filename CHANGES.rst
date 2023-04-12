@@ -64,6 +64,10 @@ Changelog
 -   Add automatic PESummary task to postprocess bilby parameter estimation
     results.
 
+-   Indicate dispatch of first less-significant alert with ``LOW_SIGNIF_PRELIM_SENT``.
+    Launch timer for revision and sending second less significant alert with the same
+    label conditioned on blocking labels indicating significant alert or advocate action.
+
 -   Replace ``EM_Selected`` and ``EM_SelectedConfident`` labels with
     ``LOW_SIGNIF_LOCKED`` and ``SIGNIF_LOCKED``.
 

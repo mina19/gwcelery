@@ -189,6 +189,13 @@ def handle_superevent(alert):
                 _set_pipeline_preferred_events.s(superevent_id)
             ).apply_async(countdown=app.conf['superevent_clean_up_timeout'])
 
+        elif label_name == 'LOW_SIGNIF_PRELIM_SENT':
+            # similar workflow as the GCN_PRELIM_SENT
+            # except block by condition evaluated at the end of timeout
+            _revise_and_send_second_less_significant_alert.si(
+                    alert, query, superevent_id,
+            ).apply_async(countdown=app.conf['superevent_clean_up_timeout'])
+
         elif label_name == superevents.EARLY_WARNING_LABEL:
             if superevents.SIGNIFICANT_LABEL in alert['object']['labels']:
                 # stop if full BW significant event already present
@@ -605,9 +612,36 @@ def _proceed_if_not_blocked_by(files, superevent_id, block_by):
         )
         return None
     else:
-        gracedb.upload.delay(None, None, superevent_id,
-                             "Sending preliminary notice")
         return files
+
+
+@gracedb.task(shared=False)
+def _revise_and_send_second_less_significant_alert(alert, query,
+                                                   superevent_id):
+    superevent_labels = gracedb.get_labels(superevent_id)
+    blocking_labels = {
+        'ADVREQ', 'ADVOK', 'ADVNO',
+        superevents.SIGNIFICANT_LABEL,
+        superevents.EARLY_WARNING_LABEL,
+    }
+    if blocking_labels.intersection(superevent_labels):
+        return
+
+    (
+        gracedb.get_events.si(query)
+        |
+        superevents.select_preferred_event.s()
+        |
+        _update_superevent_and_return_event_dict.s(superevent_id)
+        |
+        _leave_log_message_and_return_event_dict.s(
+            superevent_id,
+            "Superevent cleaned up before second less-significant alert"
+        )
+        |
+        earlywarning_preliminary_alert.s(
+            alert, alert_type='less-significant')
+    ).delay()
 
 
 @app.task(shared=False)
@@ -693,7 +727,9 @@ def earlywarning_preliminary_alert(event, alert, alert_type='preliminary',
          calling :meth:`gwcelery.tasks.skymaps.annotate_fits`.
     3.   Create a preliminary VOEvent.
     4.   Send the VOEvent to GCN and notices to SCiMMA and GCN.
-    5.   Apply the GCN_PRELIM_SENT label to the superevent.
+    5.   Apply the GCN_PRELIM_SENT or LOW_SIGNIF_PRELIM_SENT
+         depending on the significant or less-significant alert
+         respectively.
     6.   Create and upload a GCN Circular draft.
     """
     priority = 0 if superevents.should_publish(event) else 1
@@ -1121,18 +1157,26 @@ def earlywarning_preliminary_initial_update_alert(
     if combined_skymap_needed:
         download_andor_expose_group += [combined_skymap_canvas]
 
+    sent_label_canvas = identity.si()
+    if alert_type == 'less-significant':
+        sent_label_canvas = gracedb.create_label.si(
+            'LOW_SIGNIF_PRELIM_SENT',
+            superevent_id
+        )
+    elif alert_type == 'preliminary' or \
+            alert_type == 'earlywarning':
+        sent_label_canvas = gracedb.create_label.si(
+            'GCN_PRELIM_SENT',
+            superevent_id
+        )
+
     canvas = (
         group(download_andor_expose_group)
         |
         group(voevent_canvas, kafka_alert_canvas)
         |
         group(
-            (
-                gracedb.create_label.si('GCN_PRELIM_SENT', superevent_id)
-                if alert_type in {'earlywarning', 'preliminary'}
-                else identity.si()
-            ),
-
+            sent_label_canvas,
             circular_canvas,
         )
     )
