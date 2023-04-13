@@ -39,6 +39,8 @@ Changelog
     if grabbing a sky map from an external URL such as from Fermi-GBM that
     lacks this field.
 
+-   Prevent external event from switching superevents.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 

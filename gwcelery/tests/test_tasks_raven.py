@@ -207,7 +207,9 @@ def mock_get_superevent(superevent_id):
      [[{'superevent_id': 'S12', 'far': .001, 'preferred_event': 'G3'}],
         'T4', -10, 10, 'Burst'],
      [[{'superevent_id': 'MS13', 'far': 1, 'preferred_event': 'M3'}],
-        'M15', -1, 5, 'CBC']])
+        'M15', -1, 5, 'CBC'],
+     [[{'superevent_id': 'S13', 'far': 1, 'preferred_event': 'G4'}],
+        'E6', -60, 600, 'Burst']])
 @patch('gwcelery.tasks.raven.trigger_raven_alert.run')
 @patch('gwcelery.tasks.gracedb.get_labels', mock_get_labels)
 @patch('gwcelery.tasks.raven.calculate_coincidence_far.run',
@@ -229,7 +231,8 @@ def test_raven_pipeline(mock_plot_overlap_integral,
     """
     alert_object = {'preferred_event': 'G1', 'pipeline': 'Fermi',
                     'search': 'Supernova' if graceid == 'T4' else 'GRB',
-                    'labels': []}
+                    'labels': [],
+                    'superevent': None if graceid != 'E6' else 'S14'}
     time_coinc_far = mock_coinc_far()['temporal_coinc_far']
     space_coinc_far = mock_coinc_far()['spatiotemporal_coinc_far']
 
@@ -293,13 +296,20 @@ def test_raven_pipeline(mock_plot_overlap_integral,
         alert_calls.append(call(
             mock_coinc_far(),
             result, graceid, alert_object, group))
-    mock_trigger_raven_alert.assert_has_calls(alert_calls, any_order=True)
+    if graceid != 'E6':
+        mock_trigger_raven_alert.assert_has_calls(alert_calls, any_order=True)
 
-    mock_calculate_coincidence_far.assert_has_calls(coinc_calls,
-                                                    any_order=True)
-    mock_update_superevent.assert_has_calls(update_calls, any_order=True)
-    mock_create_label.assert_has_calls(label_calls, any_order=True)
-    mock_plot_overlap_integral.assert_has_calls(plot_calls, any_order=True)
+        mock_calculate_coincidence_far.assert_has_calls(coinc_calls,
+                                                        any_order=True)
+        mock_update_superevent.assert_has_calls(update_calls, any_order=True)
+        mock_create_label.assert_has_calls(label_calls, any_order=True)
+        mock_plot_overlap_integral.assert_has_calls(plot_calls, any_order=True)
+    else:
+        mock_trigger_raven_alert.assert_not_called()
+        mock_calculate_coincidence_far.assert_not_called()
+        mock_update_superevent.assert_not_called()
+        mock_create_label.assert_not_called()
+        mock_plot_overlap_integral.assert_not_called()
 
 
 @pytest.mark.parametrize(

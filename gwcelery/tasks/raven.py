@@ -217,6 +217,10 @@ def raven_pipeline(raven_search_results, gracedb_id, alert_object, tl, th,
             exttrig_id = gracedb_id
             superevent = result
             ext_event = alert_object
+            # Don't continue if it is a different superevent than previous one.
+            if ext_event['superevent'] is not None \
+                    and ext_event['superevent'] != superevent['superevent_id']:
+                return
 
         canvas = (
             gracedb.add_event_to_superevent.si(superevent_id, exttrig_id)
