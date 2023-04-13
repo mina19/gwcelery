@@ -234,7 +234,7 @@ def raven_pipeline(raven_search_results, gracedb_id, alert_object, tl, th,
                   trigger_raven_alert.s(superevent, gracedb_id,
                                         ext_event, gw_group),
                   external_skymaps.plot_overlap_integral.s(
-                      superevent_id, exttrig_id))
+                      superevent, ext_event))
         )
         canvas.delay()
 

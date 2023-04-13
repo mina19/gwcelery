@@ -273,7 +273,7 @@ def test_raven_pipeline(mock_plot_overlap_integral,
                      time_coinc_far=time_coinc_far,
                      space_coinc_far=space_coinc_far))
             plot_calls.append(
-                call(mock_coinc_far(), graceid, result['graceid']))
+                call(mock_coinc_far(), alert_object, result))
     else:
         result = raven.preferred_superevent(raven_search_results)[0]
         label_calls.append(call('EM_COINC', result['superevent_id']))
@@ -285,7 +285,7 @@ def test_raven_pipeline(mock_plot_overlap_integral,
                  time_coinc_far=time_coinc_far,
                  space_coinc_far=space_coinc_far))
         plot_calls.append(
-            call(mock_coinc_far(), result['superevent_id'], graceid))
+            call(mock_coinc_far(), result, alert_object))
 
     alert_calls = []
     if 'S' in graceid:

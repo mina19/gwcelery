@@ -41,6 +41,9 @@ Changelog
 
 -   Prevent external event from switching superevents.
 
+-   Only plot skymap overlap with prefered external event when RAVEN_ALERT label
+    is applied.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 

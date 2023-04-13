@@ -522,7 +522,7 @@ def create_upload_external_skymap(event, notice_type, notice_date):
 
 
 @app.task(shared=False)
-def plot_overlap_integral(coinc_far_dict, superevent_id, ext_id,
+def plot_overlap_integral(coinc_far_dict, superevent, ext_event,
                           var_label=r"\mathcal{I}_{\Omega}"):
     """Plot and upload visualization of the sky map overlap integral computed
     by ligo.search.overlap_integral.
@@ -532,16 +532,22 @@ def plot_overlap_integral(coinc_far_dict, superevent_id, ext_id,
     coinc_far_dict : dict
         Dictionary containing coincidence false alarm rate results from
         RAVEN
-    superevent_id : str
-        superevent GraceDB ID
-    ext_id: str
-        external event GraceDB ID
+    superevent : dict
+        superevent dictionary
+    ext_event : dict
+        external event dictionary
     var_label : str
         The variable symbol used in plotting
 
     """
     if coinc_far_dict['skymap_overlap'] is None:
         return
+    if superevent['em_type'] != ext_event['graceid'] and \
+            'RAVEN_ALERT' in superevent['labels']:
+        return
+
+    superevent_id = superevent['superevent_id']
+    ext_id = ext_event['graceid']
 
     log_overlap = np.log(coinc_far_dict['skymap_overlap'])
     logI_string = np.format_float_positional(log_overlap, 1, trim='0',

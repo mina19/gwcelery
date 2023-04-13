@@ -289,9 +289,24 @@ def test_create_upload_skymap_filter(mock_upload):
     mock_upload.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    'em_type,graceid,labels,expected_result',
+    [[None, 'E1', [], True],
+     ['E1', 'E1', [], True],
+     ['E1', 'E2', [], True],
+     ['E1', 'E1', ['RAVEN_ALERT'], True],
+     ['E1', 'E2', ['RAVEN_ALERT'], False]]
+)
 @patch('gwcelery.tasks.gracedb.upload.run')
-def test_plot_overlap_integral(mock_upload):
+def test_plot_overlap_integral(mock_upload,
+                               em_type, graceid, labels, expected_result):
 
     coinc_far_dict = {'skymap_overlap': 1e2}
-    external_skymaps.plot_overlap_integral(coinc_far_dict, 'S1234', 'E1234')
-    mock_upload.assert_called_once()
+    superevent = {'superevent_id': 'S1', 'em_type': em_type, 'labels': labels}
+    ext_event = {'graceid': graceid}
+    external_skymaps.plot_overlap_integral(coinc_far_dict, superevent,
+                                           ext_event)
+    if expected_result:
+        mock_upload.assert_called_once()
+    else:
+        mock_upload.assert_not_called()
