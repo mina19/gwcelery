@@ -56,6 +56,10 @@ Changelog
     EM_READY label instead of SKYMAP_READY. If SKYMAP_READY is applied, we 
     will once again try to get the GW sky map from the superevent.
 
+-   Update bilby and bilby_pipe to 2.1.0 and 1.0.10 respectively. The number of
+    spline nodes for calibration errors is increased to 10 thanks to the bilby
+    optimizations. Change sampler settings into naccept=60, nlive=500.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 

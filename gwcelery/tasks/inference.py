@@ -316,7 +316,7 @@ def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
                                 'npool': 24, 'sample': 'acceptance-walk'},
              'n_parallel': 2,
              'request_cpus': 24,
-             'spline_calibration_nodes': 4,
+             'spline_calibration_nodes': 10,
              'request_memory_generation': 8.0}
         )
     elif mode == 'fast_test':
@@ -329,11 +329,11 @@ def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
             setup_arg += ['--cbc-likelihood-mode', 'phenompv2_bns_roq']
             settings['request_memory_generation'] = 8.0
         settings.update(
-            {'sampler_kwargs': {'naccept': 20, 'nlive': 1000,
+            {'sampler_kwargs': {'naccept': 60, 'nlive': 500,
                                 'npool': 24, 'sample': 'acceptance-walk'},
              'n_parallel': 2,
              'request_cpus': 24,
-             'spline_calibration_nodes': 4}
+             'spline_calibration_nodes': 10}
         )
     elif mode != 'production':
         raise ValueError(f"mode: {mode} not recognized.")

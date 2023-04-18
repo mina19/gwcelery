@@ -227,18 +227,18 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
                                     'npool': 24, 'sample': 'acceptance-walk'},
                  'n_parallel': 2,
                  'request_cpus': 24,
-                 'spline_calibration_nodes': 4,
+                 'spline_calibration_nodes': 10,
                  'request_memory_generation': 8.0}
             )
         elif mode == 'fast_test':
             if mc < 3.9:
                 ans['request_memory_generation'] = 8.0
             ans.update(
-                {'sampler_kwargs': {'naccept': 20, 'nlive': 1000,
+                {'sampler_kwargs': {'naccept': 60, 'nlive': 500,
                                     'npool': 24, 'sample': 'acceptance-walk'},
                  'n_parallel': 2,
                  'request_cpus': 24,
-                 'spline_calibration_nodes': 4}
+                 'spline_calibration_nodes': 10}
             )
         with open(path_to_settings, 'r') as f:
             assert json.load(f) == ans
