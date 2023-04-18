@@ -8,6 +8,10 @@ Changelog
 
 -   Add new celery worker for Kafka consumer.
 
+-   For targeted search, add configuration variables for FAR thresholds and
+    additional trials factors. Prevent GRB candidates that fall outside of FAR
+    thresholds from triggering an alert.
+
 2.1.3 "Thunderbird" (2023-06-24)
 --------------------------------
 

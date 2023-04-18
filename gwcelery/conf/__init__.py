@@ -385,6 +385,26 @@ raven_coincidence_windows = {'GRB_CBC': [-5, 1],
 superevents of the appropriate type are considered to be coincident if
 within time window of each other."""
 
+raven_targeted_far_thresholds = {
+    'GW': {
+        'Fermi': preliminary_alert_far_threshold['cbc'],
+        'Swift': preliminary_alert_far_threshold['cbc']
+    },
+    'GRB': {
+        'Fermi': 1 / 10000,
+        'Swift': 1 / 1000
+    }
+}
+"""Max FAR thresholds used for the subthreshold targeted searches with Fermi
+and Swift. Since we only listen to CBC low significance alerts, we use that
+FAR threshold for now. Note that Swift current listens to events with the
+threshold before and Fermi after trials factors."""
+
+raven_targeted_grb_trials_factors = {'Fermi': 3, 'Swift': 1}
+"""Trials factors for GRB pipelines involved in targeted search. Fermi-GBM
+has a trial factor of 3 due to using three independent templates (harder vs
+softer) while Swift does not."""
+
 mock_events_simulate_multiple_uploads = False
 """If True, then upload each mock event several times in rapid succession with
 random jitter in order to simulate multiple pipeline uploads."""

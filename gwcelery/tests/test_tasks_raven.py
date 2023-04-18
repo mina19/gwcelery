@@ -2,6 +2,7 @@ from unittest.mock import call, patch
 
 import pytest
 
+from .. import app
 from .test_tasks_skymaps import toy_fits_filecontents  # noqa: F401
 from ..tasks import gracedb
 from ..tasks import raven
@@ -77,7 +78,8 @@ def test_calculate_coincidence_far(
         'S1234', 'E4321', tl, th,
         se_dict=se, ext_dict=ext,
         incl_sky=False, grb_search='GRB',
-        gracedb=gracedb.client, far_grb=None)
+        gracedb=gracedb.client, far_grb=None,
+        far_gw_thresh=None, far_grb_thresh=None)
 
 
 @patch('ligo.raven.search.calc_signif_gracedb')
@@ -85,16 +87,20 @@ def test_calculate_coincidence_far_subgrb(mock_calc_signif):
     se = {'superevent_id': 'S1234'}
     ext = {'graceid': 'E4321',
            'pipeline': 'Fermi',
-           'search': 'GRB',
+           'search': 'SubGRBTargeted',
            'labels': [],
-           'far': 1e5}
+           'far': 1e-5}
     tl, th = -1, 10
     raven.calculate_coincidence_far(se, ext, tl, th)
     mock_calc_signif.assert_called_once_with(
         'S1234', 'E4321', tl, th,
         se_dict=se, ext_dict=ext,
-        incl_sky=False, grb_search='GRB',
-        gracedb=gracedb.client, far_grb=1e5)
+        incl_sky=False, grb_search='SubGRBTargeted',
+        gracedb=gracedb.client, far_grb=ext['far'] * 3,
+        far_gw_thresh=(
+            app.conf['raven_targeted_far_thresholds']['GW']['Fermi']),
+        far_grb_thresh=(
+            app.conf['raven_targeted_far_thresholds']['GRB']['Fermi']))
 
 
 @pytest.mark.parametrize('group', ['CBC', 'Burst'])  # noqa: F811
@@ -123,6 +129,7 @@ def test_calculate_spacetime_coincidence_far_fermi(
         se_moc=True, ext_moc=False,
         use_radec=False,
         gracedb=gracedb.client, far_grb=None,
+        far_gw_thresh=None, far_grb_thresh=None,
         use_preferred_event_skymap=False)
 
 
@@ -152,6 +159,7 @@ def test_calculate_spacetime_coincidence_far_swift(
         se_moc=True, ext_moc=False,
         use_radec=True,
         gracedb=gracedb.client, far_grb=None,
+        far_gw_thresh=None, far_grb_thresh=None,
         use_preferred_event_skymap=False)
 
 
@@ -182,6 +190,7 @@ def test_calculate_spacetime_coincidence_far_preferred(
         se_moc=True, ext_moc=False,
         use_radec=False,
         gracedb=gracedb.client, far_grb=None,
+        far_gw_thresh=None, far_grb_thresh=None,
         use_preferred_event_skymap=True)
 
 

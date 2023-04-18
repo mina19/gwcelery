@@ -11,7 +11,7 @@
     </Author>
   </Who>
   <What>
-    <Param ucd="arith.rate;stat.falsealarm" unit="Hz" value="5e-05" name="FAR" dataType="float"/>
+    <Param ucd="arith.rate;stat.falsealarm" unit="Hz" value="5e-06" name="FAR" dataType="float"/>
     <Param name="TrigID" value="699554499710_20512" ucd="meta.id"/>
     <Param name="Integ_Time" value="1.024" unit="sec" ucd="time.interval"/>
   </What>

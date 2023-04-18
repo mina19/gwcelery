@@ -447,7 +447,13 @@ def handle_targeted_kafka_alert(alert):
     # FIXME: This is required until native ingesting of kafka events in GraceDB
     payload, pipeline, time, trig_id = _kafka_to_voevent(alert)
 
-    label = 'NOT_GRB' if alert['alert_type'] == "retraction" else None
+    # Veto events that don't pass GRB FAR threshold
+    far_grb = \
+        alert['far'] * app.conf['raven_targeted_grb_trials_factors'][pipeline]
+    veto_event = \
+        app.conf['raven_targeted_far_thresholds']['GRB'][pipeline] < far_grb
+    label = ('NOT_GRB' if alert['alert_type'] == "retraction" or veto_event
+             else None)
 
     # Look whether a previous event with the same ID exists
     query = 'group: External pipeline: {} grbevent.trigger_id = "{}"'.format(

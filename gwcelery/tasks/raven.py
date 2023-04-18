@@ -35,10 +35,23 @@ def calculate_coincidence_far(superevent, exttrig, tl, th,
     """
     superevent_id = superevent['superevent_id']
     exttrig_id = exttrig['graceid']
+    far_grb = exttrig['far']
 
     #  Don't compute coinc FAR for SNEWS coincidences
     if exttrig['pipeline'] == 'SNEWS':
         return {}
+
+    #  Define max far thresholds for targeted subthreshold search
+    if exttrig['search'] == 'SubGRBTargeted':
+        far_thresholds = app.conf['raven_targeted_far_thresholds']
+        far_gw_thresh = far_thresholds['GW'][exttrig['pipeline']]
+        far_grb_thresh = far_thresholds['GRB'][exttrig['pipeline']]
+        # Penalize GRB FAR by additional trials from targeted search
+        far_grb *= \
+            app.conf['raven_targeted_grb_trials_factors'][exttrig['pipeline']]
+    else:
+        far_gw_thresh = None
+        far_grb_thresh = None
 
     if ({'EXT_SKYMAP_READY', 'SKYMAP_READY'}.issubset(exttrig['labels']) or
             {'EXT_SKYMAP_READY', 'EM_READY'}.issubset(exttrig['labels'])):
@@ -61,7 +74,9 @@ def calculate_coincidence_far(superevent, exttrig, tl, th,
                    se_moc=True, ext_moc=False,
                    use_radec=True if exttrig['pipeline'] == 'Swift' else False,
                    incl_sky=True, gracedb=gracedb.client,
-                   far_grb=exttrig['far'],
+                   far_grb=far_grb,
+                   far_gw_thresh=far_gw_thresh,
+                   far_grb_thresh=far_grb_thresh,
                    use_preferred_event_skymap=use_preferred_event_skymap)
     else:
         return ligo.raven.search.calc_signif_gracedb(
@@ -69,7 +84,9 @@ def calculate_coincidence_far(superevent, exttrig, tl, th,
                    se_dict=superevent, ext_dict=exttrig,
                    grb_search=exttrig['search'],
                    incl_sky=False, gracedb=gracedb.client,
-                   far_grb=exttrig['far'])
+                   far_grb=far_grb,
+                   far_gw_thresh=far_gw_thresh,
+                   far_grb_thresh=far_grb_thresh)
 
 
 @app.task(shared=False)

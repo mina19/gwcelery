@@ -752,6 +752,7 @@ def _mock_get_events(query):
                          ['initial', 'update', 'retraction'])
 @pytest.mark.parametrize('kafka_path',
                          ['kafka_alert_fermi.json',
+                          'kafka_alert_fermi_ignore.json',
                           'kafka_alert_swift.json',
                           'kafka_alert_swift_noloc.json',
                           'kafka_alert_swift_wskymap.json'])
@@ -790,8 +791,9 @@ def test_handle_targeted_kafka_alert(mock_plot_allsky,
     no_loc = 'noloc' in kafka_path
     replace_event = alert_type in ['update', 'retraction']
     pipeline = 'Fermi' if 'fermi' in kafka_path else 'Swift'
+    labels = ['NOT_GRB'] if 'ignore' in kafka_path else None
     # Update VOEvent with sky localization info or ID if needed
-    if no_loc or replace_event:
+    if no_loc or replace_event or labels:
         with resources.path(data, voevent_path) as p:
             fname = str(p)
         root = etree.parse(fname)
@@ -812,6 +814,11 @@ def test_handle_targeted_kafka_alert(mock_plot_allsky,
             root.find("./What/Param[@name='TrigID']").attrib['value'] = \
                 new_id.encode()
             alert["id"] = [new_id]
+        if labels:
+            # Overwrite value in GCN template to be that in the kafka packet
+            new_far = str(alert['far'])
+            root.find("./What/Param[@name='FAR']").attrib['value'] = \
+                new_far.encode()
         text = etree.tostring(root, xml_declaration=True, encoding="UTF-8")
         # Add back removed newline
         text += b'\n'
@@ -830,7 +837,7 @@ def test_handle_targeted_kafka_alert(mock_plot_allsky,
                                                   search='SubGRBTargeted',
                                                   pipeline=pipeline,
                                                   group='External',
-                                                  labels=None)
+                                                  labels=labels)
 
     # Ensure correct localization method used
     if pipeline == 'Fermi' or 'wskymap' in kafka_path:
@@ -841,7 +848,7 @@ def test_handle_targeted_kafka_alert(mock_plot_allsky,
     else:
         mock_create_upload_external_skymap.assert_called_once()
 
-    if alert_type == "retraction":
+    if alert_type == "retraction" or (labels and alert_type == "update"):
         mock_create_label.assert_called_once_with("NOT_GRB", "E12345")
     else:
         mock_create_label.assert_not_called()
