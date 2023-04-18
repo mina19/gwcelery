@@ -53,8 +53,9 @@ Changelog
     listener.
 
 -   Use sky map from preferred event rather than superevent, triggering off 
-    EM_READY label instead of SKYMAP_READY. If SKYMAP_READY is applied, we 
-    will once again try to get the GW sky map from the superevent.
+    EM_READY label instead of SKYMAP_READY. If SKYMAP_READY is applied or if a
+    sky map file is added to the superevent, we will once again try to get the
+    GW sky map from the superevent.
 
 -   Update bilby and bilby_pipe to 2.1.0 and 1.0.10 respectively. The number of
     spline nodes for calibration errors is increased to 10 thanks to the bilby

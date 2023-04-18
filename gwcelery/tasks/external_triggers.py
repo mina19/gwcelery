@@ -387,7 +387,8 @@ def handle_grb_igwn_alert(alert):
                 if REQUIRED_LABELS_BY_TASK['compare'].issubset(
                         set(external_event['labels'])):
                     _relaunch_raven_pipeline_with_skymaps(
-                        superevent, external_event, graceid)
+                        superevent, external_event, graceid,
+                        use_superevent=True)
         else:
             if REQUIRED_LABELS_BY_TASK['compare'].issubset(
                     set(external_event['labels'])):
@@ -488,8 +489,9 @@ def _launch_external_detchar(event):
     return event
 
 
-def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid):
-    """Relaunch the RAVEN sky map comparision workflow, include recalculating
+def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid,
+                                          use_superevent=False):
+    """Relaunch the RAVEN sky map comparison workflow, include recalculating
     the joint FAR with updated sky map info and create a new combined sky map.
 
     Parameters
@@ -500,6 +502,9 @@ def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid):
         external event dictionary
     graceid: str
         GraceDB ID of event
+    use_superevent: bool
+        If True, always use skymap info from superevent
+        regardless of SKYMAP_READY label.
 
     """
     gw_group = superevent['preferred_event_data']['group']
@@ -521,6 +526,7 @@ def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid):
         canvas |= external_skymaps.create_combined_skymap.si(
                       superevent['superevent_id'], ext_event['graceid'],
                       preferred_event=(
-                          superevent['preferred_event'] if
-                          'SKYMAP_READY' not in ext_event['labels'] else None))
+                          None if 'SKYMAP_READY' in ext_event['labels']
+                          or use_superevent
+                          else superevent['preferred_event']))
     canvas.delay()

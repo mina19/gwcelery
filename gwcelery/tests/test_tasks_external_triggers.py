@@ -419,7 +419,7 @@ def test_handle_rerun_combined_skymap(mock_create_combined_skymap,
     external_triggers.handle_grb_igwn_alert(alert)
     if graceid == 'S1':
         mock_create_combined_skymap.assert_has_calls(
-            [call('S1', 'E1', preferred_event='G1'),
+            [call('S1', 'E1', preferred_event=None),
              call('S1', 'E3', preferred_event=None)]
         )
     elif graceid in {'E1', 'E3'}:
