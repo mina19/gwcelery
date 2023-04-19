@@ -3,6 +3,7 @@ Changelog
 
 2.0.6 (unreleased)
 ------------------
+-   Add `HIGH_PROFILE` label for rapid response team.
 
 -   Prevent external event switching superevents also when triggering
     off superevents.

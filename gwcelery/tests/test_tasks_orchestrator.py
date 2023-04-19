@@ -141,6 +141,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
     create_emcoinc_circular = Mock()
     expose = Mock()
     rrt_channel_creation = Mock()
+    check_high_profile = Mock()
     annotate_fits = Mock(return_value=None)
     # FIXME: remove logic of mocking return value
     # when live worker testing is enabled
@@ -229,6 +230,8 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                         check_vectors)
     monkeypatch.setattr('gwcelery.tasks.orchestrator.channel_creation.'
                         'rrt_channel_creation', rrt_channel_creation)
+    monkeypatch.setattr('gwcelery.tasks.rrt_utils.check_high_profile.run',
+                        check_high_profile)
     monkeypatch.setattr(app.conf, 'create_mattermost_channel', True)
     # Run function under test
     orchestrator.handle_superevent(alert)
@@ -270,6 +273,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         #         skymap_filename='bayestar.fits.gz', skymap_type='bayestar')
         gcn_send.assert_called_once()
         alerts_send.assert_called_once()
+        check_high_profile.assert_called_once()
         if raven_coinc:
             create_emcoinc_circular.assert_called_once()
         else:
@@ -282,6 +286,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             gcn_send.assert_not_called()
             create_tag.assert_not_called()
             create_initial_circular.assert_not_called()
+            check_high_profile.assert_not_called()
         else:
             annotate_fits.assert_called_once()
             update_superevent_task.assert_called_once_with(
@@ -303,6 +308,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             gcn_send.assert_not_called()
             create_tag.assert_not_called()
             create_initial_circular.assert_not_called()
+            check_high_profile.assert_not_called()
         else:
             annotate_fits.assert_called_once()
             # no superevent clean up needed
@@ -321,6 +327,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             gcn_send.assert_not_called()
             create_tag.assert_not_called()
             create_initial_circular.assert_not_called()
+            check_high_profile.assert_not_called()
         else:
             # check alert type is less-significant
             _files, _superevent, _alert_type = alerts_send.call_args.args

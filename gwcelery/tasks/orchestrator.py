@@ -22,6 +22,7 @@ from . import gracedb
 from . import inference
 from . import igwn_alert
 from . import p_astro
+from . import rrt_utils
 from . import skymaps
 from . import superevents
 
@@ -1085,6 +1086,11 @@ def earlywarning_preliminary_initial_update_alert(
     if filecontents and not combined_skymap_filename:
         skymap, em_bright, p_astro = filecontents
 
+        # check high profile and apply label if true
+        high_profile_canvas = rrt_utils.check_high_profile.si(
+            skymap, em_bright, p_astro, superevent
+        )
+
         download_andor_expose_group = []
 
         voevent_canvas = _create_voevent.si(
@@ -1114,6 +1120,7 @@ def earlywarning_preliminary_initial_update_alert(
             gracedb.download.si(em_bright_filename, superevent_id),
             gracedb.download.si(p_astro_filename, superevent_id),
         ]
+        high_profile_canvas = identity.si()
 
         voevent_canvas = _create_voevent.s(
             superevent_id,
@@ -1179,6 +1186,7 @@ def earlywarning_preliminary_initial_update_alert(
         group(
             sent_label_canvas,
             circular_canvas,
+            high_profile_canvas
         )
     )
 
