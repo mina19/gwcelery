@@ -197,7 +197,7 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
             assert 'o3replay' in cmd
 
         assert cmd[2] == os.path.join(
-            app.conf['pe_results_path'], sid, 'bilby')
+            app.conf['pe_results_path'], sid, 'bilby', mode)
 
         assert cmd[4] == rundir
 
@@ -454,9 +454,36 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
 
             kwargs['bilby_mode'] = 'production'
             paths = [os.path.join(sampledir,
-                                  'Bilby.production.posterior_samples.hdf5'),
-                     os.path.join(resultdir, 'bilby_extrinsic_corner.png'),
-                     os.path.join(resultdir, 'bilby_intrinsic_corner.png')]
+                                  'Bilby.production.posterior_samples.hdf5')]
+
+            path_to_bilby_config = os.path.join(rundir, "bilby_complete.ini")
+            with open(path_to_bilby_config, "w") as f:
+                f.write(
+                    "spline-calibration-envelope-dict="
+                    "{'H1': 'H1_cal.txt', 'L1': 'L1_cal.txt'}\n"
+                    "psd-dict={'H1': 'H1_psd.txt', 'L1': 'L1_psd.txt'}\n"
+                    "waveform-approximant=IMRPhenomPv2\n"
+                    "minimum-frequency=20\n"
+                    "reference-frequency=100\n"
+                    "webdir=webdir"
+                )
+
+            def mock_check_output(args, **kwargs):
+                assert args == [
+                    "summarypages", "--webdir", "webdir/pesummary",
+                    "--samples", os.path.join(sampledir, 'test_result.hdf5'),
+                    "--gw", "--redshift_method", "exact",
+                    "--evolve_spins_fowards",
+                    "--config", path_to_bilby_config,
+                    "--psd", "H1:H1_psd.txt", "L1:L1_psd.txt",
+                    "--calibration", "H1:H1_cal.txt", "L1:L1_cal.txt",
+                    "--approximant", "IMRPhenomPv2",
+                    "--f_low", "20", "--f_ref", "100"
+                ]
+
+            monkeypatch.setattr(
+                'gwcelery.tasks.condor.check_output.run', mock_check_output)
+
         else:
             paths = []
         for path in paths:
@@ -468,6 +495,9 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
 
         if pipeline == 'rapidpe':
             upload.assert_called_once()
+        elif pipeline == 'bilby':
+            # +1 corresponds to pesummary link
+            assert upload.call_count == len(paths) + 1
         else:
             assert upload.call_count == len(paths)
 

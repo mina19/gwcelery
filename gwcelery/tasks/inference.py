@@ -7,6 +7,8 @@ import os
 import subprocess
 import urllib
 
+from bilby_pipe.utils import convert_string_to_dict
+from bilby_pipe.bilbyargparser import BilbyConfigFileParser
 from celery import group
 from gwdatafind import find_urls
 import numpy as np
@@ -293,7 +295,7 @@ def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
         f.write(coinc)
 
     path_to_webdir = os.path.join(
-        app.conf['pe_results_path'], superevent_id, 'bilby'
+        app.conf['pe_results_path'], superevent_id, 'bilby', mode
     )
 
     path_to_settings = os.path.join(rundir, 'settings.json')
@@ -687,23 +689,41 @@ def _upload_tasks_bilby(rundir, superevent_id, mode):
             f.read(), samples_filename,
             superevent_id, f'{mode} Bilby posterior samples', 'pe')
 
-    # plots
-    tasks = []
-    resultdir = os.path.join(rundir, 'result')
-    for parameter_type in ['extrinsic', 'intrinsic']:
-        # Here it is not required that only a single png file exists, so that
-        # posterior samples are uploaded whatever.
-        for path in glob.iglob(
-            os.path.join(resultdir, f'*_{parameter_type}_corner.png')
-        ):
-            with open(path, 'rb') as f:
-                tasks.append(gracedb.upload.si(
-                    f.read(), f'Bilby.{mode}.{parameter_type}.png',
-                    superevent_id,
-                    f'{mode} Bilby corner plot for {parameter_type} '
-                    'parameters', 'pe'
-                ))
-    canvas |= group(tasks)
+    # pesummary
+    pesummary_kwargs = {}
+    path_to_ini, = glob.glob(os.path.join(rundir, "*_complete.ini"))
+    pesummary_kwargs["config"] = path_to_ini
+    config_parser = BilbyConfigFileParser()
+    with open(path_to_ini, "r") as f:
+        config_content, _, _, _ = config_parser.parse(f)
+    pesummary_kwargs["psd"] = convert_string_to_dict(
+        config_content["psd-dict"]
+    )
+    pesummary_kwargs["calibration"] = convert_string_to_dict(
+        config_content["spline-calibration-envelope-dict"]
+    )
+    pesummary_kwargs["approximant"] = config_content["waveform-approximant"]
+    pesummary_kwargs["f_low"] = config_content["minimum-frequency"]
+    pesummary_kwargs["f_ref"] = config_content["reference-frequency"]
+
+    webdir = os.path.join(config_content["webdir"], 'pesummary')
+    url = urllib.parse.urljoin(
+        app.conf['pe_results_url'],
+        os.path.relpath(
+            os.path.join(webdir, 'home.html'),
+            app.conf['pe_results_path']
+        )
+    )
+    canvas = group(
+        canvas,
+        _pesummary_task(webdir, in_samples, **pesummary_kwargs)
+        |
+        gracedb.upload.si(
+            None, None, superevent_id,
+            'PESummary page for {mode} Bilby is available '
+            f'<a href={url}>here</a>'
+        )
+    )
 
     return canvas
 
@@ -740,6 +760,45 @@ def dag_finished(rundir, superevent_id, pe_pipeline, **kwargs):
 
     if pe_pipeline == 'bilby':
         gracedb.create_label.delay('PE_READY', superevent_id)
+
+
+def _pesummary_task(webdir, samples, **pesummary_kwargs):
+    """Return a celery task to submit a pesummary condor job.
+
+    Parameters
+    ----------
+    webdir : str
+        output directory
+    samples : str
+        path to posterior sample file
+    **pesummary_kwargs
+        Extra arguments of summarypages
+
+    Returns
+    -------
+    celery task
+
+    """
+    args = [
+        "summarypages", "--webdir", webdir, "--samples", samples,
+        "--gw", "--redshift_method", "exact", "--evolve_spins_fowards"
+    ]
+    for key in pesummary_kwargs:
+        if key in ["psd", "calibration"]:
+            args += [f"--{key}"]
+            for ifo in pesummary_kwargs[key]:
+                args += [f'{ifo}:{pesummary_kwargs[key][ifo]}']
+        else:
+            args += [f"--{key}", pesummary_kwargs[key]]
+    if app.conf['gracedb_host'] != 'gracedb.ligo.org':
+        queue = 'Online_PE_MDC'
+    else:
+        queue = 'Online_PE'
+    return condor.check_output.si(
+        args, request_memory=16000, request_disk=5000, queue=queue,
+        accounting_group="ligo.dev.o4.cbc.pe.bilby",
+        accounting_group_user="soichiro.morisaki",
+    )
 
 
 @app.task(ignore_result=True, shared=False)

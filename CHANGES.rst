@@ -61,6 +61,9 @@ Changelog
     spline nodes for calibration errors is increased to 10 thanks to the bilby
     optimizations. Change sampler settings into naccept=60, nlive=500.
 
+-   Add automatic PESummary task to postprocess bilby parameter estimation
+    results.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 
