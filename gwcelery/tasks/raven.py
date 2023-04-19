@@ -380,7 +380,7 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
     ext_id = ext_event['graceid']
     gw_group = gw_group.lower()
     pipeline = ext_event['pipeline']
-    trials_factor = app.conf['preliminary_alert_trials_factor'][gw_group]
+    trials_factor = app.conf['significant_alert_trials_factor'][gw_group]
     missing_skymap = True
     messages = []
 
@@ -414,7 +414,7 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
             coinc_far = time_coinc_far
 
         far_type = 'joint'
-        far_threshold = app.conf['preliminary_alert_far_threshold'][gw_group]
+        far_threshold = app.conf['significant_alert_far_threshold'][gw_group]
         coinc_far_f = coinc_far * trials_factor * (trials_factor - 1.)
         pass_far_threshold = coinc_far_f <= far_threshold
 
