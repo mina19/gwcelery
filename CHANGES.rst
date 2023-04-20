@@ -2,7 +2,7 @@ Changelog
 =========
 
 2.0.5 "Mothman" (2023-04-20)
-------------------
+----------------------------
 
 -   Add Mattermost channel creation for the RRT to discuss a superevent
     candidate.
