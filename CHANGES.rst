@@ -35,6 +35,8 @@ Changelog
 -   Bump pesummary version to 1.0.0. Disable ligo skymap and use 6 cpus and
     online-PE dedicated nodes to speed up the pesummary postprocess.
 
+-   Enable public alerts in production.
+
 2.0.5 "Mothman" (2023-04-20)
 ----------------------------
 
