@@ -411,7 +411,8 @@ def test_handle_rerun_combined_skymap(mock_create_combined_skymap,
     alert = {
         "data": {"filename": ("skymap.multiorder.fits" if 'S' in graceid
                               else 'fermi_skymap.fits.gz'),
-                 "file_version": 1},
+                 "file_version": 1,
+                 "comment": ''},
         "uid": graceid,
         "alert_type": "log",
         "object": event

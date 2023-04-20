@@ -368,6 +368,7 @@ def handle_grb_igwn_alert(alert):
     elif alert['alert_type'] == 'log' and \
             'EM_COINC' in alert['object']['labels'] and \
             'fit' in alert['data']['filename'] and \
+            'flat' not in alert['data']['comment'].lower() and \
             (alert['data']['filename'] not in
              {external_skymaps.COMBINED_SKYMAP_FILENAME_MULTIORDER,
               external_skymaps.COMBINED_SKYMAP_FILENAME_FLAT}):

@@ -76,6 +76,8 @@ Changelog
 -   Don't compute p-astro for spiir/AllSky because it now computes and uploads
     its own.
 
+-   Prevent repeating of skymap comparison pipeline with the secondary flattened skymaps.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 
