@@ -90,7 +90,7 @@ def test_select_pipeline_preferred_event():
       ['EMBRIGHT_READY', 'PASTRO_READY'],
       ['EMBRIGHT_READY', 'PASTRO_READY',
        'SKYMAP_READY'], 'T0212'],
-     [['EM_Selected', 'ADVREQ', 'DQOK'],
+     [['LOW_SIGNIF_LOCKED', 'ADVREQ', 'DQOK'],
       ['EMBRIGHT_READY', 'PASTRO_READY',
        'SKYMAP_READY'],
       ['EMBRIGHT_READY', 'PASTRO_READY',
@@ -281,8 +281,8 @@ def test_raven_alert(mock_create_label, labels):
     calls = [call('ADVREQ', 'S100')]
     if {'SKYMAP_READY', 'EMBRIGHT_READY', 'PASTRO_READY'}.issubset(labels):
         calls.extend(
-            [call('EM_READY', 'S100'), call('EM_Selected', 'S100'),
-             call('EM_SelectedConfident', 'S100')]
+            [call('EM_READY', 'S100'), call('LOW_SIGNIF_LOCKED', 'S100'),
+             call('SIGNIF_LOCKED', 'S100')]
         )
     mock_create_label.assert_has_calls(calls, any_order=True)
 
@@ -586,8 +586,8 @@ def test_parse_trigger_cbc_2():
         expected_calls = [call('ADVREQ', 'S0039')]
         if superevents.is_complete(event_dictionary):
             expected_calls.extend(
-                [call('EM_READY', 'S0039'), call('EM_Selected', 'S0039'),
-                 call('EM_SelectedConfident', 'S0039')])
+                [call('EM_READY', 'S0039'), call('LOW_SIGNIF_LOCKED', 'S0039'),
+                 call('SIGNIF_LOCKED', 'S0039')])
         create_label.assert_has_calls(expected_calls, any_order=True)
 
 
@@ -658,7 +658,7 @@ def test_parse_trigger_cbc_4():
 def test_parse_trigger_cbc_5():
     """New trigger G000002 is complete, with no intersecting superevent,
     passes less-significant far, but not significant far. New superevent
-    should be created, and labeled EM_Selected."""
+    should be created, and labeled LOW_SIGNIF_LOCKED."""
     event_dictionary = {'graceid': 'G000002',
                         'gpstime': 1286741861.52678,
                         'group': 'CBC',
@@ -692,7 +692,7 @@ def test_parse_trigger_cbc_5():
         superevents.handle(payload)
         p1.assert_called_once()
         p2.assert_called_once()
-        p3.assert_called_once_with('EM_Selected', 'S123456')
+        p3.assert_called_once_with('LOW_SIGNIF_LOCKED', 'S123456')
 
 
 def test_parse_trigger_burst_1():
@@ -853,7 +853,7 @@ def test_parse_trigger_burst_4():
 
 def test_parse_trigger_burst_5():
     """New less-significant oLIB trigger, which is complete, no intersecting
-    superevent. New superevent created and labeled EM_Selected.
+    superevent. New superevent created and labeled LOW_SIGNIF_LOCKED.
     """
     event_dictionary = {'graceid': 'G000007',
                         'gpstime': 1.0,
@@ -880,12 +880,12 @@ def test_parse_trigger_burst_5():
             patch('gwcelery.tasks.gracedb.create_label') as p2:
         superevents.handle(payload)
         p1.assert_called_once()
-        p2.assert_called_once_with('EM_Selected', 'S123456')
+        p2.assert_called_once_with('LOW_SIGNIF_LOCKED', 'S123456')
 
 
 def test_parse_trigger_burst_6():
     """New less-significant MLy trigger, which is complete, no intersecting
-    superevent. New superevent created and labeled EM_Selected.
+    superevent. New superevent created and labeled LOW_SIGNIF_LOCKED.
     """
     event_dictionary = {'graceid': 'G123456',
                         'gpstime': 1.0,
@@ -911,7 +911,7 @@ def test_parse_trigger_burst_6():
             patch('gwcelery.tasks.gracedb.create_label') as p2:
         superevents.handle(payload)
         p1.assert_called_once()
-        p2.assert_called_once_with('EM_Selected', 'S123456')
+        p2.assert_called_once_with('LOW_SIGNIF_LOCKED', 'S123456')
 
 
 def test_S190421ar_spiir_scenario():    # noqa: N802

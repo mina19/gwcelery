@@ -64,6 +64,9 @@ Changelog
 -   Add automatic PESummary task to postprocess bilby parameter estimation
     results.
 
+-   Replace ``EM_Selected`` and ``EM_SelectedConfident`` labels with
+    ``LOW_SIGNIF_LOCKED`` and ``SIGNIF_LOCKED``.
+
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
 

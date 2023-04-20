@@ -77,9 +77,9 @@ def handle_superevent(alert):
         elif alert['object']['category'] == 'Test':
             query += ' Test'
 
-        # launch less-significant preliminary alerts on EM_Selected
+        # launch less-significant preliminary alerts on LOW_SIGNIF_LOCKED
         if label_name == superevents.FROZEN_LABEL:
-            # don't launch if EARLY_WARNING or EM_SelectedConfident is present
+            # don't launch if EARLY_WARNING or SIGNIF_LOCKED is present
             skipping_labels = {
                 superevents.SIGNIFICANT_LABEL,
                 superevents.EARLY_WARNING_LABEL
@@ -112,7 +112,7 @@ def handle_superevent(alert):
                     alert, alert_type='less-significant')
             ).apply_async()
 
-        # launch significant alert on EM_SelectedConfident
+        # launch significant alert on SIGNIF_LOCKED
         elif label_name == superevents.SIGNIFICANT_LABEL:
             # ensure superevent is locked before starting alert workflow
             if superevents.FROZEN_LABEL not in alert['object']['labels']:
@@ -197,7 +197,7 @@ def handle_superevent(alert):
                     "Superevent superseded by full BW event, skipping EW."
                 )
                 return
-            # start the EW alert pipeline; is blocked by EM_SelectedConfident
+            # start the EW alert pipeline; is blocked by SIGNIF_LOCKED
             # ensure superevent is locked before starting pipeline
             if superevents.FROZEN_LABEL not in alert['object']['labels']:
                 gracedb.create_label(superevents.FROZEN_LABEL, superevent_id)

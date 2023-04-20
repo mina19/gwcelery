@@ -34,7 +34,7 @@
     "labels": [
         "EM_READY",
         "ADVNO",
-        "EM_Selected",
+        "LOW_SIGNIF_LOCKED",
         "SKYMAP_READY",
         "EMBRIGHT_READY",
         "PASTRO_READY",
@@ -406,7 +406,7 @@
                 "labels": [
                     "EM_READY",
                     "ADVNO",
-                    "EM_Selected",
+                    "LOW_SIGNIF_LOCKED",
                     "SKYMAP_READY",
                     "EMBRIGHT_READY",
                     "PASTRO_READY",

@@ -24,11 +24,11 @@ REQUIRED_LABELS_BY_GROUP = {
 be complete.
 """
 
-FROZEN_LABEL = 'EM_Selected'
+FROZEN_LABEL = 'LOW_SIGNIF_LOCKED'
 """This label indicates that the superevent manager should make no further
 changes to the preferred event."""
 
-SIGNIFICANT_LABEL = 'EM_SelectedConfident'
+SIGNIFICANT_LABEL = 'SIGNIF_LOCKED'
 """This label indicates that the superevent is elevated to significant"""
 
 EARLY_WARNING_LABEL = 'EARLY_WARNING'
@@ -589,7 +589,7 @@ def _update_superevent(superevent_id, new_event_dict,
         kwargs['t_end'] = t_end
     if FROZEN_LABEL not in superevent_labels:
         if keyfunc(new_event_dict) > keyfunc(preferred_event_dict):
-            # update preferred event when EM_Selected is not applied
+            # update preferred event when LOW_SIGNIF_LOCKED is not applied
             kwargs['t_0'] = t_0
             kwargs['preferred_event'] = new_event_dict['graceid']
 

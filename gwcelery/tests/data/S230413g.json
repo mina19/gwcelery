@@ -19,11 +19,11 @@
     "labels": [
         "EM_READY",
         "ADVREQ",
-        "EM_Selected",
+        "LOW_SIGNIF_LOCKED",
         "SKYMAP_READY",
         "GCN_PRELIM_SENT",
         "DQR_REQUEST",
-        "EM_SelectedConfident"
+        "SIGNIF_LOCKED"
     ],
     "links": {
         "events": "https://gracedb-test.ligo.org/api/superevents/S230413g/events/",
@@ -132,11 +132,11 @@
                 "labels": [
                     "EM_READY",
                     "ADVREQ",
-                    "EM_Selected",
+                    "LOW_SIGNIF_LOCKED",
                     "SKYMAP_READY",
                     "GCN_PRELIM_SENT",
                     "DQR_REQUEST",
-                    "EM_SelectedConfident"
+                    "SIGNIF_LOCKED"
                 ]
             }
         },

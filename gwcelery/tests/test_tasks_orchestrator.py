@@ -15,32 +15,32 @@ from . import data
 @pytest.mark.parametrize(  # noqa: F811
     'alert_type,alert_label,group,pipeline,offline,far,instruments,'
     'superevent_id,superevent_labels',
-    [['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
-        ['H1'], 'S1234', ['EM_Selected']],
+    [['label_added', 'LOW_SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-9,
+        ['H1'], 'S1234', ['LOW_SIGNIF_LOCKED']],
      ['label_added', 'ADVREQ', 'CBC', 'gstlal', False, 1.e-9,
         ['H1'], 'S1234', ['ADVREQ']],
-     ['label_added', 'EM_SelectedConfident', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1'], 'S1234', ['EM_Selected']],
-     ['label_added', 'EM_SelectedConfident', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
-     ['label_added', 'EM_SelectedConfident', 'CBC', 'gstlal', False, 1.e-9,
+     ['label_added', 'SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-9,
+         ['H1', 'L1'], 'S1234', ['LOW_SIGNIF_LOCKED']],
+     ['label_added', 'SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-9,
+         ['H1', 'L1', 'V1'], 'S1234', ['LOW_SIGNIF_LOCKED']],
+     ['label_added', 'SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-9,
          ['H1', 'L1', 'V1'], 'S2468',
-         ['EM_Selected', 'COMBINEDSKYMAP_READY',
+         ['LOW_SIGNIF_LOCKED', 'COMBINEDSKYMAP_READY',
           'RAVEN_ALERT', 'EM_COINC']],
-     ['label_added', 'EM_SelectedConfident', 'Burst', 'CWB', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
-     ['label_added', 'EM_SelectedConfident', 'Burst', 'oLIB', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
+     ['label_added', 'SIGNIF_LOCKED', 'Burst', 'CWB', False, 1.e-9,
+         ['H1', 'L1', 'V1'], 'S1234', ['LOW_SIGNIF_LOCKED']],
+     ['label_added', 'SIGNIF_LOCKED', 'Burst', 'oLIB', False, 1.e-9,
+         ['H1', 'L1', 'V1'], 'S1234', ['LOW_SIGNIF_LOCKED']],
      ['label_added', 'GCN_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', ['EM_SelectedConfident']],
-     ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', ['EM_SelectedConfident']],
-     ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-9,
+         ['H1', 'L1', 'V1'], 'S1234', ['SIGNIF_LOCKED']],
+     ['label_added', 'LOW_SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-9,
+         ['H1', 'L1', 'V1'], 'S1234', ['SIGNIF_LOCKED']],
+     ['label_added', 'LOW_SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-9,
          ['H1', 'L1', 'V1'], 'S1234', []],
-     ['label_added', 'EM_Selected', 'CBC', 'gstlal', False, 1.e-10,
+     ['label_added', 'LOW_SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-10,
          ['H1', 'L1', 'V1'], 'S1234', ['EARLY_WARNING']],
      ['new', '', 'CBC', 'gstlal', False, 1.e-9, ['H1', 'L1'], 'S1234',
-         ['EM_Selected']]])
+         ['LOW_SIGNIF_LOCKED']]])
 def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                            alert_type, alert_label, group, pipeline,
                            offline, far, instruments, superevent_id,
@@ -242,7 +242,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             select_pipeline_preferred_event_task.return_value
         )
 
-    elif alert_label == 'EM_SelectedConfident':
+    elif alert_label == 'SIGNIF_LOCKED':
         annotate_fits.assert_called_once()
         _event_info = get_event('G1234')  # this gets the preferred event info
         assert superevents.should_publish(_event_info)
@@ -270,7 +270,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             create_initial_circular.assert_called_once()
 
     elif alert_label == 'EARLY_WARNING':
-        if 'EM_SelectedConfident' in superevent_labels:
+        if 'SIGNIF_LOCKED' in superevent_labels:
             expose.assert_not_called()
             alerts_send.assert_not_called()
             gcn_send.assert_not_called()
@@ -289,8 +289,8 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                  call('skymap-filename', 'public', 'S1234')],
                 any_order=True
             )
-    elif alert_label == 'EM_Selected':
-        if ('EM_SelectedConfident' in superevent_labels) or \
+    elif alert_label == 'LOW_SIGNIF_LOCKED':
+        if ('SIGNIF_LOCKED' in superevent_labels) or \
                 ('EARLY_WARNING' in superevent_labels):
             expose.assert_not_called()
             alerts_send.assert_not_called()
@@ -730,9 +730,9 @@ def test_parameter_estimation(monkeypatch, far, event):
 @pytest.mark.parametrize(
     "superevent_labels,block_by_labels",
     [
-        [["EM_Selected"], set()],
-        [["EM_Selected"], {"ADVOK", "ADVNO"}],
-        [["EM_SelectedConfident", "ADVOK"], {"ADVOK", "ADVNO"}]
+        [["LOW_SIGNIF_LOCKED"], set()],
+        [["LOW_SIGNIF_LOCKED"], {"ADVOK", "ADVNO"}],
+        [["SIGNIF_LOCKED", "ADVOK"], {"ADVOK", "ADVNO"}]
     ]
 )
 def test_blocking_labels(superevent_labels, block_by_labels):
