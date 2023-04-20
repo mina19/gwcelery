@@ -71,6 +71,8 @@ Changelog
 -   Replace ``EM_Selected`` and ``EM_SelectedConfident`` labels with
     ``LOW_SIGNIF_LOCKED`` and ``SIGNIF_LOCKED``.
 
+-   Fix repeating of raven alert publishing criteria met log message.
+
 -   Don't compute p-astro for spiir/AllSky because it now computes and uploads
     its own.
 

@@ -429,19 +429,17 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
     #  preferred event
     if pass_far_threshold and not is_ext_subthreshold and \
             likely_real_ext_event and not missing_skymap and \
-            not is_test_event:
-        messages.append('RAVEN: publishing criteria met for {0}-{1}'.format(
-            preferred_gwevent_id, ext_id))
-        if no_previous_alert:
-            messages.append('Triggering RAVEN alert for {0}-{1}'.format(
-                preferred_gwevent_id, ext_id))
-            (
-                gracedb.create_label.si('RAVEN_ALERT', superevent_id)
-                |
-                gracedb.create_label.si('RAVEN_ALERT', ext_id)
-                |
-                gracedb.create_label.si('RAVEN_ALERT', preferred_gwevent_id)
-            ).delay()
+            not is_test_event and no_previous_alert:
+        messages.append(('RAVEN: publishing criteria met for {0}-{1}. '
+                         'Triggering RAVEN alert'.format(
+                             preferred_gwevent_id, ext_id)))
+        (
+            gracedb.create_label.si('RAVEN_ALERT', superevent_id)
+            |
+            gracedb.create_label.si('RAVEN_ALERT', ext_id)
+            |
+            gracedb.create_label.si('RAVEN_ALERT', preferred_gwevent_id)
+        ).delay()
     if not pass_far_threshold:
         messages.append(('RAVEN: publishing criteria not met for {0}-{1},'
                          ' {2} FAR (w/ trials) too large '
@@ -460,9 +458,6 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
         messages.append('RAVEN: {0}-{1} is non-astrophysical, '
                         'at least one event is a Test event'.format(
                             preferred_gwevent_id, ext_id))
-    if not no_previous_alert:
-        messages.append(('RAVEN: Alert already triggered for {}'.format(
-                            ext_id)))
     if missing_skymap:
         messages.append('RAVEN: Will only publish GRB coincidence '
                         'if spatial-temporal FAR is present. '
