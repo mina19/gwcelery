@@ -1,12 +1,13 @@
 Changelog
 =========
 
-2.0.5 (unreleased)
+2.0.5 "Mothman" (2023-04-20)
 ------------------
 
--   Add Mattermost channel creation feature for RRT purpose.
+-   Add Mattermost channel creation for the RRT to discuss a superevent
+    candidate.
 
--   Use Online_PE_MDC nodes for bilby jobs on O3-Reply injections.
+-   Use Online_PE_MDC nodes for bilby jobs on O3-Replay injections.
 
 -   Do not remove PE run directory after the run completes or fails.
 
@@ -18,17 +19,19 @@ Changelog
 
 -   Bump ligo.em-bright version to v1.1.1.
 
+-   Bump ligo-followup-advocate version to v1.2.1.
+
 -   Also update the preferred external event when issuing a manual RAVEN alert.
 
--   Skip less significant alert workflow in case of both significant and EW triggers.
-    Existing workflow only accounted for blocking only in presence of significant
-    events.
+-   Skip less significant alert workflow in case of both significant and EW
+    triggers. Previous workflow only accounted for blocking in presence of
+    significant events.
 
--   Update rapidpe-rift-pipe to 0.0.12. Using mchirp and q as the coordinates for 
-    the rectilinear intrinsic grid. Updated accounting_group to 
-    ligo.dev.o4.cbc.pe.lalinferencerapid and added accouting_group_user. Added an 
-    option to map the events to an injection. Uploading only  a selected set of log files 
-    to gracedb. 
+-   Update rapidpe-rift-pipe version to 0.0.12. Use mchirp and q as the
+    coordinates for the rectilinear intrinsic grid. Update accounting_group to
+    ligo.dev.o4.cbc.pe.lalinferencerapid and add accouting_group_user. Add
+    an option to map the events to an injection. Upload only a select set
+    of log files to gracedb. 
 
 -   Prevent alternative collating method for O3 replay and MDC events with INTEGRAL.
 
@@ -43,10 +46,10 @@ Changelog
 
 -   Prevent external event from switching superevents.
 
--   Only plot skymap overlap with prefered external event when RAVEN_ALERT label
-    is applied.
+-   Only plot sky map overlap with prefered external event when RAVEN_ALERT
+    label is applied.
 
--   Populate the duration and central_frequency fields in Kafka notices about
+-   Populate the duration and central_frequency fields in Kafka notices for
     burst events.
 
 -   Add periodic SNEWS MDC events to test the corresponding IGWN alert
@@ -64,9 +67,10 @@ Changelog
 -   Add automatic PESummary task to postprocess bilby parameter estimation
     results.
 
--   Indicate dispatch of first less-significant alert with ``LOW_SIGNIF_PRELIM_SENT``.
-    Launch timer for revision and sending second less significant alert with the same
-    label conditioned on blocking labels indicating significant alert or advocate action.
+-   Indicate dispatch of first less-significant alert with
+    ``LOW_SIGNIF_PRELIM_SENT``. Launch timer for revision and send second less
+    significant alert with the same label conditioned on blocking labels
+    indicating significant alert or advocate action.
 
 -   Replace ``EM_Selected`` and ``EM_SelectedConfident`` labels with
     ``LOW_SIGNIF_LOCKED`` and ``SIGNIF_LOCKED``.
@@ -76,7 +80,8 @@ Changelog
 -   Don't compute p-astro for spiir/AllSky because it now computes and uploads
     its own.
 
--   Prevent repeating of skymap comparison pipeline with the secondary flattened skymaps.
+-   Prevent repeating of sky map comparison pipeline with the secondary
+    flattened sky maps.
 
 2.0.4 "Skunk Ape" (2023-03-28)
 ------------------------------
