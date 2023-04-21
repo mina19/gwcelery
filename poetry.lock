@@ -4352,14 +4352,14 @@ cffi = {version = "*", markers = "implementation_name == \"pypy\""}
 
 [[package]]
 name = "rapid-pe"
-version = "0.0.6"
+version = "0.1.0"
 description = "RapidPE: The original low-latency gravitational wave parameter estimation code."
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "rapid_pe-0.0.6-py3-none-any.whl", hash = "sha256:90813511f9160de9ace6b5dcf8d1c2c7d2f946a3768c6c2e5bf6c1440ec72211"},
-    {file = "rapid_pe-0.0.6.tar.gz", hash = "sha256:75912c695c9f9e1f9dc6492b2002703b194c98c17ffc2faeefb3436dfcb69523"},
+    {file = "rapid_pe-0.1.0-py3-none-any.whl", hash = "sha256:55fb87a0fd2520fe42ff3034695052469f54fb5fa14a1e970915bd3761dc72ad"},
+    {file = "rapid_pe-0.1.0.tar.gz", hash = "sha256:c269fe191579e128a11824af65948c22deac02addd8b8ea9e769856d73574b6b"},
 ]
 
 [package.dependencies]
@@ -4378,14 +4378,14 @@ six = "*"
 
 [[package]]
 name = "rapidpe-rift-pipe"
-version = "0.0.12"
+version = "0.2.2"
 description = "Pipeline for running RapidPE and RIFT parameter estimation codes"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "rapidpe_rift_pipe-0.0.12-py3-none-any.whl", hash = "sha256:ddb6917d2148675034557207accd7cbb1cdab16447196a1d115e42cd79659b5e"},
-    {file = "rapidpe_rift_pipe-0.0.12.tar.gz", hash = "sha256:16e31facbd2caf78563e74177f045a2cfef281a273156f109aef6e4ab0c05189"},
+    {file = "rapidpe_rift_pipe-0.2.2-py3-none-any.whl", hash = "sha256:308f83d79e290d9fb91f24a05b0fc24be2a56b6cbb41bf271a4282bdc0685188"},
+    {file = "rapidpe_rift_pipe-0.2.2.tar.gz", hash = "sha256:99079cc92c08ae8e27cd5058be770ec0a88b8b5d40120c5eb0a2aa340245225c"},
 ]
 
 [package.dependencies]
@@ -4394,7 +4394,7 @@ h5py = "*"
 lalsuite = "*"
 matplotlib = "*"
 numpy = "*"
-rapid-pe = "0.0.6"
+rapid-pe = ">=0.1.0,<0.2.0"
 rift = ">=0.0.15.7,<0.0.15.9"
 tabulate = "*"
 
@@ -5828,4 +5828,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.11"
-content-hash = "49b51673d020b1111b4b9fbdc81e12b6ddbff1f4ca237eb82dd55ad7011e6278"
+content-hash = "54c27a02ba5470ab37ea13a8a74206de8cad7cb71aba6c106313984e6cdd6b69"

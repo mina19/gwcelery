@@ -4,6 +4,7 @@ output_parent_directory={{ rundir }}
 #Note: if use_skymap is set, set the skymap directory/file pattern to match in the [Event] section
 use_skymap=0
 use_event_spin=True
+cProfile=True
 
 gracedb_url={{ gracedb_url }}
 
@@ -59,7 +60,7 @@ mdc_time_offset=101760000
 [InitialGridOnly]
 #mc-min = 5
 #mc-max = 61
-points-per-side=5
+points-per-side=10
 
 [InitialGridSetup]
 #The arguments in this section are passed directly to the command line in the condor dag job which does the grid refinement. Do not include any arguments which change per iteration or per node.
@@ -134,5 +135,13 @@ vectorized=
 gpu=
 force-xpy=
 sampler-method=adaptive_cartesian_gpu
-cProfile=
 manual-logarithm-offset=
+
+[Pastro]
+category_rates={"R_bns": 3.040442568596489e-07,"R_nsbh": 2.187249638130701e-07,"R_bbh": 2.1323454514234493e-06}
+
+category_rates_inj={"R_bns": 3.040442568596489e-07,"R_nsbh": 2.187249638130701e-07,"R_bbh": 2.1323454514234493e-06}
+
+far_threshold=0.0002777777777777778
+prior_boundary={"m_max_bank": 200.0,"m_min_bank": 0.98,"m_max_ns": 3.0,"q_min_bank": 0.05,"q_max_bank": 1}
+rankstat_pdf_file=/home/gstlalcbc.online/observing/4/pre-engineering/runs/trigs.renee_Apr21/dist_stat_pdfs/H1L1-GSTLAL_DIST_STAT_PDFS-0-0.xml.gz

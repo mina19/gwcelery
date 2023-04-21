@@ -20,6 +20,14 @@ Changelog
 -   Ignore SSM search for superevent, until decision about dedicated notice type
     and other details from OpsDiv are decided.
 
+-   Update rapidpe-rift-pipe to v0.2.2. Adding config options to calculate
+    pastro. Uploading rapidpe pastro to gracedb. Adding a link to
+    rapidpe summary page in logs. Moving the config option to cprofile the
+    jobs to the General section of config. Increasing the number of grid points
+    per intrinsic coordinate to 10.
+
+
+
 2.0.6 "Spaghetti Tree" (2023-05-10)
 -----------------------------------
 
@@ -66,6 +74,7 @@ Changelog
     GCN information.
 
 -   Require em-bright >= 1.1.2.
+
 
 2.0.5 "Mothman" (2023-04-20)
 ----------------------------

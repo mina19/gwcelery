@@ -603,14 +603,6 @@ def _setup_dag_for_rapidpe(rundir, superevent_id, frametype_dict):
         The path to the .dag file
 
     """
-    # dump SVD depth file
-    path_to_svd_file = os.path.join(rundir, 'svd_depth_methods.json')
-    with open(path_to_svd_file, 'w') as f:
-        json.dump(
-            [{'bounds': {}, 'fudge_factors': {'mchirp': 0.2, 'eta': 0.1},
-             'svd_depth': 1}],
-            f)
-
     # dump ini file
     ini_template = env.get_template('rapidpe.jinja2')
     ini_contents = ini_template.render(
@@ -620,8 +612,7 @@ def _setup_dag_for_rapidpe(rundir, superevent_id, frametype_dict):
          ),
          'gracedb_url': f'https://{app.conf["gracedb_host"]}/api',
          'superevent_id': superevent_id,
-         'frame_data_types': frametype_dict,
-         'svd_depth_json': os.path.abspath(path_to_svd_file)})
+         'frame_data_types': frametype_dict})
     path_to_ini = os.path.join(rundir, 'rapidpe.ini')
     with open(path_to_ini, 'w') as f:
         f.write(ini_contents)
@@ -982,6 +973,45 @@ def _upload_tasks_bilby(rundir, superevent_id, mode):
     return canvas
 
 
+def _upload_tasks_rapidpe(rundir, superevent_id):
+    summary_path = os.path.join(rundir, "summary")
+
+    url = urllib.parse.urljoin(
+        app.conf['pe_results_url'],
+        os.path.join(superevent_id, 'rapidpe', 'summarypage.html')
+    )
+    canvas = gracedb.upload.si(
+        None, None, superevent_id,
+        f'Summary page for RapidPE-RIFT is available <a href={url}>here</a>',
+        ('pe',))
+
+    to_upload = [
+        (
+            "p_astro.json", "RapidPE_RIFT.p_astro.json",
+            "RapidPE-RIFT Pastro results",
+            ("pe", "lvem", "public", "p_astro"),
+        ),
+        (
+            "p_astro.png", "RapidPE_RIFT.p_astro.png",
+            "RapidPE-RIFT Pastro results",
+            ("pe", "lvem", "public", "p_astro"),
+        ),
+    ]
+    tasks = []
+    for src_basename, dst_filename, description, tags in to_upload:
+        src_filename = os.path.join(summary_path, src_basename)
+        if os.path.isfile(src_filename):
+            with open(src_filename, "rb") as f:
+                tasks.append(
+                    gracedb.upload.si(
+                        f.read(), dst_filename,
+                        superevent_id, description, tags))
+
+    canvas |= group(tasks)
+
+    return canvas
+
+
 @app.task(ignore_result=True, shared=False)
 def dag_finished(rundir, superevent_id, pe_pipeline, **kwargs):
     """Upload PE results
@@ -1003,15 +1033,13 @@ def dag_finished(rundir, superevent_id, pe_pipeline, **kwargs):
         canvas = _upload_tasks_bilby(
             rundir, superevent_id, kwargs['bilby_mode'])
     elif pe_pipeline == 'rapidpe':
-        # TODO: upload rapidpe posterior samples
-        canvas = gracedb.upload.si(
-            None, None, superevent_id,
-            'Online RapidPE-RIFT parameter estimation finished.', 'pe')
+        canvas = _upload_tasks_rapidpe(rundir, superevent_id)
     else:
         raise NotImplementedError(f'Unknown PE pipeline {pe_pipeline}.')
 
     canvas.delay()
 
+    # NOTE: check if this should include rapidpe as well
     if pe_pipeline == 'bilby':
         gracedb.create_label.delay('PE_READY', superevent_id)
 

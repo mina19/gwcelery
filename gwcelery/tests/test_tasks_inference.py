@@ -547,6 +547,13 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline, host):
                 "wb"
             ) as f:
                 f.write(b'data')
+        elif pipeline == "rapidpe":
+            summary_path = os.path.join(rundir, "summary")
+            os.makedirs(summary_path, exist_ok=True)
+            paths = [
+                os.path.join(summary_path, "p_astro.json"),
+                os.path.join(summary_path, "p_astro.png"),
+            ]
 
         else:
             paths = []
@@ -557,7 +564,8 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline, host):
         inference.dag_finished(rundir, sid, pipeline, **kwargs)
 
         if pipeline == 'rapidpe':
-            upload.assert_called_once()
+            # +1 corresponds to summary page link
+            assert upload.call_count == len(paths) + 1
         elif pipeline == 'bilby':
             # +1 corresponds to pesummary link
             assert upload.call_count == len(paths) + 1
