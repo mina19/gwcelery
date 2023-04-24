@@ -4,7 +4,8 @@ Changelog
 2.0.6 (unreleased)
 ------------------
 
--   No changes yet
+-   Prevent external event switching superevents also when triggering
+    off superevents. 
 
 2.0.5 "Mothman" (2023-04-20)
 ----------------------------

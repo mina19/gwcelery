@@ -284,6 +284,8 @@ def test_raven_pipeline(mock_plot_overlap_integral,
         alert_object['time_coinc_far'] = 1e-5
         alert_object['space_coinc_far'] = None
         alert_object['overlap_integral'] = None
+        for result in raven_search_results:
+            result['superevent'] = None
     raven.raven_pipeline(raven_search_results, graceid, alert_object, tl, th,
                          group)
 
