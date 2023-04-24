@@ -379,7 +379,8 @@ def create_external_skymap(ra, dec, error, pipeline, notice_type=111):
         if pipeline == 'Swift':
             error /= np.sqrt(-2 * np.log1p(-.9))
         error_radius = error * u.deg
-        nside = pixel_resolution_to_nside(error_radius, round='up')
+        # Use minimum nside of 256
+        nside = max(pixel_resolution_to_nside(error_radius, round='up'), 256)
     else:
         nside = np.inf
     if nside >= max_nside:

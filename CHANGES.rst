@@ -5,7 +5,9 @@ Changelog
 ------------------
 
 -   Prevent external event switching superevents also when triggering
-    off superevents. 
+    off superevents.
+
+-   Add minimum resolution for external sky maps.
 
 2.0.5 "Mothman" (2023-04-20)
 ----------------------------
