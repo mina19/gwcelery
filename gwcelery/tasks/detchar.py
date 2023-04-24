@@ -145,18 +145,21 @@ def make_omegascan(ifo, t0, durs):
         plt.text(0.1, 0.45, f"Failed to create {ifo} omegascan", fontsize=17)
     else:
         fig = Plot(*qgrams,
-                   figsize=(12 * len(durs), 5),
+                   figsize=(12 * len(durs), 6),
                    geometry=(1, len(durs)),
                    yscale='log',
                    method='pcolormesh',
                    cmap='viridis')
-        for ax in fig.axes:
-            fig.colorbar(ax=ax, label='Normalized energy', clim=(0, 30))
+        for i, ax in enumerate(fig.axes):
+            if i in [1, 2]:
+                ax.set_ylabel('')
+            if i == 2:
+                fig.colorbar(ax=ax, label='Normalized energy', clim=(0, 30))
             ax.set_epoch(t0)
         fig.suptitle(f'Omegascans of {strain_name} at {t0}', fontweight="bold")
-
+    plt.subplots_adjust(wspace=0.08)
     outfile = io.BytesIO()
-    fig.savefig(outfile, format='png', dpi=300)
+    fig.savefig(outfile, format='png', dpi=150, bbox_inches='tight')
     return outfile.getvalue()
 
 

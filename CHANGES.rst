@@ -9,6 +9,9 @@ Changelog
 
 -   Add minimum resolution for external sky maps.
 
+-   Remove clutter from omegascan pngs and lower dpi to 150 to reduce
+    file size.
+
 2.0.5 "Mothman" (2023-04-20)
 ----------------------------
 
