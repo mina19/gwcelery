@@ -7,6 +7,7 @@ from ..tasks import first2years_external
 from ..util import read_json
 
 
+@pytest.mark.parametrize('ext_search', ['GRB', 'SubGRB', 'SubGRBTargeted'])
 @pytest.mark.parametrize(
     'host,se_search,group,superevent_id,expected_result',
     [['gracedb-playground.ligo.org', 'MDC', 'CBC', 'MS180616j', True],
@@ -19,6 +20,7 @@ from ..util import read_json
      ['gracedb.ligo.org', 'AllSky', 'Burst', 'MS180616j', False],
      ['gracedb.ligo.org', 'MDC', 'CBC', 'MS180616k', False]])
 def test_handle_create_grb_event(monkeypatch,
+                                 ext_search,
                                  host,
                                  se_search,
                                  group,
@@ -31,6 +33,8 @@ def test_handle_create_grb_event(monkeypatch,
     alert['object']['preferred_event_data']['search'] = se_search
     alert['object']['preferred_event_data']['group'] = group
 
+    ext_search = 'MDC' if se_search == 'MDC' else ext_search
+
     mock_create_upload_external_skymap = Mock()
     mock_get_upload_external_skymap = Mock()
     mock_check_vectors = Mock()
@@ -39,7 +43,7 @@ def test_handle_create_grb_event(monkeypatch,
                       'gpstime': 1,
                       'instruments': '',
                       'pipeline': 'Fermi',
-                      'search': 'GRB',
+                      'search': ext_search,
                       'extra_attributes':
                       {'GRB': {'trigger_duration': 1,
                                'trigger_id': 123,
@@ -63,12 +67,8 @@ def test_handle_create_grb_event(monkeypatch,
     monkeypatch.setattr('gwcelery.tasks.gracedb.get_events.run',
                         mock_get_events)
     monkeypatch.setattr(app.conf, 'gracedb_host', host)
-    if group == 'Test':
-        with pytest.raises(AssertionError):
-            first2years_external.upload_external_event(alert)
-        res = None
-    else:
-        res = first2years_external.upload_external_event(alert)
+    res = first2years_external.upload_external_event(
+                alert, ext_search=ext_search)
     if not expected_result:
         assert res is None
         events, pipelines = [], []
@@ -78,13 +78,17 @@ def test_handle_create_grb_event(monkeypatch,
     calls = []
     for i in range(len(events)):
         calls.append(call(filecontents=events[i],
-                          search='MDC' if se_search == 'MDC' else 'GRB',
+                          search=ext_search,
                           pipeline=pipelines[i],
                           group='External',
                           labels=None))
     if expected_result:
         mock_create_event.assert_has_calls(calls)
-        mock_create_upload_external_skymap.assert_called()
+        if ext_search == 'SubGRB' or \
+                ('Fermi' in pipelines and ext_search == 'GRB'):
+            mock_get_upload_external_skymap.assert_called()
+        else:
+            mock_create_upload_external_skymap.assert_called()
     else:
         mock_create_event.assert_not_called()
         mock_create_upload_external_skymap.assert_not_called()

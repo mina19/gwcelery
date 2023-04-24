@@ -30,6 +30,9 @@ Changelog
 -   Fix typo to block coherence plots for combined sky maps, since these are
     redundant to their GW counterparts.
 
+-   Add subthreshold targeted events from Fermi and Swift, as well as
+    subthreshold untargeted events from Fermi to the O3 MDC replay.
+
 2.1.6 "Champ" (08-10-2023)
 --------------------------
 

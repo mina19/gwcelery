@@ -17,7 +17,7 @@ from . import app as celery_app
 from ._version import get_versions
 from .flask import app, cache
 from .tasks import first2years, gracedb, orchestrator, circulars, \
-    superevents, first2years_external, external_skymaps, external_triggers
+    superevents, first2years_external, external_skymaps
 from .util import PromiseProxy
 
 distributions = PromiseProxy(lambda: tuple(metadata.distributions()))
@@ -495,13 +495,11 @@ def send_mock_event():
 
 @gracedb.task(shared=False)
 def _create_upload_external_event(gpstime):
-    new_time = first2years_external._offset_time(gpstime, 'CBC')
+    new_time = first2years_external._offset_time(
+        gpstime, 'CBC', 'Fermi', 'GRB')
 
-    ext_event = first2years_external.create_external_event(new_time, 'Fermi',
-                                                           'MDC')
-
-    # Upload as from GCN
-    external_triggers.handle_grb_gcn(ext_event)
+    ext_event = first2years_external.create_upload_external_event(
+                    new_time, 'Fermi', 'MDC')
 
     return ext_event
 

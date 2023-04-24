@@ -11,9 +11,12 @@ import re
 from ..import app
 from . import external_triggers
 from . import igwn_alert
+from . import raven
+from ..tests import data
+from ..util import read_json
 
 
-def create_external_event(gpstime, pipeline, se_search):
+def create_upload_external_event(gpstime, pipeline, ext_search):
     """ Create a random external event VOEvent.
 
     Parameters
@@ -22,61 +25,114 @@ def create_external_event(gpstime, pipeline, se_search):
         Event's gps time
     pipeline : str
         External trigger pipeline name
-    se_search : str
-        Search field for preferred event, 'MDC' or 'AllSky'
+    ext_search : str
+        Search field for external event
     """
     new_date = str(Time(gpstime, format='gps', scale='utc').isot) + 'Z'
     new_TrigID = str(int(gpstime))
+    ra = random.uniform(0, 360)
+    thetas = np.arange(-np.pi / 2, np.pi / 2, .01)
+    dec = random.choices(np.rad2deg(thetas),
+                         weights=np.cos(thetas) / sum(np.cos(thetas)))[0]
+    error = .05 if pipeline == 'Swift' else random.uniform(1, 30)
 
     if pipeline in {'Fermi', 'Swift', 'INTEGRAL', 'AGILE'}:
         is_grb = True
     else:
         is_grb = False
 
-    fname = str(Path(__file__).parent /
-                '../tests/data/{0}_{1}gcn.xml'.format(
-                    pipeline.lower(),
-                    'grb_' if is_grb else ''))
+    # If SubGRBTargeted modify alert packet from Kafka
+    if ext_search == 'SubGRBTargeted':
+        if pipeline == 'Fermi':
+            # Template based on:
+            # https://github.com/joshuarwood/gcn-schema/tree/main/gcn/notices/
+            # fermi/gbm
+            alert = read_json(data, 'kafka_alert_fermi.json')
+            # Remove sky map file to create our own sky map
+            alert.pop('healpix_file')
+            alert['dec_uncertainty'] = [error]
+        elif pipeline == 'Swift':
+            # Template based on:
+            # https://github.com/nasa-gcn/gcn-schema/tree/main/gcn/notices/
+            # swift/bat/guano
+            alert = read_json(data, 'kafka_alert_swift.json')
+            alert['ra_uncertainty'] = [error]
+        else:
+            raise ValueError(
+                'Only use Fermi or Swift for SubGRBTargeted search')
 
-    root = etree.parse(fname)
-    # Change ivorn to indicate if this is an MDC event or O3 replay event
-    root.xpath('.')[0].attrib['ivorn'] = \
-        'ivo://lvk.internal/{0}#{1}_event{2}'.format(
-            pipeline if pipeline != 'Swift' else 'SWIFT',
-            'MDC-test' if se_search == 'MDC' else 'O3-replay',
-            new_date).encode()
+        alert['trigger_time'] = new_date
+        alert['alert_datetime'] = new_date
+        alert['id'] = [new_TrigID]
+        alert['ra'] = ra
+        alert['dec'] = dec
+        # Generate FAR from max threshold and trials factors
+        alert['far'] = \
+            (app.conf['raven_targeted_far_thresholds']['GRB'][pipeline] *
+             random.uniform(0, 1))
 
-    # Change times to chosen time
-    root.find("./Who/Date").text = str(new_date).encode()
-    root.find(("./WhereWhen/ObsDataLocation/"
-               "ObservationLocation/AstroCoords/Time/TimeInstant/"
-               "ISOTime")).text = str(new_date).encode()
-    root.find("./What/Param[@name='TrigID']").attrib['value'] = \
-        str(new_TrigID).encode()
+        external_triggers.handle_targeted_kafka_alert(alert)
 
-    if is_grb:
-        # Give random sky position
+        # Return VOEvent for testing until GraceDB natively ingests kafka
+        # alerts
+        return external_triggers._kafka_to_voevent(alert)[0]
+
+    # Otherwise modify respective VOEvent template
+    else:
+        fname = str(Path(__file__).parent /
+                    '../tests/data/{0}{1}_{2}gcn.xml'.format(
+                        pipeline.lower(),
+                        '_subthresh' if ext_search == 'SubGRB' else '',
+                        'grb_' if is_grb else ''))
+
+        root = etree.parse(fname)
+        # Change ivorn to indicate if this is an MDC event or O3 replay event
+        root.xpath('.')[0].attrib['ivorn'] = \
+            'ivo://lvk.internal/{0}#{1}{2}_event_{3}'.format(
+                pipeline if pipeline != 'Swift' else 'SWIFT',
+                '_subthresh' if ext_search == 'SubGRB' else '',
+                'MDC-test' if ext_search == 'MDC' else 'O3-replay',
+                new_date).encode()
+
+        # Change times to chosen time
+        root.find("./Who/Date").text = str(new_date).encode()
         root.find(("./WhereWhen/ObsDataLocation/"
-                   "ObservationLocation/AstroCoords/Position2D/Value2/"
-                   "C1")).text = str(random.uniform(0, 360)).encode()
-        thetas = np.arange(-np.pi / 2, np.pi / 2, .01)
-        root.find(("./WhereWhen/ObsDataLocation/"
-                   "ObservationLocation/AstroCoords/Position2D/Value2/"
-                   "C2")).text = \
-            str(random.choices(
-                np.rad2deg(thetas),
-                weights=np.cos(thetas) / sum(np.cos(thetas)))[0]).encode()
-        if pipeline != 'Swift':
-            root.find(
-                ("./WhereWhen/ObsDataLocation/"
-                 "ObservationLocation/AstroCoords/Position2D/"
-                 "Error2Radius")).text = str(random.uniform(1, 30)).encode()
+                   "ObservationLocation/AstroCoords/Time/TimeInstant/"
+                   "ISOTime")).text = str(new_date).encode()
+        if ext_search == 'SubGRB':
+            root.find("./What/Param[@name='Trans_Num']").attrib['value'] = \
+                str(new_TrigID).encode()
+        else:
+            root.find("./What/Param[@name='TrigID']").attrib['value'] = \
+                str(new_TrigID).encode()
 
-    return etree.tostring(root, xml_declaration=True, encoding="UTF-8",
-                          pretty_print=True)
+        if is_grb:
+            # Give random sky position
+            root.find(("./WhereWhen/ObsDataLocation/"
+                       "ObservationLocation/AstroCoords/Position2D/Value2/"
+                       "C1")).text = str(ra).encode()
+            root.find(("./WhereWhen/ObsDataLocation/"
+                       "ObservationLocation/AstroCoords/Position2D/Value2/"
+                       "C2")).text = str(dec).encode()
+            if pipeline != 'Swift':
+                root.find(
+                    ("./WhereWhen/ObsDataLocation/"
+                     "ObservationLocation/AstroCoords/Position2D/"
+                     "Error2Radius")).text = str(error).encode()
+
+        event = etree.tostring(root, xml_declaration=True, encoding="UTF-8",
+                               pretty_print=True)
+
+        # Upload as from GCN
+        if is_grb:
+            external_triggers.handle_grb_gcn(event)
+        else:
+            external_triggers.handle_snews_gcn(event)
+
+        return event
 
 
-def _offset_time(gpstime, group):
+def _offset_time(gpstime, group, pipeline, ext_search):
     """ This function checks coincident time windows for superevents if they
     are of Burst or CBC group.
 
@@ -87,14 +143,8 @@ def _offset_time(gpstime, group):
        group : str
            Burst or CBC
     """
-    if group == 'Burst':
-        th, tl = app.conf['raven_coincidence_windows']['GRB_Burst']
-    elif group == 'CBC':
-        th, tl = app.conf['raven_coincidence_windows']['GRB_CBC']
-    else:
-        raise AssertionError(
-            'Invalid group {}. Use only CBC or Burst.'.format(group))
-    return gpstime + random.uniform(-tl, -th)
+    tl, th = raven._time_window('S1', group, [pipeline], [ext_search])
+    return gpstime + random.uniform(tl, th)
 
 
 def _is_joint_mdc(graceid, se_search):
@@ -120,7 +170,7 @@ def _is_joint_mdc(graceid, se_search):
 @igwn_alert.handler('mdc_superevent',
                     'superevent',
                     shared=False)
-def upload_external_event(alert):
+def upload_external_event(alert, ext_search=None):
     """Upload a random GRB event for a certain percentage of MDC
     or O3-replay superevents.
 
@@ -142,27 +192,51 @@ def upload_external_event(alert):
         == 'gracedb-playground.ligo.org'
     joint_mdc_alert = se_search == 'MDC' and _is_joint_mdc(alert['uid'], 'MDC')
     joint_allsky_alert = se_search == 'AllSky' and \
-        _is_joint_mdc(alert['uid'], 'AllSky') and is_gracedb_playground
+        _is_joint_mdc(alert['uid'], 'AllSky') and is_gracedb_playground and \
+        group in {'CBC', 'Burst'}
     if not (joint_mdc_alert or joint_allsky_alert):
         return
 
     # Potentially upload 1, 2, or 3 GRB events
     num = 1 + np.random.choice(np.arange(3), p=[.6, .3, .1])
+
+    if joint_mdc_alert:
+        # If joint MDC alert, make external event MDC
+        if ext_search is None:
+            ext_search = 'MDC'
+        elif ext_search == 'MDC':
+            pass
+        else:
+            raise ValueError('External search must be "MDC" if MDC superevent')
+    # If O3 replay, choose search from acceptable list
+    elif ext_search is None:
+        # Determine search for external event and then pipelines
+        ext_search = \
+            (np.random.choice(['GRB', 'SubGRB', 'SubGRBTargeted'],
+                              p=[.6, .1, .3])
+             if joint_allsky_alert else 'GRB')
+    # Choose pipeline(s) based on search
+    if ext_search in {'GRB', 'MDC'}:
+        pipelines = np.random.choice(['Fermi', 'Swift', 'INTEGRAL', 'AGILE'],
+                                     p=[.5, .3, .1, .1],
+                                     size=num, replace=False)
+    elif ext_search == 'SubGRB':
+        pipelines = np.full(num, 'Fermi')
+    elif ext_search == 'SubGRBTargeted':
+        # Only two current pipelines in targeted search so map 3 => 2
+        num = min(num, 2)
+        pipelines = np.random.choice(['Fermi', 'Swift'],
+                                     p=[.5, .5], size=num, replace=False)
     events = []
-    pipelines = []
-    for i in range(num):
+    for pipeline in pipelines:
         gpstime = float(alert['object']['t_0'])
-        new_time = _offset_time(gpstime, group)
+        new_time = _offset_time(gpstime, group, pipeline, ext_search)
 
         # Choose external grb pipeline to simulate
-        pipeline = np.random.choice(['Fermi', 'Swift', 'INTEGRAL', 'AGILE'],
-                                    p=[.5, .3, .1, .1])
-        ext_event = create_external_event(new_time, pipeline, se_search)
+        ext_event = create_upload_external_event(
+                        new_time, pipeline, ext_search)
 
-        # Upload as from GCN
-        external_triggers.handle_grb_gcn(ext_event)
-
-        events.append(ext_event), pipelines.append(pipeline)
+        events.append(ext_event)
 
     return events, pipelines
 
@@ -172,6 +246,5 @@ def upload_external_event(alert):
 def upload_snews_event():
     """Create and upload a SNEWS-like MDC external event."""
     current_time = Time(Time.now(), format='gps').value
-    ext_event = create_external_event(current_time, 'SNEWS', 'MDC')
-    external_triggers.handle_snews_gcn(ext_event)
+    ext_event = create_upload_external_event(current_time, 'SNEWS', 'MDC')
     return ext_event

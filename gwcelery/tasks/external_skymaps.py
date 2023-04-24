@@ -446,7 +446,7 @@ def create_external_skymap(ra, dec, error, pipeline, notice_type=111):
         skymap = np.exp(-0.5 * np.square(distance / error_radius).to_value(
             u.dimensionless_unscaled))
         skymap /= skymap.sum()
-    if pipeline == 'Fermi':
+    if pipeline == 'Fermi' and notice_type is not None:
         # Correct for Fermi systematics based on recommendations from GBM team
         # Convolve with both a narrow core and wide tail Gaussian with error
         # radius determined by the scales respectively, each comprising a
