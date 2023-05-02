@@ -72,9 +72,9 @@ create_mattermost_channel = False
 """Do not create Mattermost channel."""
 
 kafka_consumer_config = {
-    'fermi': {'url': 'kafka://kafka.dev.gcn.nasa.gov/'
+    'fermi': {'url': 'kafka://kafka.test.gcn.nasa.gov/'
               'fermi.gbm.targeted.private', 'suffix': 'json'},
-    'swift': {'url': 'kafka://kafka.dev.gcn.nasa.gov/swift.bat.guano',
+    'swift': {'url': 'kafka://kafka.test.gcn.nasa.gov/swift.bat.guano',
               'suffix': 'json'}
 }
 """Kafka consumer configuration details. The keys describe the senders of the
