@@ -66,7 +66,8 @@ class KafkaBase:
     def __init__(self, name, config, prefix):
         self.name = name
         self._config = config
-        self._hop_stream = Stream(auth=self.get_auth(prefix))
+        self._credential = self.get_auth(prefix)
+        self._hop_stream = Stream(self._credential)
 
         # FIXME Drop get_payload_content method once
         # https://github.com/scimma/hop-client/pull/190 is merged
@@ -148,7 +149,7 @@ class KafkaWriter(KafkaBase):
         kafka_url = self._config['url']
         _, _, broker, topic = kafka_url.split('/')
         try:
-            topics = list_topics(kafka_url, timeout=5)
+            topics = list_topics(kafka_url, auth=self._credential, timeout=5)
             if topics[topic].error is None:
                 log.info(f'{kafka_url} appears to be functioning properly')
                 return True
