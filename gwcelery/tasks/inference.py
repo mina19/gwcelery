@@ -281,9 +281,9 @@ def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
     Notes
     -----
     `--channel-dict o3replay` is added to bilby_pipe_gracedb arguments when the
-    gracedb host is different from `gracedb.ligo.org`. Condor queue is set to
-    `Online_PE` if gracedb host is `gracedb.ligo.org`, and `Online_PE_MDC`
-    otherwise.
+    gracedb host is different from `gracedb.ligo.org` or
+    `gracedb-test.ligo.org`. Condor queue is set to `Online_PE` if gracedb host
+    is `gracedb.ligo.org`, and `Online_PE_MDC` otherwise.
 
     """
     path_to_json = os.path.join(rundir, 'event.json')
@@ -307,9 +307,14 @@ def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
                 'accounting_user': 'soichiro.morisaki'}
     if app.conf['gracedb_host'] != 'gracedb.ligo.org':
         settings['queue'] = 'Online_PE_MDC'
-        setup_arg += ['--channel-dict', 'o3replay']
     else:
         settings['queue'] = 'Online_PE'
+    # FIXME: using live data for gracedb-test events should be reconsidered
+    # when we have a better idea to differentiate MDC and real events.
+    if app.conf['gracedb_host'] not in [
+        'gracedb.ligo.org', 'gracedb-test.ligo.org'
+    ]:
+        setup_arg += ['--channel-dict', 'o3replay']
 
     if mode == 'quick_bns':
         setup_arg += ['--cbc-likelihood-mode', 'lowspin_phenomd_narrowmc_roq']
