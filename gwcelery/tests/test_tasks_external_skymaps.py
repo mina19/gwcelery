@@ -296,13 +296,14 @@ def test_create_upload_skymap_filter(mock_upload):
      ['E1', 'E1', [], True],
      ['E1', 'E2', [], True],
      ['E1', 'E1', ['RAVEN_ALERT'], True],
-     ['E1', 'E2', ['RAVEN_ALERT'], False]]
+     ['E1', 'E2', ['RAVEN_ALERT'], False],
+     [None, 'E3', [], False]]
 )
 @patch('gwcelery.tasks.gracedb.upload.run')
 def test_plot_overlap_integral(mock_upload,
                                em_type, graceid, labels, expected_result):
 
-    coinc_far_dict = {'skymap_overlap': 1e2}
+    coinc_far_dict = {'skymap_overlap': 1e2} if graceid != 'E3' else {}
     superevent = {'superevent_id': 'S1', 'em_type': em_type, 'labels': labels}
     ext_event = {'graceid': graceid}
     external_skymaps.plot_overlap_integral(coinc_far_dict, superevent,

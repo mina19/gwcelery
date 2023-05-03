@@ -18,6 +18,9 @@ Changelog
 
 -   Add Kafka consumer bootstep.
 
+-   Skip plotting sky map overlap integral if coinc_far_dict is empty, which
+    occurs for SNEWS coincidences.
+
 2.0.5 "Mothman" (2023-04-20)
 ----------------------------
 

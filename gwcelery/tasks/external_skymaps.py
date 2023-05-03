@@ -554,7 +554,7 @@ def plot_overlap_integral(coinc_far_dict, superevent, ext_event,
         The variable symbol used in plotting
 
     """
-    if coinc_far_dict['skymap_overlap'] is None:
+    if coinc_far_dict.get('skymap_overlap') is None:
         return
     if superevent['em_type'] != ext_event['graceid'] and \
             'RAVEN_ALERT' in superevent['labels']:
