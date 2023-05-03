@@ -21,6 +21,9 @@ Changelog
 -   Skip plotting sky map overlap integral if coinc_far_dict is empty, which
     occurs for SNEWS coincidences.
 
+-   Update iDQ channel configuration for O4 iDQ channels. The playground
+    config will continue to use the O3 channels to support the O3 MDC replay.
+
 2.0.5 "Mothman" (2023-04-20)
 ----------------------------
 
