@@ -1171,8 +1171,7 @@ def earlywarning_preliminary_initial_update_alert(
             'LOW_SIGNIF_PRELIM_SENT',
             superevent_id
         )
-    elif alert_type == 'preliminary' or \
-            alert_type == 'earlywarning':
+    elif alert_type == 'preliminary':
         sent_label_canvas = gracedb.create_label.si(
             'GCN_PRELIM_SENT',
             superevent_id

@@ -44,7 +44,9 @@ from . import data
      ['label_added', 'LOW_SIGNIF_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-7,
          ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
      ['new', '', 'CBC', 'gstlal', False, 1.e-9, ['H1', 'L1'], 'S1234',
-         ['LOW_SIGNIF_LOCKED']]])
+         ['LOW_SIGNIF_LOCKED']],
+     ['label_added', 'EARLY_WARNING', 'CBC', 'gstlal', False, 1.e-10,
+         ['H1', 'L1', 'V1'], 'S1234', []]])
 def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                            alert_type, alert_label, group, pipeline,
                            offline, far, instruments, superevent_id,
@@ -274,6 +276,9 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         gcn_send.assert_called_once()
         alerts_send.assert_called_once()
         check_high_profile.assert_called_once()
+        assert call(
+            'GCN_PRELIM_SENT', superevent_id) in create_label.call_args_list
+
         if raven_coinc:
             create_emcoinc_circular.assert_called_once()
         else:
@@ -300,6 +305,9 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                  call('skymap-filename', 'public', 'S1234')],
                 any_order=True
             )
+            assert call('GCN_PRELIM_SENT', superevent_id) \
+                not in create_label.call_args_list
+
     elif alert_label == 'LOW_SIGNIF_LOCKED':
         if ('SIGNIF_LOCKED' in superevent_labels) or \
                 ('EARLY_WARNING' in superevent_labels):
@@ -316,6 +324,8 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             # no circular creation for less-significant alerts
             create_initial_circular.assert_not_called()
             create_emcoinc_circular.assert_not_called()
+            assert call('LOW_SIGNIF_PRELIM_SENT', superevent_id) \
+                in create_label.call_args_list
     elif alert_label == 'ADVREQ':
         rrt_channel_creation.assert_called_once_with(
             superevent_id,
