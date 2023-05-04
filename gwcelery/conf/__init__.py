@@ -374,15 +374,12 @@ joint_O3_replay_freq = 10
 superevent to test the RAVEN alert pipeline, i.e for every x
 O3 replay superevents an external MDC event is created."""
 
-bilby_default_mode = 'fast_test'
-"""Sampling mode of bilby"""
-
 condor_retry_kwargs = dict(
-    max_retries=45, retry_backoff=True, retry_jitter=False,
+    max_retries=80, retry_backoff=True, retry_jitter=False,
     retry_backoff_max=600
 )
 """Retry settings of condor.submit task. With these settings, a condor job is
-no longer tracked ~6 hours after it starts."""
+no longer tracked ~12 hours after it starts."""
 
 # Delete imported modules so that they do not pollute the config object
 del os, getpass

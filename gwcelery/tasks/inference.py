@@ -254,8 +254,198 @@ def _setup_dag_for_lalinference(coinc, rundir, event, superevent_id,
     return os.path.join(rundir, 'multidag.dag')
 
 
+def _dump_phenomd_settings(path):
+    settings = {
+        "likelihood_args": {
+            "likelihood_type": "ROQGravitationalWaveTransient",
+            "minimum_frequency": 20,
+            "maximum_frequency": 1024,
+            "roq_scale_factor": 1,
+            "waveform_approximant": "IMRPhenomD",
+        },
+        "likelihood_parameter_bounds": {
+            "mass_ratio_min": 0.125,
+            "a_1_max": 0.05,
+            "a_2_max": 0.05,
+            "spin_template": "aligned",
+        },
+        "trigger_dependent": {
+            "range": {
+                "chirp_mass": [
+                    [0.6, 1.012], [1.012, 1.54], [1.54, 2.31], [2.31, 4.0]
+                ],
+            },
+            "likelihood_args": [
+                {"roq_linear_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_512s.hdf5",
+                 "roq_quadratic_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_512s.hdf5",
+                 "duration": 512},
+                {"roq_linear_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_256s.hdf5",
+                 "roq_quadratic_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_256s.hdf5",
+                 "duration": 256},
+                {"roq_linear_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_128s.hdf5",
+                 "roq_quadratic_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_128s.hdf5",
+                 "duration": 128},
+                {"roq_linear_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_64s.hdf5",
+                 "roq_quadratic_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_64s.hdf5",
+                 "duration": 64}
+            ],
+            "likelihood_parameter_bounds": [
+                {"chirp_mass_min": 0.6, "chirp_mass_max": 1.1},
+                {"chirp_mass_min": 0.92, "chirp_mass_max": 1.7},
+                {"chirp_mass_min": 1.4, "chirp_mass_max": 2.6},
+                {"chirp_mass_min": 2.1, "chirp_mass_max": 4.0}
+            ],
+        },
+    }
+    with open(path, 'w') as f:
+        json.dump(settings, f, indent=2)
+
+
+def _dump_high_mass_ratio_pv2_settings(path):
+    settings = {
+        "likelihood_args": {
+            "likelihood_type": "ROQGravitationalWaveTransient",
+            "minimum_frequency": 20,
+            "maximum_frequency": 1024,
+            "roq_scale_factor": 1,
+            "waveform_approximant": "IMRPhenomPv2",
+        },
+        "likelihood_parameter_bounds": {
+            "mass_ratio_min": 0.05,
+            "a_1_max": 0.99,
+            "a_2_max": 0.99,
+            "spin_template": "precessing",
+        },
+        "trigger_dependent": {
+            "range": {
+                "chirp_mass": [[1.4, 2.31], [2.31, 3.63], [3.63, 5.72],
+                               [5.72, 9.57], [9.57, 21]],
+            },
+            "likelihood_args": [
+                {"roq_linear_matrix":
+                    "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_128s.hdf5",
+                 "roq_quadratic_matrix":
+                    "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_128s.hdf5",
+                 "duration": 128},
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_64s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_64s.hdf5",
+                    "duration": 64,
+                },
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_32s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_32s.hdf5",
+                    "duration": 32,
+                },
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_16s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_16s.hdf5",
+                    "duration": 16,
+                },
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_8s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_8s.hdf5",
+                    "duration": 8,
+                },
+            ],
+            "likelihood_parameter_bounds": [
+                {"chirp_mass_min": 1.4, "chirp_mass_max": 2.6},
+                {"chirp_mass_min": 2.1, "chirp_mass_max": 4.0},
+                {"chirp_mass_min": 3.3, "chirp_mass_max": 6.3},
+                {"chirp_mass_min": 5.2, "chirp_mass_max": 11.0},
+                {"chirp_mass_min": 8.7, "chirp_mass_max": 21.0},
+            ],
+        },
+    }
+    with open(path, 'w') as f:
+        json.dump(settings, f, indent=2)
+
+
+def _dump_xphm_settings(path):
+    settings = {
+        "likelihood_args": {
+            "likelihood_type": "ROQGravitationalWaveTransient",
+            "minimum_frequency": 20,
+            "maximum_frequency": 4096,
+            "reference_frequency": 20,
+            "roq_scale_factor": 1,
+            "waveform_approximant": "IMRPhenomXPHM",
+            "waveform_arguments_dict": {"PhenomXHMReleaseVersion": 122019},
+            "phase_marginalization": False,
+        },
+        "likelihood_parameter_bounds": {
+            "mass_ratio_min": 0.05,
+            "a_1_max": 0.99,
+            "a_2_max": 0.99,
+            "spin_template": "precessing",
+        },
+        "trigger_dependent": {
+            "range": {
+                "chirp_mass": [[10.03, 16], [16, 25],
+                               [25, 45], [45, np.inf]],
+            },
+            "likelihood_args": [
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_32s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_32s.hdf5",
+                    "duration": 32,
+                },
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_16s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_16s.hdf5",
+                    "duration": 16,
+                },
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_8s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_8s.hdf5",
+                    "duration": 8,
+                },
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_4s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_4s.hdf5",
+                    "duration": 4,
+                },
+            ],
+            "likelihood_parameter_bounds": [
+                {"chirp_mass_min": 10.03, "chirp_mass_max": 19.04},
+                {"chirp_mass_min": 13, "chirp_mass_max": 31.85},
+                {"chirp_mass_min": 20, "chirp_mass_max": 62.86},
+                {"chirp_mass_min": 30, "chirp_mass_max": 200},
+            ],
+        },
+    }
+    with open(path, 'w') as f:
+        json.dump(settings, f, indent=2)
+
+
 @app.task(shared=False)
-def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
+def _setup_dag_for_bilby(
+    coinc, rundir, event, superevent_id, mode="production"
+):
     """Create DAG for a bilby run and return the path to DAG.
 
     Parameters
@@ -271,7 +461,8 @@ def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
     superevent_id : str
         The GraceDB ID of a target superevent
     mode : str
-        Analysis mode
+        Analysis mode, allowed options are "production" and "fast_test",
+        default is "production".
 
     Returns
     -------
@@ -316,33 +507,49 @@ def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
     ]:
         setup_arg += ['--channel-dict', 'o3replay']
 
-    if mode == 'quick_bns':
-        setup_arg += ['--cbc-likelihood-mode', 'lowspin_phenomd_narrowmc_roq']
-        settings.update(
-            {'sampler_kwargs': {'naccept': 10, 'nlive': 500,
-                                'npool': 24, 'sample': 'acceptance-walk'},
-             'n_parallel': 2,
-             'request_cpus': 24,
-             'spline_calibration_nodes': 10,
-             'request_memory_generation': 8.0}
+    trigger_chirp_mass = event['extra_attributes']['CoincInspiral']['mchirp']
+    if trigger_chirp_mass < 0.6:
+        raise ValueError(
+            "No bilby settings available for trigger chirp mass of"
+            f" {trigger_chirp_mass}Msun."
         )
+    if mode == 'production':
+        settings.update(
+            {
+                'sampler_kwargs': {'naccept': 60, 'nlive': 500,
+                                   'npool': 24, 'sample': 'acceptance-walk'},
+                'n_parallel': 2,
+                'request_cpus': 24,
+                'spline_calibration_nodes': 10,
+                'request_memory_generation': 8.0
+            }
+        )
+        # use low-spin IMRPhenomD below chirp mass of m1=3Msun, m2=1Msun
+        # assuming binary neutron star
+        if trigger_chirp_mass < 1.465:
+            likelihood_mode = os.path.join(rundir, "likelihood_mode.json")
+            _dump_phenomd_settings(likelihood_mode)
+            settings['sampler_kwargs']['naccept'] = 10
+        # use IMRPhenomPv2 with mass ratio upper bound of 8 below chirp mass of
+        # m1=8Msun, m2=1Msun
+        elif trigger_chirp_mass < 2.243:
+            likelihood_mode = 'phenompv2_bns_roq'
+        # use IMRPhenomPv2 with mass ratio upper bound of 20 in chirp-mass
+        # range where IMRPhenomXPHM ROQ bases are not available
+        elif trigger_chirp_mass < 12:
+            likelihood_mode = os.path.join(rundir, "likelihood_mode.json")
+            _dump_high_mass_ratio_pv2_settings(likelihood_mode)
+        else:
+            likelihood_mode = os.path.join(rundir, "likelihood_mode.json")
+            _dump_xphm_settings(likelihood_mode)
+            settings['request_memory_generation'] = 16.0
+        setup_arg += ['--cbc-likelihood-mode', likelihood_mode]
     elif mode == 'fast_test':
-        # use pv2_nrtidalv2 below chirp mass of m1=3Msun, m2=1Msun
-        if event['extra_attributes']['CoincInspiral']['mchirp'] < 1.465:
-            setup_arg += ['--cbc-likelihood-mode', 'phenompv2nrtidalv2_roq']
-            settings['request_memory_generation'] = 8.0
-        # use bns-mass pv2 basis for chirp mass range where it is available
-        elif event['extra_attributes']['CoincInspiral']['mchirp'] < 3.9:
+        setup_arg += ["--sampler-kwargs", "FastTest"]
+        if trigger_chirp_mass < 3.9:
             setup_arg += ['--cbc-likelihood-mode', 'phenompv2_bns_roq']
             settings['request_memory_generation'] = 8.0
-        settings.update(
-            {'sampler_kwargs': {'naccept': 60, 'nlive': 500,
-                                'npool': 24, 'sample': 'acceptance-walk'},
-             'n_parallel': 2,
-             'request_cpus': 24,
-             'spline_calibration_nodes': 10}
-        )
-    elif mode != 'production':
+    else:
         raise ValueError(f"mode: {mode} not recognized.")
 
     with open(path_to_settings, 'w') as f:
@@ -356,18 +563,21 @@ def _setup_dag_for_bilby(coinc, rundir, event, superevent_id, mode):
         gracedb.upload.delay(
             filecontents=contents, filename='bilby_dag.log',
             graceid=superevent_id,
-            message=f'Failed to prepare DAG for {mode} bilby', tags='pe'
+            message=f'Failed to prepare DAG for {mode}-mode bilby', tags='pe'
         )
         raise
     else:
         # Uploads bilby ini file to GraceDB
         with open(os.path.join(rundir, 'bilby_config.ini'), 'r') as f:
             ini_contents = f.read()
+        if mode == 'production':
+            filename = 'bilby_config.ini'
+        else:
+            filename = f'bilby_{mode}_config.ini'
         gracedb.upload.delay(
-            ini_contents, filename=f'bilby_{mode}_config.ini',
-            graceid=superevent_id,
-            message=(f'Automatically generated {mode} Bilby configuration file'
-                     ' for this event.'),
+            ini_contents, filename=filename, graceid=superevent_id,
+            message=(f'Automatically generated {mode}-mode Bilby configuration'
+                     ' file for this event.'),
             tags='pe')
 
     path_to_dag, = glob.glob(os.path.join(rundir, 'submit/dag*.submit'))
@@ -682,7 +892,10 @@ def _upload_tasks_bilby(rundir, superevent_id, mode):
     """
     # convert bilby sample file into one compatible with ligo-skymap
     samples_dir = os.path.join(rundir, 'final_result')
-    samples_filename = f'Bilby.{mode}.posterior_samples.hdf5'
+    if mode == 'production':
+        samples_filename = 'Bilby.posterior_samples.hdf5'
+    else:
+        samples_filename = f'Bilby.{mode}.posterior_samples.hdf5'
     out_samples = os.path.join(samples_dir, samples_filename)
     in_samples, = glob.glob(os.path.join(samples_dir, '*result.hdf5'))
     subprocess.run(
@@ -692,7 +905,7 @@ def _upload_tasks_bilby(rundir, superevent_id, mode):
     with open(out_samples, 'rb') as f:
         canvas = gracedb.upload.si(
             f.read(), samples_filename,
-            superevent_id, f'{mode} Bilby posterior samples', 'pe')
+            superevent_id, f'{mode}-mode Bilby posterior samples', 'pe')
 
     # pesummary
     pesummary_kwargs = {}
@@ -725,7 +938,7 @@ def _upload_tasks_bilby(rundir, superevent_id, mode):
         |
         gracedb.upload.si(
             None, None, superevent_id,
-            'PESummary page for {mode} Bilby is available '
+            'PESummary page for {mode}-mode Bilby is available '
             f'<a href={url}>here</a>'
         )
     )
@@ -783,10 +996,18 @@ def _pesummary_task(webdir, samples, **pesummary_kwargs):
     -------
     celery task
 
+    Notes
+    -----
+    `--disable_interactive --disable_expert` are added and `--redshift_method
+    exact --evolve_spins_forwards` are not added to `summarypages` arguments
+    when the gracedb host is different from `gracedb.ligo.org`. Condor queue is
+    set to `Online_PE` if gracedb host is `gracedb.ligo.org`, and
+    `Online_PE_MDC` otherwise.
+
     """
     args = [
-        "summarypages", "--webdir", webdir, "--samples", samples,
-        "--gw", "--redshift_method", "exact", "--evolve_spins_fowards"
+        "summarypages", "--webdir", webdir, "--samples", samples, "--gw",
+        "--no_ligo_skymap", "--multi_process", "6"
     ]
     for key in pesummary_kwargs:
         if key in ["psd", "calibration"]:
@@ -795,15 +1016,21 @@ def _pesummary_task(webdir, samples, **pesummary_kwargs):
                 args += [f'{ifo}:{pesummary_kwargs[key][ifo]}']
         else:
             args += [f"--{key}", pesummary_kwargs[key]]
-    if app.conf['gracedb_host'] != 'gracedb.ligo.org':
-        queue = 'Online_PE_MDC'
-    else:
-        queue = 'Online_PE'
-    return condor.check_output.si(
-        args, request_memory=16000, request_disk=5000, queue=queue,
-        accounting_group="ligo.dev.o4.cbc.pe.bilby",
-        accounting_group_user="soichiro.morisaki",
+    condor_kwargs = dict(
+        request_memory=16000, request_disk=5000, request_cpus=6,
+        accounting_group_user='soichiro.morisaki'
     )
+    if app.conf['gracedb_host'] != 'gracedb.ligo.org':
+        condor_kwargs['accounting_group'] = 'ligo.dev.o4.cbc.pe.bilby'
+        condor_kwargs['requirements'] = '((TARGET.Online_PE_MDC =?= True))'
+        condor_kwargs['+Online_PE_MDC'] = True
+        args += ["--disable_interactive", "--disable_expert"]
+    else:
+        condor_kwargs['accounting_group'] = 'ligo.prod.o4.cbc.pe.bilby'
+        condor_kwargs['requirements'] = '((TARGET.Online_PE =?= True))'
+        condor_kwargs['+Online_PE'] = True
+        args += ["--redshift_method", "exact", "--evolve_spins_forwards"]
+    return condor.check_output.si(args, **condor_kwargs)
 
 
 @app.task(ignore_result=True, shared=False)
@@ -832,13 +1059,10 @@ def start_pe(frametype_dict, event, superevent_id, pe_pipeline):
     os.mkdir(event_dir)
 
     if pe_pipeline == 'bilby':
-        modes = [app.conf['bilby_default_mode']]
-        # add quick-bns mode if chirp mass is lower than that of 3Msun-3Msun
-        if event['extra_attributes']['CoincInspiral']['mchirp'] < 2.62:
-            modes += ['quick_bns']
+        modes = ["production"]
         rundirs = [os.path.join(event_dir, m) for m in modes]
         kwargs_list = [{'bilby_mode': m} for m in modes]
-        analyses = [f'{m} bilby' for m in modes]
+        analyses = [f'{m}-mode bilby' for m in modes]
     else:
         rundirs = [event_dir]
         kwargs_list = [{}]

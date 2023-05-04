@@ -178,8 +178,8 @@ def test_setup_dag_for_lalinference(monkeypatch, tmp_path):
     "host,mode,mc",
     product(
         ['gracedb-playground.ligo.org', 'gracedb.ligo.org'],
-        ['fast_test', 'quick_bns', 'production'],
-        [10, 3, 1]
+        ['production', 'fast_test'],
+        [30, 10, 3, 2, 1, 0.1]
     )
 )
 def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
@@ -211,6 +211,9 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
         with open(path_to_psd, 'rb') as f:
             assert f.read() == psd
 
+        if mode == "fast_test":
+            assert "FastTest" in cmd
+
         path_to_settings = cmd[10]
         assert os.path.exists(path_to_settings)
         ans = {
@@ -221,25 +224,32 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
         }
         if host != 'gracedb.ligo.org':
             ans['queue'] = 'Online_PE_MDC'
-        if mode == 'quick_bns':
+        if mode == 'production':
             ans.update(
-                {'sampler_kwargs': {'naccept': 10, 'nlive': 500,
+                {'sampler_kwargs': {'naccept': 60, 'nlive': 500,
                                     'npool': 24, 'sample': 'acceptance-walk'},
                  'n_parallel': 2,
                  'request_cpus': 24,
                  'spline_calibration_nodes': 10,
                  'request_memory_generation': 8.0}
             )
-        elif mode == 'fast_test':
-            if mc < 3.9:
-                ans['request_memory_generation'] = 8.0
-            ans.update(
-                {'sampler_kwargs': {'naccept': 60, 'nlive': 500,
-                                    'npool': 24, 'sample': 'acceptance-walk'},
-                 'n_parallel': 2,
-                 'request_cpus': 24,
-                 'spline_calibration_nodes': 10}
-            )
+            if 1.465 < mc < 2.243:
+                assert 'phenompv2_bns_roq' in cmd
+            else:
+                path_to_mode = cmd[cmd.index("--cbc-likelihood-mode") + 1]
+                assert os.path.exists(path_to_mode)
+                with open(path_to_mode, 'r') as f:
+                    w = json.load(f)["likelihood_args"]["waveform_approximant"]
+                if 0.6 < mc < 1.465:
+                    assert w == "IMRPhenomD"
+                    ans['sampler_kwargs']['naccept'] = 10
+                elif mc < 11.033:
+                    assert w == "IMRPhenomPv2"
+                else:
+                    assert w == "IMRPhenomXPHM"
+                    ans['request_memory_generation'] = 16.0
+        elif mode == 'fast_test' and mc < 3.9:
+            ans['request_memory_generation'] = 8.0
         with open(path_to_settings, 'r') as f:
             assert json.load(f) == ans
 
@@ -257,19 +267,27 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
     monkeypatch.setattr('subprocess.run', _subprocess_run)
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
 
-    path_to_dag = inference._setup_dag_for_bilby(psd, rundir, event, sid, mode)
+    if mc < 0.6:
+        with pytest.raises(ValueError):
+            inference._setup_dag_for_bilby(psd, rundir, event, sid, mode)
+    else:
+        path_to_dag = inference._setup_dag_for_bilby(
+            psd, rundir, event, sid, mode
+        )
 
-    assert os.path.exists(path_to_dag)
-    with open(path_to_dag, 'r') as f:
-        assert f.read() == dag
-    upload.assert_called_once()
+        assert os.path.exists(path_to_dag)
+        with open(path_to_dag, 'r') as f:
+            assert f.read() == dag
+        upload.assert_called_once()
 
 
 def test_setup_dag_for_bilby_unknown_mode(tmp_path):
     with pytest.raises(ValueError):
         inference._setup_dag_for_bilby(
             b'psd', str(tmp_path),
-            {'gpstime': 1187008882, 'graceid': 'G1234'}, 'S1234', 'unknown'
+            {'gpstime': 1187008882, 'graceid': 'G1234',
+             'extra_attributes': {'CoincInspiral': {'mchirp': 1}}},
+            'S1234', 'unknown'
         )
 
 
@@ -310,7 +328,8 @@ def test_setup_dag_for_failure(monkeypatch, tmp_path, pipeline):
         'gpstime': 1187008882,
         'graceid': 'G1234',
         'extra_attributes': {'SingleInspiral':
-                             [{'mass1': 1.4, 'mass2': 1.4, 'mchirp': 1.2}]}
+                             [{'mass1': 1.4, 'mass2': 1.4, 'mchirp': 1.2}],
+                             'CoincInspiral': {'mchirp': 1}}
     }
     with pytest.raises(subprocess.CalledProcessError):
         if pipeline == 'lalinference':
@@ -409,8 +428,15 @@ def test_job_error_notification(monkeypatch, tmp_path, exc):
 
 
 @pytest.mark.parametrize(
-    'pipeline', ['lalinference', 'bilby', 'rapidpe', 'my_awesome_pipeline'])
-def test_dag_finished(monkeypatch, tmp_path, pipeline):
+    'pipeline,host',
+    product(
+        ['lalinference', 'bilby_production', 'bilby_fast_test', 'rapidpe',
+         'my_awesome_pipeline'],
+        ['gracedb-playground.ligo.org', 'gracedb.ligo.org']
+    )
+)
+def test_dag_finished(monkeypatch, tmp_path, pipeline, host):
+    monkeypatch.setitem(app.conf, 'gracedb_host', host)
     sid = 'S1234'
     rundir = str(tmp_path / 'rundir')
     resultdir = str(tmp_path / 'rundir/result')
@@ -429,7 +455,9 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
     monkeypatch.setattr('gwcelery.tasks.gracedb.create_label.run',
                         create_label)
 
-    if pipeline in ['lalinference', 'bilby', 'rapidpe']:
+    if pipeline in [
+        'lalinference', 'bilby_production', 'bilby_fast_test', 'rapidpe'
+    ]:
         kwargs = {}
         if pipeline == 'lalinference':
             paths = [os.path.join(rundir,
@@ -441,20 +469,25 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
                      os.path.join(pe_results_path, 'extrinsic.png'),
                      os.path.join(pe_results_path, 'intrinsic.png'),
                      os.path.join(pe_results_path, 'posplots.html')]
-        elif pipeline == 'bilby':
+        elif pipeline in ['bilby_production', 'bilby_fast_test']:
+            kwargs['bilby_mode'] = pipeline[6:]
+            pipeline = 'bilby'
+
             input_sample = os.path.join(sampledir, "test_result.hdf5")
             with open(input_sample, 'wb') as f:
                 f.write(b'result')
 
+            samplename = f'Bilby.{kwargs["bilby_mode"]}.posterior_samples.hdf5'
+            if kwargs["bilby_mode"] == "production":
+                samplename = 'Bilby.posterior_samples.hdf5'
+            paths = [os.path.join(sampledir, samplename)]
+
             def _subprocess_run(cmd):
                 assert os.path.exists(cmd[1])
+                assert cmd[3] == paths[0]
 
             monkeypatch.setattr(
                 'subprocess.run', Mock(side_effect=_subprocess_run))
-
-            kwargs['bilby_mode'] = 'production'
-            paths = [os.path.join(sampledir,
-                                  'Bilby.production.posterior_samples.hdf5')]
 
             path_to_bilby_config = os.path.join(rundir, "bilby_complete.ini")
             with open(path_to_bilby_config, "w") as f:
@@ -469,17 +502,22 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
                 )
 
             def mock_check_output(args, **kwargs):
-                assert args == [
+                ans = [
                     "summarypages", "--webdir", "webdir/pesummary",
                     "--samples", os.path.join(sampledir, 'test_result.hdf5'),
-                    "--gw", "--redshift_method", "exact",
-                    "--evolve_spins_fowards",
-                    "--config", path_to_bilby_config,
-                    "--psd", "H1:H1_psd.txt", "L1:L1_psd.txt",
-                    "--calibration", "H1:H1_cal.txt", "L1:L1_cal.txt",
-                    "--approximant", "IMRPhenomPv2",
+                    "--gw", "--no_ligo_skymap", "--multi_process", "6",
+                    "--config", path_to_bilby_config, "--psd", "H1:H1_psd.txt",
+                    "L1:L1_psd.txt", "--calibration", "H1:H1_cal.txt",
+                    "L1:L1_cal.txt", "--approximant", "IMRPhenomPv2",
                     "--f_low", "20", "--f_ref", "100"
                 ]
+                if host != 'gracedb.ligo.org':
+                    ans += ["--disable_interactive", "--disable_expert"]
+                else:
+                    ans += [
+                        "--redshift_method", "exact", "--evolve_spins_forwards"
+                    ]
+                assert args == ans
 
             monkeypatch.setattr(
                 'gwcelery.tasks.condor.check_output.run', mock_check_output)
@@ -490,8 +528,7 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
             with open(path, 'wb') as f:
                 f.write(b'result')
 
-        inference.dag_finished(
-            rundir, sid, pipeline, bilby_mode='production')
+        inference.dag_finished(rundir, sid, pipeline, **kwargs)
 
         if pipeline == 'rapidpe':
             upload.assert_called_once()
@@ -511,7 +548,9 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline):
             inference.dag_finished(rundir, sid, pipeline)
 
 
-def test_start_pe(monkeypatch, tmp_path):
+@pytest.mark.parametrize(
+    'pipeline', ['lalinference', 'bilby', 'rapidpe'])
+def test_start_pe(monkeypatch, tmp_path, pipeline):
     path_to_sub = 'pe.dag.condor.sub'
 
     @app.task
@@ -534,51 +573,7 @@ def test_start_pe(monkeypatch, tmp_path):
     monkeypatch.setattr('gwcelery.tasks.inference.dag_finished.run',
                         dag_finished)
 
-    inference.start_pe({}, {'graceid': 'G1234'}, 'S1234', 'lalinference')
+    inference.start_pe({}, {'graceid': 'G1234'}, 'S1234', pipeline)
     dag_prepare_task.assert_called_once()
     condor_submit.assert_called_once()
     dag_finished.assert_called_once()
-
-
-def test_start_pe_multiple_bilby(monkeypatch, tmp_path):
-    path_to_sub = 'pe.dag.condor.sub'
-
-    def mock_dag_prepare_task(
-        rundir, event, superevent_id, pe_pipeline, frametype_dict=None,
-        **kwargs
-    ):
-        assert 'bilby_mode' in kwargs
-
-        @app.task
-        def mock_task():
-            return path_to_sub
-
-        return mock_task.s()
-
-    def mock_condor_submit(path):
-        assert path == path_to_sub
-
-    def mock_dag_finished(rundir, superevent_id, pe_pipeline, **kwargs):
-        assert 'bilby_mode' in kwargs
-
-    dag_prepare_task = Mock(side_effect=mock_dag_prepare_task)
-    condor_submit = Mock(side_effect=mock_condor_submit)
-    dag_finished = Mock(side_effect=mock_dag_finished)
-
-    monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', Mock())
-    monkeypatch.setattr('distutils.dir_util.mkpath',
-                        Mock(return_value=str(tmp_path)))
-    monkeypatch.setattr('gwcelery.tasks.inference.dag_prepare_task',
-                        dag_prepare_task)
-    monkeypatch.setattr('gwcelery.tasks.condor.submit.run', condor_submit)
-    monkeypatch.setattr('gwcelery.tasks.inference.dag_finished.run',
-                        dag_finished)
-
-    event = {
-        'graceid': 'G1234',
-        'extra_attributes': {'CoincInspiral': {'mchirp': 1}}
-    }
-    inference.start_pe({}, event, 'S1234', 'bilby')
-    assert dag_prepare_task.call_count == 2
-    assert condor_submit.call_count == 2
-    assert dag_finished.call_count == 2

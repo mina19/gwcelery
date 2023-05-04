@@ -3037,14 +3037,14 @@ tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
 
 [[package]]
 name = "pesummary"
-version = "0.13.10"
+version = "1.0.0"
 description = "Python package to produce summary pages for Parameter estimation codes"
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pesummary-0.13.10-py3-none-any.whl", hash = "sha256:8bf4b45fac3d33f17ea8cc459259f9ff5386f6a55716c9d37882c113fe5e2773"},
-    {file = "pesummary-0.13.10.tar.gz", hash = "sha256:ad72d27b0c4739417554ac309843bf11a44c3ba92a5d429b737556501ff2691f"},
+    {file = "pesummary-1.0.0-py3-none-any.whl", hash = "sha256:d65d8dd6937ae5eff7ecb93b5c0a5568ba9f6f06cf74150aeffc37c0cc8797ba"},
+    {file = "pesummary-1.0.0.tar.gz", hash = "sha256:9b55ed593f18a73fe9682d730fe2a3e4d91f492216515cfd79c59cc4603bd1e6"},
 ]
 
 [package.dependencies]
@@ -3068,10 +3068,10 @@ tables = "*"
 tqdm = ">=4.44.0"
 
 [package.extras]
-docs = ["Sphinx (>=1.2.2)", "ipykernel", "nbsphinx", "requests", "sphinx-argparse", "sphinx-panels", "sphinx-rtd-theme", "sphinxcontrib-programoutput"]
+docs = ["Sphinx (>=1.2.2)", "ipykernel", "jinja2 (==3.0.3)", "nbsphinx", "requests", "sphinx-argparse", "sphinx-panels", "sphinx-rtd-theme", "sphinxcontrib-programoutput"]
 extras = ["GitPython", "bilby (>=1.1.1)", "coloredlogs", "gwosc", "jupyter-client", "ligo.em-bright (>=0.1.2)", "ligo.skymap", "nbformat", "pepredicates (>=0.0.3)"]
 lint = ["flake8 (>=3.7.0)", "flake8-bandit"]
-test = ["astropy (>=3.2.3,!=4.3.0)", "beautifulsoup4", "bilby-pipe", "coverage", "coverage-badge", "cython (>=0.28.5)", "markupsafe (==2.0.1)", "pycbc", "pytest (>=3.0.0)", "pytest-cov", "pytest-rerunfailures", "pytest-xdist", "requests", "testfixtures"]
+test = ["astropy (>=3.2.3,!=4.3.0)", "beautifulsoup4", "bilby-pipe", "coverage", "coverage-badge", "cython (>=0.28.5)", "markupsafe (==2.0.1)", "pycbc (>=2.0.3)", "pytest (>=3.0.0)", "pytest-cov", "pytest-rerunfailures", "pytest-xdist", "requests", "testfixtures"]
 
 [[package]]
 name = "pexpect"
@@ -5188,4 +5188,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.11"
-content-hash = "73f60aadc07f28c148ee2c6b057eac75b1babbbeaa9d9fc2f58166bdc7296873"
+content-hash = "9f4a427f211f96d72a80bf00b5b0c6f697d248ad9e90ccaf1f25c13f22fd741f"

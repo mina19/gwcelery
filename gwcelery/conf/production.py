@@ -90,9 +90,6 @@ only_alert_for_mdc = True
 """If True, then only sends alerts for MDC events. Useful for times outside
 of observing runs."""
 
-bilby_default_mode = 'production'
-"""Sampling mode of bilby"""
-
 condor_retry_kwargs = dict(
     max_retries=None, retry_backoff=True, retry_jitter=True,
     retry_backoff_max=600

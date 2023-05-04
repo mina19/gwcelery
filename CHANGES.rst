@@ -24,6 +24,17 @@ Changelog
 -   Update iDQ channel configuration for O4 iDQ channels. The playground
     config will continue to use the O3 channels to support the O3 MDC replay.
 
+-   Update bilby settings. Set the chirp mass boundary between BNS and
+    potential NSBH to 1.465Msun, computed from component masses of 3Msun and
+    1Msun, and use low-spin IMRPhenomD below and high-spin IMRPhenomPv2 above.
+    For high mass triggers, use IMRPhenomXPHM. Use these "production" settings
+    by default for MDC and production analyses, and we no longer have multiple
+    bilby runs on a single event. Increase the time limit of condor job to 12
+    hours.
+
+-   Bump pesummary version to 1.0.0. Disable ligo skymap and use 6 cpus and
+    online-PE dedicated nodes to speed up the pesummary postprocess.
+
 2.0.5 "Mothman" (2023-04-20)
 ----------------------------
 
