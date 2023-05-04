@@ -4,6 +4,7 @@ from celery import group
 from celery.utils.log import get_task_logger
 
 from ..import app
+from .core import identity
 from . import external_skymaps
 from . import gracedb
 
@@ -231,14 +232,10 @@ def raven_pipeline(raven_search_results, gracedb_id, alert_object, tl, th,
             |
             calculate_coincidence_far.si(superevent, ext_event, tl, th)
             |
-            update_coinc_far.s(superevent, ext_event)
-            |
             group(gracedb.create_label.si('EM_COINC', superevent_id),
                   gracedb.create_label.si('EM_COINC', exttrig_id),
                   trigger_raven_alert.s(superevent, gracedb_id,
-                                        ext_event, gw_group),
-                  external_skymaps.plot_overlap_integral.s(
-                      superevent, ext_event))
+                                        ext_event, gw_group))
         )
         canvas.delay()
 
@@ -382,6 +379,7 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
     pipeline = ext_event['pipeline']
     trials_factor = app.conf['significant_alert_trials_factor'][gw_group]
     missing_skymap = True
+    comments = []
     messages = []
 
     #  Since the significance of SNEWS triggers is so high, we will publish
@@ -430,10 +428,16 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
     if pass_far_threshold and not is_ext_subthreshold and \
             likely_real_ext_event and not missing_skymap and \
             not is_test_event and no_previous_alert:
-        messages.append(('RAVEN: publishing criteria met for {0}-{1}. '
+        comments.append(('RAVEN: publishing criteria met for {0}-{1}. '
                          'Triggering RAVEN alert'.format(
                              preferred_gwevent_id, ext_id)))
-        (
+        # Add label to local dictionary and to event on GraceDB server
+        # NOTE: We may prefer to apply the superevent label first and the grab
+        # labels to refresh in the future
+        superevent['labels'] += 'RAVEN_ALERT'
+        # Add RAVEN_ALERT to preferred event last to avoid race conditions
+        # where superevent is expected to have it once alert is issued
+        alert_canvas = (
             gracedb.create_label.si('RAVEN_ALERT', superevent_id)
             |
             gracedb.create_label.si('HIGH_PROFILE', superevent_id)
@@ -441,33 +445,47 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
             gracedb.create_label.si('RAVEN_ALERT', ext_id)
             |
             gracedb.create_label.si('RAVEN_ALERT', preferred_gwevent_id)
-        ).delay()
+        )
+    else:
+        alert_canvas = identity.si()
     if not pass_far_threshold:
-        messages.append(('RAVEN: publishing criteria not met for {0}-{1},'
+        comments.append(('RAVEN: publishing criteria not met for {0}-{1},'
                          ' {2} FAR (w/ trials) too large '
                          '({3:.4g} > {4:.4g})'.format(
                              preferred_gwevent_id, ext_id, far_type,
                              coinc_far_f, far_threshold)))
     if is_ext_subthreshold:
-        messages.append(('RAVEN: publishing criteria not met for {0}-{1},'
+        comments.append(('RAVEN: publishing criteria not met for {0}-{1},'
                          ' {1} is subthreshold'.format(preferred_gwevent_id,
                                                        ext_id)))
     if not likely_real_ext_event:
-        messages.append(('RAVEN: publishing criteria not met for {0}-{1},'
+        comments.append(('RAVEN: publishing criteria not met for {0}-{1},'
                          ' {1} is likely non-astrophysical.'.format(
                              preferred_gwevent_id, ext_id)))
     if is_test_event:
-        messages.append('RAVEN: {0}-{1} is non-astrophysical, '
+        comments.append('RAVEN: {0}-{1} is non-astrophysical, '
                         'at least one event is a Test event'.format(
                             preferred_gwevent_id, ext_id))
     if missing_skymap:
-        messages.append('RAVEN: Will only publish GRB coincidence '
+        comments.append('RAVEN: Will only publish GRB coincidence '
                         'if spatial-temporal FAR is present. '
                         'Waiting for both sky maps to be available '
                         'first.')
-    for message in messages:
-        gracedb.upload.si(None, None, superevent_id, message,
-                          tags=['ext_coinc']).delay()
+    for comment in comments:
+        messages.append(gracedb.upload.si(None, None, superevent_id, comment,
+                                          tags=['ext_coinc']))
+
+    # Update coincidence FAR with latest info, including the application of
+    # RAVEN_ALERT, then issue alert
+    (
+        update_coinc_far.si(coinc_far_dict, superevent, ext_event)
+        |
+        group(
+            alert_canvas,
+            external_skymaps.plot_overlap_integral.s(superevent, ext_event),
+            *messages
+        )
+    ).delay()
 
 
 @app.task(queue='exttrig',
