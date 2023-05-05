@@ -17,7 +17,8 @@ def check_high_profile(skymap, em_bright,
 
     # Raven alert condition
     if 'RAVEN_ALERT' in superevent['labels']:
-        gracedb.create_label('HIGH_PROFILE', superevent_id)
+        gracedb.create_label.si(
+            'HIGH_PROFILE', superevent_id).delay()
         return
 
     # low-far unmodelled burst condition
@@ -32,7 +33,8 @@ def check_high_profile(skymap, em_bright,
 
     if far_list_sorted[0]["group"] == "Burst" and \
        far_list_sorted[0]["search"] != "BBH":
-        gracedb.create_label('HIGH_PROFILE', superevent_id)
+        gracedb.create_label.si(
+            'HIGH_PROFILE', superevent_id).delay()
         return
 
     # annotation number condition
@@ -54,5 +56,6 @@ def check_high_profile(skymap, em_bright,
 
         if p_terr < 0.5:
             if (p_bns > 0.1 or p_nsbh > 0.1 or has_remnant > 0.1 or sky_area < 100):  # noqa: E501
-                gracedb.create_label('HIGH_PROFILE', superevent_id)
+                gracedb.create_label.si(
+                    'HIGH_PROFILE', superevent_id).delay()
                 return
