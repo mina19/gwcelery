@@ -13,13 +13,13 @@ def check_high_profile(skymap, em_bright,
     # conditions are defined in L2100046
     # Checking if the label is applied beforehand
     if 'HIGH_PROFILE' in superevent['labels']:
-        return
+        return "HIGH_PROFILE already applied"
 
     # Raven alert condition
     if 'RAVEN_ALERT' in superevent['labels']:
         gracedb.create_label.si(
             'HIGH_PROFILE', superevent_id).delay()
-        return
+        return "RAVEN_ALERT found. Applying label"
 
     # low-far unmodelled burst condition
     far_list = []
@@ -35,7 +35,7 @@ def check_high_profile(skymap, em_bright,
        far_list_sorted[0]["search"] != "BBH":
         gracedb.create_label.si(
             'HIGH_PROFILE', superevent_id).delay()
-        return
+        return "Significant Burst event. Applying label"
 
     # annotation number condition
     preferred_event = superevent['preferred_event_data']
@@ -58,4 +58,5 @@ def check_high_profile(skymap, em_bright,
             if (p_bns > 0.1 or p_nsbh > 0.1 or has_remnant > 0.1 or sky_area < 100):  # noqa: E501
                 gracedb.create_label.si(
                     'HIGH_PROFILE', superevent_id).delay()
-                return
+                return "Annotations condition satisfied. Applying label"
+    return "No conditions satisfied. Skipping"
