@@ -973,8 +973,9 @@ def _upload_tasks_bilby(rundir, superevent_id, mode):
         |
         gracedb.upload.si(
             None, None, superevent_id,
-            'PESummary page for {mode}-mode Bilby is available '
-            f'<a href={url}>here</a>'
+            f'PESummary page for {mode}-mode Bilby is available '
+            f'<a href={url}>here</a>',
+            'pe'
         )
     )
 
