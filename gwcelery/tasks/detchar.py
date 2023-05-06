@@ -419,7 +419,7 @@ def check_vectors(event, graceid, start, end):
 
     """
     # Skip early warning events (ie queries for times before now)
-    if start > Time.now().gps:
+    if end > Time.now().gps:
         log.info("Skipping detchar checks because %s is in the future",
                  event['graceid'])
         return event
