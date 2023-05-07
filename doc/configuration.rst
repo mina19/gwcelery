@@ -48,7 +48,7 @@ it in a location such as ``~/.globus/userkey.pem`` and
 
 You must provide a valid username and password for :doc:`IGWN Alert <igwn-alert:index>`. You can request an
 account using the `SCiMMA Auth portal`_. To get started, see :doc:`IGWN Alert Userguide <igwn-alert:guide>`.
-The IGWN Alert username and password should be stored in your `netrc file`_.
+The IGWN Alert username and password should be stored in your `auth.toml`_ file.
 
 .. rubric:: Kafka
 
@@ -76,7 +76,7 @@ consumer configuration key must have an entry in this file.
 .. _`LSC DataGrid Client`: https://www.lsc-group.phys.uwm.edu/lscdatagrid/doc/installclient.html
 .. _`obtain a robot certificate`: https://robots.ligo.org
 .. _`SCiMMA Auth portal`: https://my.hop.scimma.org/
-.. _`netrc file`: https://www.gnu.org/software/inetutils/manual/html_node/The-_002enetrc-file.html
+.. _`auth.toml`: https://hop-client.readthedocs.io/en/latest/user/auth.html#configuration
 
 .. _redis-configuration:
 
