@@ -625,6 +625,7 @@ def test_trigger_raven_alert(mock_create_label, mock_update_superevent,
 
     if expected_result:
         label_calls = [call('RAVEN_ALERT', superevent_id),
+                       call('HIGH_PROFILE', superevent_id),
                        call('RAVEN_ALERT', ext_id),
                        call('RAVEN_ALERT', preferred_id)]
         mock_create_label.assert_has_calls(label_calls)

@@ -436,6 +436,8 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
         (
             gracedb.create_label.si('RAVEN_ALERT', superevent_id)
             |
+            gracedb.create_label.si('HIGH_PROFILE', superevent_id)
+            |
             gracedb.create_label.si('RAVEN_ALERT', ext_id)
             |
             gracedb.create_label.si('RAVEN_ALERT', preferred_gwevent_id)

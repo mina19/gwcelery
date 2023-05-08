@@ -11,15 +11,10 @@ def check_high_profile(skymap, em_bright,
                        p_astro, superevent):
     superevent_id = superevent['superevent_id']
     # conditions are defined in L2100046
+    # RAVEN_ALERT HIGH_PROFILE is implemented in raven.py
     # Checking if the label is applied beforehand
     if 'HIGH_PROFILE' in superevent['labels']:
         return "HIGH_PROFILE already applied"
-
-    # Raven alert condition
-    if 'RAVEN_ALERT' in superevent['labels']:
-        gracedb.create_label.si(
-            'HIGH_PROFILE', superevent_id).delay()
-        return "RAVEN_ALERT found. Applying label"
 
     # low-far unmodelled burst condition
     far_list = []

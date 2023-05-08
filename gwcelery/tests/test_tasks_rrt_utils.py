@@ -11,17 +11,16 @@ skymap_large = resources.read_binary(
     data, 'MS220722v_bayestar.multiorder.fits')
 
 # checks
-# 1. Raven Alert checks ---> True
-# 2. Burst far checks   ---> True
-# 3. HasRemnant check   ---> True
-# 4. p_BNS check        ---> True
-# 5. p_NSBH check       ---> True
-# 6. skymap check       ---> True
-# 7. Simple BBH         ---> False
-# 8. Burst but low far  ---> False
-# 9. High p-terrestrial ---> False
-# 10. Burst BBH low far ---> False
-# 11. HIGH_PROFILE_applied-> False
+# 1. Burst far checks   ---> True
+# 2. HasRemnant check   ---> True
+# 3. p_BNS check        ---> True
+# 4. p_NSBH check       ---> True
+# 5. skymap check       ---> True
+# 6. Simple BBH         ---> False
+# 7. Burst but low far  ---> False
+# 8. High p-terrestrial ---> False
+# 9. Burst BBH low far ---> False
+# 10. HIGH_PROFILE_applied-> False
 
 
 def get_event(graceid):
@@ -66,11 +65,7 @@ def get_event(graceid):
 
 @pytest.mark.parametrize(
         'superevent,embright,pastro,skymap,result',
-        [[{'labels': ['RAVEN_ALERT'], 'gw_events':['G123']},
-          {'HasNS': 0.0, 'HasRemnant': 0.0, 'HasMassGap': 0.0},
-          {"BNS": 0.0, "NSBH": 0.0, "BBH": 0.9, "Terrestrial": 0.1},
-          skymap_large, True],
-         [{'labels': [], 'gw_events':['G123', 'G456']},
+        [[{'labels': [], 'gw_events':['G123', 'G456']},
           {'HasNS': 0.0, 'HasRemnant': 0.0, 'HasMassGap': 0.0},
           {"BNS": 0.0, "NSBH": 0.0, "BBH": 0.7, "Terrestrial": 0.3},
           skymap_large, True],
