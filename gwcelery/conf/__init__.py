@@ -150,7 +150,7 @@ early_warning_alert_far_threshold = 1 / (30 * 86400)
 significant_alert_trials_factor = dict(cbc=5.0, burst=4.0)
 """Trials factor corresponding to trigger categories. For CBC and Burst, trials
 factor is the number of pipelines. CBC pipelines are gstlal, pycbc, mbta and
-spiir. Burst searches are cwb.allsky, cwb.bbh and cwb.imbh."""
+spiir. Burst searches are cwb.allsky, cwb.imbh, and olib."""
 
 preliminary_alert_trials_factor = dict(cbc=8.0, burst=8.0)
 """Trials factor for less significant alerts."""
