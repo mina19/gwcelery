@@ -305,6 +305,16 @@ deploy to test at LHO:
   variables:
     REMOTE_HOST: emfollow-test@emfollow-test.ligo-wa.caltech.edu
 
+deploy to dev at CIT:
+  <<: *deploy-start
+  when: manual
+  environment:
+    name: dev/CIT
+    on_stop: stop deployment on dev at CIT
+    url: https://emfollow-dev.ligo.caltech.edu/flower
+  variables:
+    REMOTE_HOST: emfollow-dev@emfollow-dev.ligo.caltech.edu
+
 stop deployment on production at CIT:
   <<: *deploy-stop
   when: manual
@@ -345,4 +355,11 @@ stop deployment on test at LHO:
   when: manual
   environment:
     name: test/LHO
+    action: stop
+
+stop deployment on dev at CIT:
+  <<: *deploy-stop
+  when: manual
+  environment:
+    name: dev/CIT
     action: stop

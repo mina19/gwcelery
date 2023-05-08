@@ -1,5 +1,5 @@
 #!/usr/bin/env condor_submit
-accounting_group_user = leo.singer
+accounting_group_user = cody.messick
 universe = local
 getenv = true
 executable = /usr/bin/env

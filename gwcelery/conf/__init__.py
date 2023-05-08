@@ -12,6 +12,7 @@ in :obj:`sys.path`, including any of the following presets:
  * :mod:`gwcelery.conf.playground` (the default)
  * :mod:`gwcelery.conf.production`
  * :mod:`gwcelery.conf.test`
+ * :mod:`gwcelery.conf.dev`
 """
 
 import getpass
