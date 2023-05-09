@@ -6,6 +6,8 @@ Changelog
 
 -   Only check iDQ for detectors that are on.
 
+-   Clean up large bilby data files after the run for MDC injections.
+
 2.0.6 "Spaghetti Tree" (2023-05-10)
 -----------------------------------
 

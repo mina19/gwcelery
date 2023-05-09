@@ -1,4 +1,5 @@
 import configparser
+import glob
 from itertools import product
 import os
 import subprocess
@@ -410,21 +411,33 @@ def test_dag_prepare_task(monkeypatch, pipeline):
                 rundir, event, sid, pipeline, frametype_dict).delay()
 
 
-@pytest.mark.parametrize('exc', [condor.JobAborted(1, 'test'),
-                                 condor.JobFailed(1, 'test'),
-                                 condor.JobRunning({'Cluster': 1234})])
-def test_job_error_notification(monkeypatch, tmp_path, exc):
+@pytest.mark.parametrize(
+    'exc,host',
+    product(
+        [condor.JobAborted(1, 'test'),
+         condor.JobFailed(1, 'test'),
+         condor.JobRunning({'Cluster': 1234})],
+        ['gracedb-playground.ligo.org', 'gracedb.ligo.org']
+    )
+)
+def test_job_error_notification(monkeypatch, tmp_path, exc, host):
+    monkeypatch.setitem(app.conf, 'gracedb_host', host)
     filenames = ['pe.log', 'pe.err', 'pe.out']
     for filename in filenames:
         with open(str(tmp_path / filename), 'w') as f:
             f.write('test')
     upload = Mock()
+    cleanup = Mock()
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
+    monkeypatch.setattr(
+        'gwcelery.tasks.inference._clean_up_bilby.run', cleanup
+    )
     monkeypatch.setattr('subprocess.run', Mock())
-
     inference.job_error_notification(
-        None, exc, 'test', 'S1234', str(tmp_path), 'lalinference')
+        None, exc, 'test', 'S1234', str(tmp_path), 'bilby')
     assert upload.call_count == len(filenames) + 1
+    if host != 'gracedb.ligo.org':
+        cleanup.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -441,6 +454,7 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline, host):
     rundir = str(tmp_path / 'rundir')
     resultdir = str(tmp_path / 'rundir/result')
     sampledir = str(tmp_path / 'rundir/final_result')
+    datadir = str(tmp_path / 'rundir/data')
     pe_results_path = str(tmp_path / 'public_html/online_pe')
     monkeypatch.setitem(app.conf, 'pe_results_path', pe_results_path)
     pe_results_path = os.path.join(pe_results_path, sid, pipeline)
@@ -448,6 +462,7 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline, host):
     os.makedirs(resultdir)
     os.makedirs(sampledir)
     os.makedirs(pe_results_path)
+    os.makedirs(datadir)
 
     upload = Mock()
     create_label = Mock()
@@ -522,6 +537,17 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline, host):
             monkeypatch.setattr(
                 'gwcelery.tasks.condor.check_output.run', mock_check_output)
 
+            with open(
+                os.path.join(datadir, "test_generation_roq_weights.hdf5"),
+                "wb"
+            ) as f:
+                f.write(b'data')
+            with open(
+                os.path.join(datadir, "test_generation_data_dump.pickle"),
+                "wb"
+            ) as f:
+                f.write(b'data')
+
         else:
             paths = []
         for path in paths:
@@ -535,6 +561,11 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline, host):
         elif pipeline == 'bilby':
             # +1 corresponds to pesummary link
             assert upload.call_count == len(paths) + 1
+            n = len(glob.glob(os.path.join(datadir, "*")))
+            if host == "gracedb.ligo.org":
+                assert n == 2
+            else:
+                assert n == 0
         else:
             assert upload.call_count == len(paths)
 

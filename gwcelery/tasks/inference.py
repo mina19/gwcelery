@@ -724,6 +724,25 @@ def _find_paths_from_name(directory, name):
 
 
 @app.task(ignore_result=True, shared=False)
+def _clean_up_bilby(rundir):
+    """Remove large data products produced by bilby
+
+    Parameters
+    ----------
+    rundir : str
+
+    """
+    for p in glob.glob(
+        os.path.join(rundir, "data/*_generation_roq_weights.hdf5")
+    ):
+        os.remove(p)
+    for p in glob.glob(
+        os.path.join(rundir, "data/*_generation_data_dump.pickle")
+    ):
+        os.remove(p)
+
+
+@app.task(ignore_result=True, shared=False)
 def job_error_notification(request, exc, traceback,
                            superevent_id, rundir, analysis):
     """Upload notification when condor.submit terminates unexpectedly.
@@ -742,6 +761,11 @@ def job_error_notification(request, exc, traceback,
         The run directory for PE
     analysis : str
         Analysis name used as a label in uploaded messages
+
+    Notes
+    -----
+    Some large bilby data products are cleaned up after the notification if the
+    gracedb host is different from `gracedb.ligo.org`.
 
     """
     if isinstance(exc, condor.JobRunning):
@@ -786,6 +810,9 @@ def job_error_notification(request, exc, traceback,
                     tags='pe'
                 ))
         canvas |= group(tasks)
+
+    if "bilby" in analysis and app.conf['gracedb_host'] != 'gracedb.ligo.org':
+        canvas |= _clean_up_bilby.si(rundir)
 
     canvas.delay()
 
@@ -889,6 +916,11 @@ def _upload_tasks_bilby(rundir, superevent_id, mode):
     tasks : canvas
         The work-flow for uploading Bilby results
 
+    Notes
+    -----
+    Some large bilby data products are cleaned up after posteterior file is
+    uploaded if the gracedb host is different from `gracedb.ligo.org`.
+
     """
     # convert bilby sample file into one compatible with ligo-skymap
     samples_dir = os.path.join(rundir, 'final_result')
@@ -906,6 +938,9 @@ def _upload_tasks_bilby(rundir, superevent_id, mode):
         canvas = gracedb.upload.si(
             f.read(), samples_filename,
             superevent_id, f'{mode}-mode Bilby posterior samples', 'pe')
+
+    if app.conf['gracedb_host'] != 'gracedb.ligo.org':
+        canvas |= _clean_up_bilby.si(rundir)
 
     # pesummary
     pesummary_kwargs = {}
