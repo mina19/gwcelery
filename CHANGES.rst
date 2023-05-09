@@ -37,6 +37,8 @@ Changelog
 
 -   Enable public alerts in production.
 
+-   Disable Kafka consumer bootstep in the production deployment.
+
 2.0.5 "Mothman" (2023-04-20)
 ----------------------------
 
