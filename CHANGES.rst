@@ -4,6 +4,8 @@ Changelog
 2.0.7 (unreleased)
 ------------------
 
+-   Only check iDQ for detectors that are on.
+
 2.0.6 "Spaghetti Tree" (2023-05-10)
 -----------------------------------
 

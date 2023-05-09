@@ -34,9 +34,22 @@ def ifo_h1(monkeypatch):
 
 
 @pytest.fixture
+def ifo_l1(monkeypatch):
+    monkeypatch.setitem(app.conf, 'llhoft_channels', {
+        'L1:DMT-DQ_VECTOR': 'dmt_dq_vector_bits',
+        'L1:GDS-CALIB_STATE_VECTOR': 'ligo_state_vector_bits'})
+
+
+@pytest.fixture
 def ifo_h1_idq(monkeypatch):
     monkeypatch.setitem(
         app.conf, 'idq_channels', ['H1:IDQ-FAP_OVL_32_2048'])
+
+
+@pytest.fixture
+def ifo_l1_idq(monkeypatch):
+    monkeypatch.setitem(
+        app.conf, 'idq_channels', ['L1:IDQ-FAP_OVL_32_2048'])
 
 
 @pytest.fixture
@@ -227,7 +240,7 @@ def test_check_vectors(mock_create_label, mock_remove_label, mock_upload,
             ['data_quality']),
         call(
             None, None, 'S12345a',
-            ('iDQ false alarm probabilities at both H1 and L1'
+            ('iDQ false alarm probabilities for active detectors'
              ' are good (above {} threshold). '
              'Minimum FAP is "H1:IDQ-FAP_OVL_32_2048": 1.0. '
              'Check looked within -1.5/+1.5 seconds of superevent. ').format(
@@ -243,6 +256,55 @@ def test_check_vectors(mock_create_label, mock_remove_label, mock_upload,
         [call('DQV', 'S12345a'),
          call('INJ', 'S12345a')],
         any_order=True)
+
+
+@patch('gwcelery.tasks.detchar.dqr_json', return_value='dqrjson')
+@patch('gwcelery.tasks.gracedb.upload.run')
+@patch('gwcelery.tasks.gracedb.remove_label')
+@patch('gwcelery.tasks.gracedb.create_label')
+def test_check_vectors_fails(
+        mock_create_label, mock_remove_label, mock_upload,
+        mock_json, llhoft_glob_fail, ifo_l1, ifo_l1_idq):
+    event = {'search': 'AllSky', 'instruments': 'L1', 'pipeline': 'oLIB'}
+    superevent_id = 'S12345a'
+    start, end = 1216577978, 1216577978.1
+    detchar.check_vectors(event, superevent_id, start, end)
+    calls = [
+        call(
+            None, None, 'S12345a',
+            ('Detector state for active instruments is bad.\n{}'
+             'Check looked within -1.5/+1.5 seconds of superevent. ').format(
+                 detchar.generate_table(
+                     'Data quality bits', [],
+                     ['L1:NO_OMC_DCPD_ADC_OVERFLOW',
+                      'L1:NO_DMT-ETMY_ESD_DAC_OVERFLOW',
+                      'L1:HOFT_OK', 'L1:OBSERVATION_INTENT'], [])),
+            ['data_quality']),
+        call(
+            None, None, 'S12345a',
+            ('Injection found.\n{}\n'
+             'Check looked within -1.5/+1.5 seconds of superevent. ').format(
+                 detchar.generate_table(
+                     'Injection bits', [],
+                     ['L1:NO_STOCH_HW_INJ', 'L1:NO_CBC_HW_INJ',
+                      'L1:NO_BURST_HW_INJ', 'L1:NO_DETCHAR_HW_INJ'], [])),
+            ['data_quality']),
+        call(
+            None, None, 'S12345a',
+            ('iDQ false alarm probability is low '
+             '(below {} threshold), '
+             'i.e., there could be a data quality issue: '
+             'minimum FAP is "L1:IDQ-FAP_OVL_32_2048": 0.0. '
+             'Check looked within -1.5/+1.5 seconds of superevent. ').format(
+                 app.conf['idq_fap_thresh']),
+            ['data_quality']),
+        call(
+            '"dqrjson"', 'gwcelerydetcharcheckvectors-S12345a.json', 'S12345a',
+            'DQR-compatible json generated from check_vectors results'),
+    ]
+    mock_upload.assert_has_calls(calls, any_order=True)
+    mock_create_label.assert_called_with('DQV', 'S12345a')
+    mock_remove_label.assert_called_with('DQOK', 'S12345a')
 
 
 @patch('gwcelery.tasks.detchar.dqr_json', return_value='dqrjson')

@@ -466,17 +466,21 @@ def check_vectors(event, graceid, start, end):
     active_inj_states = {key: value for key, value in inj_states.items()
                          if key.split(':')[0] in instruments}
 
-    # Check iDQ states
+    # Check iDQ states and filter for active instruments
     idq_faps = dict(check_idq(caches[channel.split(':')[0]],
                     channel, start, end)
-                    for channel in app.conf['idq_channels'])
+                    for channel in app.conf['idq_channels']
+                    if channel.split(':')[0] in instruments)
 
     # Logging iDQ to GraceDB
-    if None not in idq_faps.values():
+    if None not in idq_faps.values() and len(idq_faps) > 0:
         idq_faps_readable = {k: round(v, 3) for k, v in idq_faps.items()}
         if min(idq_faps.values()) <= app.conf['idq_fap_thresh']:
-            idq_msg = ("iDQ false alarm probability is low: "
+            idq_msg = ("iDQ false alarm probability is low "
+                       "(below {} threshold), "
+                       "i.e., there could be a data quality issue: "
                        "minimum FAP is {}. ").format(
+                app.conf['idq_fap_thresh'],
                 json.dumps(idq_faps_readable)[1:-1])
             # If iDQ FAP is low and pipeline enabled, apply DQV
             if app.conf['idq_veto'][pipeline]:
@@ -489,7 +493,7 @@ def check_vectors(event, graceid, start, end):
                 except ValueError:  # not in list
                     pass
         else:
-            idq_msg = ("iDQ false alarm probabilities at both H1 and L1 "
+            idq_msg = ("iDQ false alarm probabilities for active detectors "
                        "are good (above {} threshold). "
                        "Minimum FAP is {}. ").format(
                            app.conf['idq_fap_thresh'],
