@@ -1,12 +1,13 @@
 Changelog
 =========
 
-2.0.6 (unreleased)
-------------------
+2.0.6 "Spaghetti Tree" (2023-05-10)
+-----------------------------------
+
 -   Add `HIGH_PROFILE` label for rapid response team.
 
--   Prevent external event switching superevents also when triggering
-    off superevents.
+-   Ensure that external events are not already associated with a superevent
+    when triggering Raven off of superevents.
 
 -   Add minimum resolution for external sky maps.
 
@@ -39,10 +40,13 @@ Changelog
 
 -   Disable Kafka consumer bootstep in the production deployment.
 
--   Fix bug where Kafka alerts were using combined sky map from external event
-    rather than superevent.
+-   Fix bug where Kafka alerts were using combined sky map from the external
+    event rather than the superevent.
 
--   Fix bug to update external sky map with the latest GCN information.
+-   Fix bug where the external sky map was created with out-of-date external
+    GCN information.
+
+-   Require em-bright >= 1.1.2.
 
 2.0.5 "Mothman" (2023-04-20)
 ----------------------------
