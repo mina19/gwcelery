@@ -39,6 +39,9 @@ Changelog
 
 -   Disable Kafka consumer bootstep in the production deployment.
 
+-   Fix bug where Kafka alerts were using combined sky map from external event
+    rather than superevent.
+
 2.0.5 "Mothman" (2023-04-20)
 ----------------------------
 

@@ -148,7 +148,7 @@ def _add_external_coinc_to_alert(alert_dict, superevent,
     external_event = gracedb.get_event(superevent['em_type'])
     if combined_skymap_filename:
         combined_skymap = gracedb.download(combined_skymap_filename,
-                                           superevent['em_type'])
+                                           superevent['superevent_id'])
     else:
         combined_skymap = None
     alert_dict['external_coinc'] = {
