@@ -4,7 +4,6 @@ from celery import group
 from celery.utils.log import get_logger
 
 from ..import app
-from .core import identity
 from . import detchar
 from . import gcn
 from . import gracedb
@@ -194,7 +193,7 @@ def handle_grb_gcn(payload):
         if search == 'GRB':
             # Replace event and pass already existing event dictionary
             canvas |= gracedb.replace_event.si(graceid, payload)
-            canvas |= identity.si(event)
+            canvas |= gracedb.get_event.si(graceid)
         else:
             return
 

@@ -42,6 +42,8 @@ Changelog
 -   Fix bug where Kafka alerts were using combined sky map from external event
     rather than superevent.
 
+-   Fix bug to update external sky map with the latest GCN information.
+
 2.0.5 "Mothman" (2023-04-20)
 ----------------------------
 

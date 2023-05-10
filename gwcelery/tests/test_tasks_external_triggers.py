@@ -209,13 +209,20 @@ def test_handle_initial_fermi_event(mock_check_vectors,
 @patch('gwcelery.tasks.gracedb.create_label.run')
 @patch('gwcelery.tasks.gracedb.remove_label.run')
 @patch('gwcelery.tasks.gracedb.replace_event.run')
-@patch('gwcelery.tasks.gracedb.get_events', return_value=[{
+@patch('gwcelery.tasks.gracedb.get_event.run', return_value=[{
     'graceid': 'E1', 'gpstime': 1, 'instruments': '', 'pipeline': 'Fermi',
     'search': 'GRB',
     'extra_attributes': {'GRB': {'trigger_duration': 1, 'trigger_id': 123,
                                  'ra': 0., 'dec': 0., 'error_radius': 10.}},
     'links': {'self': 'https://gracedb.ligo.org/events/E356793/'}}])
-def test_handle_replace_grb_event(mock_get_events,
+@patch('gwcelery.tasks.gracedb.get_events', return_value=[{
+    'graceid': 'E1', 'gpstime': 1, 'instruments': '', 'pipeline': 'Fermi',
+    'search': 'GRB',
+    'extra_attributes': {'GRB': {'trigger_duration': 1, 'trigger_id': 123,
+                                 'ra': 0., 'dec': 0., 'error_radius': 15.}},
+    'links': {'self': 'https://gracedb.ligo.org/events/E356793/'}}])
+def test_handle_replace_grb_event(mock_get_event,
+                                  mock_get_events,
                                   mock_replace_event, mock_remove_label,
                                   mock_create_label,
                                   mock_get_upload_external_skymap,
