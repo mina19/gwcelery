@@ -83,7 +83,7 @@ create_mattermost_channel = False
 
 kafka_consumer_config = {
     'fermi': {'url': 'kafka://kafka.test.gcn.nasa.gov/'
-              'fermi.gbm.targeted.private', 'suffix': 'json'},
+              'fermi.gbm.targeted.private.igwn', 'suffix': 'json'},
     'swift': {'url': 'kafka://kafka.test.gcn.nasa.gov/swift.bat.guano',
               'suffix': 'json'}
 }

@@ -39,6 +39,8 @@ Changelog
     iDQ channel name is not the same as that in the frames. This happened for
     S230518h during ER15 and broke the alert pipeline.
 
+-   Update the Kafka topic that we consume Fermi alerts from.
+
 2.0.6 "Spaghetti Tree" (2023-05-10)
 -----------------------------------
 
