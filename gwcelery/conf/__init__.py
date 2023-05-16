@@ -69,6 +69,15 @@ igwn_alert_group = 'gracedb-playground'
 gracedb_host = 'gracedb-playground.ligo.org'
 """GraceDB host."""
 
+gwskynet_upper_far_threshold = 1 / 21600
+"""GWSkyNet will only annotate events with FARs below this value."""
+
+gwskynet_snr_threshold = 4.5
+"""GWSkyNet will only annotate events with individual SNRs above this value."""
+
+gwskynet_network_snr_threshold = 7.0
+"""GWSkyNet will only annotate events with network SNRs above this value."""
+
 create_mattermost_channel = False
 """Do not create Mattermost channel."""
 
@@ -81,6 +90,11 @@ kafka_consumer_config = {
 """Kafka consumer configuration details. The keys describe the senders of the
 messages to be consumed. The values are a dictionary of the URL to listen to
 and information about the message serializer."""
+
+views_manual_preferred_event_log_message = 'User {} queued a preferred event' \
+                                           ' change to {}.'
+"""Log message that is uploaded to GraceDB when a user manually changes the
+preferred event in the dashboard."""
 
 voevent_broadcaster_address = ':5342'
 """The VOEvent broker will bind to this address to send GCNs.

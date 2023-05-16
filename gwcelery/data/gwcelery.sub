@@ -64,3 +64,10 @@ queue
 arguments = "--unset OMP_NUM_THREADS gwcelery-condor-submit-helper gwcelery worker -l info -n gwcelery-openmp-worker-$(Process)@%h -f %n.log -Q openmp -c 1 --prefetch-multiplier 1"
 description = gwcelery-openmp-worker-$(Process)
 queue 15
+
++Online_GWSkyNet = True
+Requirements = (TARGET.Online_GWSkyNet =?= True)
+
+arguments = "gwcelery-condor-submit-helper gwcelery worker -l info -n gwcelery-skynet-worker@%h -f %n.log -Q skynet -c 1 --prefetch-multiplier 1"
+description = gwcelery-skynet-worker
+queue

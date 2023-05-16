@@ -26,7 +26,7 @@ def celery_worker_parameters():
     return dict(
         perform_ping_check=False,
         queues=['celery', 'exttrig', 'kafka', 'multiprocessing', 'openmp',
-                'superevent', 'voevent']
+                'superevent', 'voevent', 'skynet']
     )
 
 

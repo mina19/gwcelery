@@ -255,7 +255,7 @@ def change_preferred_event():
         (
             gracedb.upload.s(
                 None, None, superevent_id,
-                'User {} queued a preferred event change to {}.'
+                celery_app.conf['views_manual_preferred_event_log_message']
                 .format(request.remote_user or '(unknown)', event_id),
                 tags=['em_follow'])
             |

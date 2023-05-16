@@ -3,6 +3,13 @@ Changelog
 
 2.0.7 (unreleased)
 ------------------
+-   Add GWSkyNet to annotate CBC all-sky search superevents. Only the 
+    superevents that meet the following conditions will be annotated by 
+    GWSkyNet: 1. A network of signal-to-noise ratio of greater
+    than or equal to 7.0; 2. The SNRs in at least two detectors are no less
+    than 4.5; 3. The FAR is below 1 / 21600Hz. In addition, superevents 
+    that meet the above conditions will also be annotated if there is a change
+    of preferred event. 
 
 -   Only check iDQ for detectors that are on.
 

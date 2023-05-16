@@ -66,6 +66,7 @@ flask-caching = "*"
 gracedb-sdk = ">=0.2.0"  # https://git.ligo.org/emfollow/gracedb-sdk/-/merge_requests/7
 gwdatafind = ">=1.1.1"
 gwpy = ">=2.0.1"  # https://github.com/gwpy/gwpy/issues/1277
+GWSkyNet = ">=2.3.0" # https://git.ligo.org/computing/sccb/-/issues/1153
 healpy = "*"
 hop-client = ">=0.7.0"  # https://github.com/scimma/hop-client/pull/176
 igwn-alert = ">=0.2.2"
