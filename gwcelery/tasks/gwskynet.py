@@ -73,7 +73,7 @@ def _unpack_gwskynet_annotation_and_upload(gwskynet_output, skymap_filename,
                '{skymap_filename}">'
                '{skymap_filename}</a>.'
                ' GWSkyNet class score: {cs},'
-               ' FAP:{FAP}, FNP:{FNP}.').format(
+               ' FAP: {FAP}, FNP: {FNP}.').format(
                    graceid=graceid,
                    skymap_filename=skymap_filename,
                    cs=np.round(gwskynet_output_dict['class_score'], 3),
