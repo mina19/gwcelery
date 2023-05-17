@@ -26,7 +26,11 @@ Changelog
     jobs to the General section of config. Increasing the number of grid points
     per intrinsic coordinate to 10.
 
+-   Update bilby to v2.1.1 and bilby_pipe to v1.1.0.
 
+-   Increase request memory of bilby runs for BBH.
+
+-   Update bilby filenames in acceptance test.
 
 2.0.6 "Spaghetti Tree" (2023-05-10)
 -----------------------------------

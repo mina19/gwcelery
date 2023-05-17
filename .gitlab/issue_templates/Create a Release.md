@@ -71,15 +71,13 @@
 ## Replay events
 
 24. [ ] [A Production superevent labeled `GCN_PRELIM_SENT`](https://gracedb-playground.ligo.org/latest/?query=Production+GCN_PRELIM_SENT&query_type=S&get_neighbors=&results_format=) has the following parameter estimation annotations and the `PE_READY` label.
-    - [ ] `online_bilby_pe.ini`
+    - [ ] `bilby_config.ini`
     - [ ] `Bilby.posterior_samples.hdf5`
     - [ ] `Bilby.multiorder.fits`
     - [ ] `Bilby.html`
     - [ ] `Bilby.fits.gz`
     - [ ] `Bilby.png`
     - [ ] `Bilby.volume.png`
-    - [ ] `Bilby.extrinsic.png`
-    - [ ] `Bilby.intrinsic.png`
     - [ ] `PE_READY`
 
 /label ~Release
