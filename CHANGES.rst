@@ -32,6 +32,10 @@ Changelog
 
 -   Update bilby filenames in acceptance test.
 
+-   Handle ValueErrors from checking iDQ channels, such as if the configured
+    iDQ channel name is not the same as that in the frames. This happened for
+    S230518h during ER15 and broke the alert pipeline.
+
 2.0.6 "Spaghetti Tree" (2023-05-10)
 -----------------------------------
 

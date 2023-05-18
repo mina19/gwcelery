@@ -53,6 +53,12 @@ def ifo_l1_idq(monkeypatch):
 
 
 @pytest.fixture
+def ifo_l1_idq_wrong_channel_name(monkeypatch):
+    monkeypatch.setitem(
+        app.conf, 'idq_channels', ['L1:IDQ-FAP_OVL_WRONG'])
+
+
+@pytest.fixture
 def gatedpipe(monkeypatch):
     monkeypatch.setitem(app.conf, 'uses_gatedhoft', {'gatepipe': True})
 
@@ -131,6 +137,17 @@ def test_check_idq(llhoft_glob_pass):
     cache = detchar.create_cache('H1', start, end)
     assert detchar.check_idq(cache, channel, start, end) == (
         'H1:IDQ-FAP_OVL_32_2048', 1)
+
+
+def test_check_idq_wrong_channel_handled(caplog, llhoft_glob_pass):
+    """Test that iDQ checks looking at the wrong channel are handled."""
+    caplog.set_level(logging.INFO)
+    channel = 'H1:IDQ-FAP_OVL_WRONG'
+    start, end = 1216577976, 1216577980
+    cache = detchar.create_cache('H1', start, end)
+    detchar.check_idq(cache, channel, start, end)
+    messages = [record.message for record in caplog.records]
+    assert 'Failed to read from low-latency iDQ frame files' in messages  # noqa: E501
 
 
 @patch('time.strftime', return_value='00:00:00 UTC Mon 01 Jan 2000')

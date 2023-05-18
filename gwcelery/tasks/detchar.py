@@ -296,10 +296,8 @@ def check_idq(cache, channel, start, end):
             idq_fap = TimeSeries.read(
                 cache, channel, start=start, end=end)
             return (channel, float(idq_fap.min().value))
-        except (IndexError, RuntimeError):
-            # FIXME: Change from log.exception to log.warning until this fixed,
-            # because it's saturating Sentry.
-            log.warning('Failed to read from low-latency iDQ frame files')
+        except (IndexError, RuntimeError, ValueError):
+            log.exception('Failed to read from low-latency iDQ frame files')
     # FIXME: figure out how to get access to low-latency frames outside
     # of the cluster. Until we figure that out, actual I/O errors have
     # to be non-fatal.
