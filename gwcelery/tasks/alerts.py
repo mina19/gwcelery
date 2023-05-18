@@ -18,6 +18,26 @@ class _KafkaDispatchHandler(DispatchHandler):
     def process_args(self, name, record):
         return name, (record,), {}
 
+    def __call__(self, *keys, **kwargs):
+        r"""Create a new task and register it as a callback for handling the
+        given keys.
+
+        Parameters
+        ----------
+        \*keys : list
+            Keys to match
+        \*\*kwargs
+            Additional keyword arguments for `celery.Celery.task`.
+
+        """
+        def wrap(f):
+            f = gracedb.task(ignore_result=True, **kwargs)(f)
+            for key in keys:
+                self.setdefault(key, []).append(f)
+            return f
+
+        return wrap
+
 
 handler = _KafkaDispatchHandler()
 r"""Function decorator to register a handler callback for specified Kafka URLs.
