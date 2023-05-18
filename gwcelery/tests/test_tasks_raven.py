@@ -292,12 +292,14 @@ def test_raven_pipeline(mock_create_label,
     if 'S' in graceid:
         for result in raven_search_results:
             label_calls.append(call('EM_COINC', result['graceid']))
-            coinc_calls.append(call(alert_object, result, tl, th))
+            coinc_calls.append(call(alert_object, result, tl, th,
+                                    use_superevent_skymap=None))
             label_calls.append(call('EM_COINC', graceid))
     else:
         result = raven.preferred_superevent(raven_search_results)[0]
         label_calls.append(call('EM_COINC', result['superevent_id']))
-        coinc_calls.append(call(result, alert_object, tl, th))
+        coinc_calls.append(call(result, alert_object, tl, th,
+                                use_superevent_skymap=None))
         label_calls.append(call('EM_COINC', graceid))
 
     alert_calls = []

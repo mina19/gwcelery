@@ -388,12 +388,31 @@ def handle_grb_igwn_alert(alert):
                         set(external_event['labels'])):
                     _relaunch_raven_pipeline_with_skymaps(
                         superevent, external_event, graceid,
-                        use_superevent=True)
+                        use_superevent_skymap=True)
         else:
             if REQUIRED_LABELS_BY_TASK['compare'].issubset(
                     set(external_event['labels'])):
                 _relaunch_raven_pipeline_with_skymaps(
                     superevent, external_event, graceid)
+    # Rerun the coincidence FAR calculation if possible with combined sky map
+    # if the preferred event changes
+    # We don't want to run this logic if PE results are present
+    elif alert['alert_type'] == 'log' and \
+            'PE_READY' not in alert['object']['labels'] and \
+            'EM_COINC' in alert['object']['labels']:
+        new_log_comment = alert['data'].get('comment', '')
+        if 'S' in graceid and \
+            new_log_comment.startswith('Updated superevent parameters: '
+                                       'preferred_event: '):
+            superevent = alert['object']
+            # Rerun for all eligible external events
+            for ext_id in superevent['em_events']:
+                external_event = gracedb.get_event(ext_id)
+                if REQUIRED_LABELS_BY_TASK['compare'].issubset(
+                        set(external_event['labels'])):
+                    _relaunch_raven_pipeline_with_skymaps(
+                        superevent, external_event, graceid,
+                        use_superevent_skymap=False)
     elif alert['alert_type'] == 'label_removed' and \
             alert['object'].get('group') == 'External':
         if alert['data']['name'] == 'NOT_GRB' and \
@@ -490,7 +509,7 @@ def _launch_external_detchar(event):
 
 
 def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid,
-                                          use_superevent=False):
+                                          use_superevent_skymap=None):
     """Relaunch the RAVEN sky map comparison workflow, include recalculating
     the joint FAR with updated sky map info and create a new combined sky map.
 
@@ -502,9 +521,9 @@ def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid,
         external event dictionary
     graceid: str
         GraceDB ID of event
-    use_superevent: bool
-        If True, always use skymap info from superevent
-        regardless of SKYMAP_READY label.
+    use_superevent_skymap: bool
+        If True/False, use/don't use skymap info from superevent.
+        Else if None, check SKYMAP_READY label in external event.
 
     """
     gw_group = superevent['preferred_event_data']['group']
@@ -513,11 +532,14 @@ def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid,
                                 [ext_event['search']])
     # FIXME: both overlap integral and combined sky map could be
     # done by the same function since they are so similar
+    use_superevent = (use_superevent_skymap
+                      if use_superevent_skymap is not None else
+                      'SKYMAP_READY' in ext_event['labels'])
     canvas = raven.raven_pipeline.si(
                  [ext_event] if 'S' in graceid else [superevent],
                  graceid,
                  superevent if 'S' in graceid else ext_event,
-                 tl, th, gw_group)
+                 tl, th, gw_group, use_superevent_skymap=use_superevent)
     # Swift localizations are incredibly well localized and require
     # a different method from Fermi/Integral/AGILE
     # FIXME: Add Swift localization information in the future
@@ -526,7 +548,6 @@ def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid,
         canvas |= external_skymaps.create_combined_skymap.si(
                       superevent['superevent_id'], ext_event['graceid'],
                       preferred_event=(
-                          None if 'SKYMAP_READY' in ext_event['labels']
-                          or use_superevent
+                          None if use_superevent
                           else superevent['preferred_event']))
     canvas.delay()

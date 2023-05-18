@@ -53,6 +53,8 @@ Changelog
     yet available in the caches due to data transfer latency. This will retry
     every five seconds up to four times, for a maximum total of 20 seconds.
 
+-   Rerun the RAVEN sky map comparison whenever the GW preferred event changes.
+
 2.0.6 "Spaghetti Tree" (2023-05-10)
 -----------------------------------
 

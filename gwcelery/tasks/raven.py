@@ -13,7 +13,8 @@ log = get_task_logger(__name__)
 
 @app.task(queue='exttrig',
           shared=False)
-def calculate_coincidence_far(superevent, exttrig, tl, th):
+def calculate_coincidence_far(superevent, exttrig, tl, th,
+                              use_superevent_skymap=None):
     """Compute coincidence FAR for external trigger and superevent
     coincidence by calling ligo.raven.search.calc_signif_gracedb,
     using sky map info if available.
@@ -28,6 +29,9 @@ def calculate_coincidence_far(superevent, exttrig, tl, th):
         start of coincident time window
     th: float
         end of coincident time window
+    use_superevent_skymap: bool
+        If True/False, use/don't use skymap info from superevent.
+        Else if None, check SKYMAP_READY label in external event.
 
     """
     superevent_id = superevent['superevent_id']
@@ -40,7 +44,10 @@ def calculate_coincidence_far(superevent, exttrig, tl, th):
     if ({'EXT_SKYMAP_READY', 'SKYMAP_READY'}.issubset(exttrig['labels']) or
             {'EXT_SKYMAP_READY', 'EM_READY'}.issubset(exttrig['labels'])):
         #  if both sky maps available, calculate spatial coinc far
-        use_preferred_event_skymap = 'SKYMAP_READY' not in exttrig['labels']
+        use_preferred_event_skymap = (
+            not use_superevent_skymap
+            if use_superevent_skymap is not None else
+            'SKYMAP_READY' not in exttrig['labels'])
         se_skymap = external_skymaps.get_skymap_filename(
             (superevent['preferred_event'] if use_preferred_event_skymap
              else superevent_id), is_gw=True)
@@ -188,7 +195,7 @@ def search(gracedb_id, alert_object, tl=-5, th=5, group=None,
 @app.task(queue='exttrig',
           shared=False)
 def raven_pipeline(raven_search_results, gracedb_id, alert_object, tl, th,
-                   gw_group):
+                   gw_group, use_superevent_skymap=None):
     """Executes much of the full raven pipeline, including adding
     the external trigger to the superevent, calculating the
     coincidence false alarm rate, and applying 'EM_COINC' to the
@@ -205,6 +212,9 @@ def raven_pipeline(raven_search_results, gracedb_id, alert_object, tl, th,
         Alert dictionary, either a superevent or an external event
     gw_group: str
         Burst or CBC
+    use_superevent_skymap: bool
+        If True/False, use/don't use skymap info from superevent.
+        Else if None, check SKYMAP_READY label in external event.
 
     """
     if not raven_search_results:
@@ -230,7 +240,10 @@ def raven_pipeline(raven_search_results, gracedb_id, alert_object, tl, th,
         canvas = (
             gracedb.add_event_to_superevent.si(superevent_id, exttrig_id)
             |
-            calculate_coincidence_far.si(superevent, ext_event, tl, th)
+            calculate_coincidence_far.si(
+                superevent, ext_event, tl, th,
+                use_superevent_skymap=use_superevent_skymap
+            )
             |
             group(gracedb.create_label.si('EM_COINC', superevent_id),
                   gracedb.create_label.si('EM_COINC', exttrig_id),
