@@ -129,8 +129,8 @@ change log.
 9.  If desired, navigate to the GitLab project's `Environments`_ page and
     trigger a deployment to production.
 
-    Each pipeline has an interface which enables deployment to the 
-    available environments. 
+    Each pipeline has an interface which enables deployment to the
+    available environments.
 
     .. image:: _static/deployment-screenshot.png
        :alt: Screen shot of deployment options

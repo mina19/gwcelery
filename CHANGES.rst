@@ -3,13 +3,13 @@ Changelog
 
 2.0.7 (unreleased)
 ------------------
--   Add GWSkyNet to annotate CBC all-sky search superevents. Only the 
-    superevents that meet the following conditions will be annotated by 
+-   Add GWSkyNet to annotate CBC all-sky search superevents. Only the
+    superevents that meet the following conditions will be annotated by
     GWSkyNet: 1. A network of signal-to-noise ratio of greater
     than or equal to 7.0; 2. The SNRs in at least two detectors are no less
-    than 4.5; 3. The FAR is below 1 / 21600Hz. In addition, superevents 
+    than 4.5; 3. The FAR is below 1 / 21600Hz. In addition, superevents
     that meet the above conditions will also be annotated if there is a change
-    of preferred event. 
+    of preferred event.
 
 -   Only check iDQ for detectors that are on.
 
@@ -114,7 +114,7 @@ Changelog
     coordinates for the rectilinear intrinsic grid. Update accounting_group to
     ligo.dev.o4.cbc.pe.lalinferencerapid and add accouting_group_user. Add
     an option to map the events to an injection. Upload only a select set
-    of log files to gracedb. 
+    of log files to gracedb.
 
 -   Prevent alternative collating method for O3 replay and MDC events with INTEGRAL.
 
@@ -138,7 +138,7 @@ Changelog
 -   Add periodic SNEWS MDC events to test the corresponding IGWN alert
     listener.
 
--   Use sky map from preferred event rather than superevent, triggering off 
+-   Use sky map from preferred event rather than superevent, triggering off
     EM_READY label instead of SKYMAP_READY. If SKYMAP_READY is applied or if a
     sky map file is added to the superevent, we will once again try to get the
     GW sky map from the superevent.
@@ -203,7 +203,7 @@ Changelog
     to the superevent. The automated pipeline is launched and is blocked before sending
     if ``EM_SelectedConfident`` is found to be applied.
 
--   Add O3 replay MDC testing with RAVEN pipeline. This will run on the 
+-   Add O3 replay MDC testing with RAVEN pipeline. This will run on the
     emfollow-playground server, creating mock coincidences with a frequency
     given by the ``joint_O3_replay_freq`` variable.
 
@@ -330,9 +330,9 @@ Changelog
 
 -   Use the exttring worker for RAVEN tasks.
 
--   Bump ligo.em-bright to 1.1.0.dev1 to add HasMassGap. 
+-   Bump ligo.em-bright to 1.1.0.dev1 to add HasMassGap.
     Review page: https://git.ligo.org/emfollow/em-properties/em-bright/-/wikis/Mass-gap-review
-    
+
 -   Compute source properties uniformly across all CBC pipelines.
 
 -   Don't compute p-astro for MBTA because they now compute and upload their
@@ -343,10 +343,10 @@ Changelog
     uploaded the event.
 
 -   Indicate a joint CBC-GRB event should be used for a measurement of the
-    speed of gravity by applying the SOG_READY label to the superevent. This pipeline is launched is the right conditions are met after ADVOK label. 
+    speed of gravity by applying the SOG_READY label to the superevent. This pipeline is launched is the right conditions are met after ADVOK label.
 
 -   Add button to apply RAVEN alert labels to flask app. This will manually
-    trigger a RAVEN alert. 
+    trigger a RAVEN alert.
 
 -   Update messages from RAVEN alert pipeline to be more informative.
 
@@ -450,7 +450,7 @@ Changelog
 -   Use multi-resolution GW sky maps when calculating the joint false alarm
     rate. Use single pixel RA/dec when evaluating for Swift coincidences.
 
--   Filter BBH/IMBH events from burst-GRB searches. 
+-   Filter BBH/IMBH events from burst-GRB searches.
 
 1.0.1 (2022-05-09)
 ------------------
@@ -590,7 +590,7 @@ This release primarily updates versions of dependencies.
 
 -   Inhibit GCNs for superevents with the INJ label.
 
--   Add configuration variable to disable all but MDC alerts from GCN, and 
+-   Add configuration variable to disable all but MDC alerts from GCN, and
     set that variable to True on the production instance.
 
 -   Skip the preliminary alert timeout for early warning events.
@@ -645,7 +645,7 @@ This release primarily updates versions of dependencies.
 
 -   Skip detchar checks for events which occur in the future.
 
--   Delay omegascans until data are available for events in the future. 
+-   Delay omegascans until data are available for events in the future.
 
 -   Enable Zstandard compression of tasks and results to reduce bandwidth into
     and out of Redis.
