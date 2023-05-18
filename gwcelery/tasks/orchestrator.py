@@ -1177,14 +1177,21 @@ def earlywarning_preliminary_initial_update_alert(
             superevent_id
         )
 
+    # NOTE: The following canvas structure was used to fix #480
     canvas = (
         group(download_andor_expose_group)
         |
-        group(voevent_canvas, kafka_alert_canvas)
-        |
         group(
-            sent_label_canvas,
-            circular_canvas,
+            voevent_canvas
+            |
+            group(
+                circular_canvas,
+
+                sent_label_canvas
+            ),
+
+            kafka_alert_canvas,
+
             high_profile_canvas
         )
     )

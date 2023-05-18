@@ -41,6 +41,9 @@ Changelog
 
 -   Update the Kafka topic that we consume Fermi alerts from.
 
+-   Fix the triple circular uploads by rearranging the alerts canvas and
+    moving tasks into the second group.
+
 2.0.6 "Spaghetti Tree" (2023-05-10)
 -----------------------------------
 
