@@ -20,11 +20,14 @@ Changelog
 -   Ignore SSM search for superevent, until decision about dedicated notice type
     and other details from OpsDiv are decided.
 
--   Update rapidpe-rift-pipe to v0.2.2. Adding config options to calculate
+-   Update rapidpe-rift-pipe to v0.3.0. Adding config options to calculate
     pastro. Uploading rapidpe pastro to gracedb. Adding a link to
     rapidpe summary page in logs. Moving the config option to cprofile the
     jobs to the General section of config. Increasing the number of grid points
-    per intrinsic coordinate to 10.
+    per intrinsic coordinate to 10.  Adding a config option to specify
+    the type of run (`online` vs `o3replay`) when choosing channel names, the
+    same as `bilby_pipe` does.  Modified `inference.py` to set this config
+    option based on the GraceDB URL.
 
 -   Update bilby to v2.1.1 and bilby_pipe to v1.1.0.
 

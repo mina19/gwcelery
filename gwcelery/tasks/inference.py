@@ -413,6 +413,13 @@ def _setup_dag_for_rapidpe(rundir, superevent_id, frametype_dict):
         The path to the .dag file
 
     """
+    if app.conf['gracedb_host'] not in {
+        'gracedb.ligo.org', 'gracedb-test.ligo.org'
+    }:
+        run_mode = 'o3replay'
+    else:
+        run_mode = 'online'
+
     # dump ini file
     ini_template = env.get_template('rapidpe.jinja2')
     ini_contents = ini_template.render(
@@ -422,6 +429,7 @@ def _setup_dag_for_rapidpe(rundir, superevent_id, frametype_dict):
          ),
          'gracedb_url': f'https://{app.conf["gracedb_host"]}/api',
          'superevent_id': superevent_id,
+         'run_mode': run_mode,
          'frame_data_types': frametype_dict})
     path_to_ini = os.path.join(rundir, 'rapidpe.ini')
     with open(path_to_ini, 'w') as f:
