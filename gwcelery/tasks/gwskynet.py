@@ -1,20 +1,27 @@
 """GWSkyNet annotation with GWSkyNet model"""
+from functools import cache
 import json
 import re
 
-from GWSkyNet import GWSkyNet
 import numpy as np
 
 from . import gracedb, igwn_alert, superevents
 from ..import app
 from ..util.tempfile import NamedTemporaryFile
-from ..util import PromiseProxy
 
-GWSkyNet_model = PromiseProxy(GWSkyNet.load_GWSkyNet_model)
 manual_pref_event_change_regexp = re.compile(
     app.conf['views_manual_preferred_event_log_message'].replace('.', '\\.')
     .replace('{}', '.+')
 )
+
+
+@cache
+def GWSkyNet_model():
+    # FIXME Remove import from function scope once importing GWSkyNet is not a
+    # slow operation
+    from GWSkyNet import GWSkyNet
+
+    return GWSkyNet.load_GWSkyNet_model()
 
 
 @app.task(queue='skynet', shared=False)
@@ -28,9 +35,13 @@ def gwskynet_annotation(filecontents):
     GWSkyNet_model : keras.engine.functional.Functional object
             the GWSkyNet model used to annotate the events
     """
+    # FIXME Remove import from function scope once importing GWSkyNet is not a
+    # slow operation
+    from GWSkyNet import GWSkyNet
+
     with NamedTemporaryFile(content=filecontents) as fitsfile:
         GWSkyNet_input = GWSkyNet.prepare_data(fitsfile.name)
-    class_score = GWSkyNet.predict(GWSkyNet_model, GWSkyNet_input)
+    class_score = GWSkyNet.predict(GWSkyNet_model(), GWSkyNet_input)
     FAP, FNP = GWSkyNet.get_rates(class_score)
     fap = FAP[0]
     fnp = FNP[0]
