@@ -342,6 +342,28 @@ def test_send_update_gcn_circular_post(mock_create_circular,
         'MS190208a', update_types=answer)
 
 
+@patch('gwcelery.tasks.circulars.create_medium_latency_circular',
+       return_value='')
+def test_send_medium_latency_gcn_circular_post(mock_create_circular,
+                                               client):
+    """Test send_medium_latency_gcn_circular endpoint with complete form
+    data."""
+    response = client.post(url_for('create_medium_latency_gcn_circular'),
+                           data={'ext_event_id': 'E12345'})
+
+    assert HTTP_STATUS_CODES[response.status_code] == 'OK'
+    mock_create_circular.assert_called_once_with('E12345')
+
+
+def test_send_medium_latency_gcn_circular_post_no_data(client):
+    """Test send_medium_latency_gcn_circular endpoint with no form
+    data."""
+    response = client.post(url_for('create_medium_latency_gcn_circular'))
+    assert HTTP_STATUS_CODES[response.status_code] == 'Found'
+    assert get_flashed_messages() == [
+        'No circular created. Please fill in external event ID']
+
+
 def test_typeahead_superevent_id(client, monkeypatch):
     """Test typeahead filtering for superevent_id."""
     mock_superevents = Mock(return_value=(

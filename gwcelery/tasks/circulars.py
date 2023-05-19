@@ -18,6 +18,13 @@ def create_emcoinc_circular(graceid):
 
 
 @gracedb.task(shared=False)
+def create_medium_latency_circular(graceid):
+    """Create and return the em_coinc circular txt."""
+    return ligo.followup_advocate.compose_grb_medium_latency(
+               graceid, client=gracedb.client)
+
+
+@gracedb.task(shared=False)
 def create_update_circular(graceid, update_types=['sky_localization',
                                                   'em_bright',
                                                   'p_astro']):

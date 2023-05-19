@@ -33,6 +33,21 @@ def test_create_emcoinc_circular(monkeypatch):
         'S1234', client=gracedb.client)
 
 
+def test_create_medium_latency_circular(monkeypatch):
+    """Test that the compose medium latency circulars method is called with the
+    correct input parameters.
+    """
+    ext_event_id = 'E1234'
+    mock_compose_medium_latency_circular = Mock()
+    monkeypatch.setattr('ligo.followup_advocate.compose_grb_medium_latency',
+                        mock_compose_medium_latency_circular)
+
+    # call create_emcoinc_circular
+    circulars.create_medium_latency_circular(ext_event_id)
+    mock_compose_medium_latency_circular.assert_called_once_with(
+        'E1234', client=gracedb.client)
+
+
 @pytest.mark.parametrize(
      'update_types',
      [['sky_localization', 'em_bright', 'p_astro'],

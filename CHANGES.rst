@@ -44,6 +44,9 @@ Changelog
 -   Fix the triple circular uploads by rearranging the alerts canvas and
     moving tasks into the second group.
 
+-   Add ability to create circular for medium-latency GRB followup by PyGRB
+    and X-pipeline from the dashboard.
+
 2.0.6 "Spaghetti Tree" (2023-05-10)
 -----------------------------------
 

@@ -377,6 +377,21 @@ def send_update_gcn():
     return redirect(url_for('index'))
 
 
+@app.route('/create_medium_latency_gcn_circular', methods=['POST'])
+def create_medium_latency_gcn_circular():
+    """Handle submission of medium_latency GCN Circular form."""
+    ext_event_id = request.form.get('ext_event_id')
+    if ext_event_id:
+        response = make_response(circulars.create_medium_latency_circular(
+            ext_event_id))
+        response.headers["content-type"] = "text/plain"
+        return response
+    else:
+        flash('No circular created. Please fill in external event ID',
+              'danger')
+    return redirect(url_for('index'))
+
+
 @app.route('/create_update_gcn_circular', methods=['POST'])
 def create_update_gcn_circular():
     """Handle submission of GCN Circular form."""
