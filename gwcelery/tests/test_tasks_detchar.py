@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import call, patch
 
 from astropy.time import Time
+import celery
 from gwpy.timeseries import Bits
 import matplotlib.pyplot as plt
 import numpy as np
@@ -322,6 +323,24 @@ def test_check_vectors_fails(
     mock_upload.assert_has_calls(calls, any_order=True)
     mock_create_label.assert_called_with('DQV', 'S12345a')
     mock_remove_label.assert_called_with('DQOK', 'S12345a')
+
+
+@patch('gwcelery.tasks.gracedb.upload.run')
+@patch('celery.app.task.Task.request')
+@patch('gwcelery.tasks.detchar.check_vector', side_effect=ValueError)
+def test_check_vectors_retries_on_valueerror(
+        mock_check_vector, mock_request,
+        mock_upload, llhoft_glob_pass, ifo_h1, ifo_h1_idq):
+    # Mocking this retry https://docs.celeryq.dev/en/stable/_modules/celery/app/task.html#Task.retry  # noqa E501
+    event = {'search': 'AllSky', 'instruments': 'L1', 'pipeline': 'oLIB'}
+    superevent_id = 'S12345a'
+    start, end = 1216577978, 1216577978.1
+    mock_request.called_directly = False
+    mock_request.retries = 3
+    with pytest.raises(celery.exceptions.Retry) as retry_exc:
+        detchar.check_vectors.delay(event, superevent_id, start, end)
+    # after three retries, should still retry once in 5 seconds
+    assert retry_exc.value.when == 5
 
 
 @patch('gwcelery.tasks.detchar.dqr_json', return_value='dqrjson')

@@ -459,7 +459,7 @@ def check_vectors(self, event, graceid, start, end):
         except ValueError as exc:
             # check_vector likely failed to find the requested data
             # in the cache because it has yet to arrive
-            raise self.retry(exc=exc, max_retries=3)
+            raise self.retry(exc=exc, max_retries=4)
     # Pick out DQ and injection states, then filter for active detectors
     dq_states = {key: value for key, value in states.items()
                  if key.split('_')[-1] != 'INJ'}
