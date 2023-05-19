@@ -441,7 +441,8 @@ def handle_posterior_samples(alert):
         |
         gracedb.upload.s(
             '{}.em_bright.json'.format(prefix), superevent_id,
-            'em-bright computed from "{}"'.format(info)
+            'em-bright computed from "{}"'.format(info),
+            'pe'
         )
     ).delay()
 

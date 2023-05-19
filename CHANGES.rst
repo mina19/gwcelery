@@ -47,6 +47,8 @@ Changelog
 -   Add ability to create circular for medium-latency GRB followup by PyGRB
     and X-pipeline from the dashboard.
 
+-   Add pe tag to EM-bright probabilities calculated from bilby samples.
+
 2.0.6 "Spaghetti Tree" (2023-05-10)
 -----------------------------------
 
