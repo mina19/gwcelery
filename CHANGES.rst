@@ -49,6 +49,9 @@ Changelog
 
 -   Add pe tag to EM-bright probabilities calculated from bilby samples.
 
+-   Add an automatic retry for the check_vectors task if requested data is not
+    yet available in the caches due to data transfer latency
+
 2.0.6 "Spaghetti Tree" (2023-05-10)
 -----------------------------------
 
