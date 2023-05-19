@@ -75,9 +75,9 @@ imapclient = "*"
 importlib-metadata = { version = "*"}
 jinja2 = ">=2.11.2"  # https://github.com/pallets/jinja/issues/1168
 lalsuite = ">=6.82"  # https://git.ligo.org/lscsoft/lalsuite/-/issues/414
-ligo-followup-advocate = ">=1.2.1"
+ligo-followup-advocate = ">=1.2.2"
 ligo-gracedb = ">=2.7.5"  # https://git.ligo.org/lscsoft/gracedb-client/-/issues/28
-ligo-raven = ">=3.1"
+ligo-raven = ">=3.2"
 ligo-segments = "*"
 "ligo.em-bright" = ">=1.1.2"  # https://git.ligo.org/computing/sccb/-/issues/1166
 "ligo.skymap" = ">=1.0.4"  # https://git.ligo.org/lscsoft/ligo.skymap/-/merge_requests/299
