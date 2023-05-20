@@ -1,8 +1,9 @@
 Changelog
 =========
 
-2.0.7 (unreleased)
-------------------
+2.1.0 "Jersey Devil" (2023-05-19)
+---------------------------------
+
 -   Add GWSkyNet to annotate CBC all-sky search superevents. Only the
     superevents that meet the following conditions will be annotated by
     GWSkyNet: 1. A network of signal-to-noise ratio of greater
@@ -13,11 +14,15 @@ Changelog
 
 -   Only check iDQ for detectors that are on.
 
+-   Update IGWN alert authentication documentation.
+
 -   Clean up large bilby data files after the run for MDC injections.
 
 -   Add pe tag to pesummary uploads.
 
--   Ignore SSM search for superevent, until decision about dedicated notice type
+-   Add new emfollow-dev deployment.
+
+-   Ignore SSM search for superevents until decision about dedicated notice type
     and other details from OpsDiv are decided.
 
 -   Update rapidpe-rift-pipe to v0.3.0. Adding config options to calculate
@@ -32,6 +37,8 @@ Changelog
 -   Increase request memory of bilby runs for BBH.
 
 -   Update bilby filenames in acceptance test.
+
+-   Reduce GW FAR requirement for SOG_READY to 1/10 years.
 
 -   Handle ValueErrors from checking iDQ channels, such as if the configured
     iDQ channel name is not the same as that in the frames. This happened for
@@ -54,6 +61,8 @@ Changelog
 -   Rerun the RAVEN sky map comparison whenever the GW preferred event changes.
 
 -   Upgrade bilby to v2.1.1
+
+-   Update ligo-raven to v3.2 and ligo-followup-advocate to v1.2.2.
 
 2.0.6 "Spaghetti Tree" (2023-05-10)
 -----------------------------------
