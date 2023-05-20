@@ -53,6 +53,8 @@ Changelog
 
 -   Rerun the RAVEN sky map comparison whenever the GW preferred event changes.
 
+-   Upgrade bilby to v2.1.1
+
 2.0.6 "Spaghetti Tree" (2023-05-10)
 -----------------------------------
 

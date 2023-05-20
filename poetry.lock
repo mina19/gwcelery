@@ -328,14 +328,14 @@ files = [
 
 [[package]]
 name = "bilby"
-version = "2.1.0"
+version = "2.1.1"
 description = "A user-friendly Bayesian inference library"
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "bilby-2.1.0-py3-none-any.whl", hash = "sha256:9140dace8f09b338ca348d28dd843a37fe0252cc7eea4ef1df500eece33adafb"},
-    {file = "bilby-2.1.0.tar.gz", hash = "sha256:a7216e61f1e82a3b3ec73a7e4ad1a7fdc7e2eb51ae54ff7197851f2ee1e42d55"},
+    {file = "bilby-2.1.1-py3-none-any.whl", hash = "sha256:c004d79b01fa72388d4a9abee7d0e5913802f1e874226936bd1e43b12b8bb1df"},
+    {file = "bilby-2.1.1.tar.gz", hash = "sha256:0f60326d4a1e58b3f9978b0a9b2f339b4632bbd86e3b1078f1ce0c6fd6feb4cd"},
 ]
 
 [package.dependencies]
@@ -5828,4 +5828,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.11"
-content-hash = "496fce5983980893348834e7905f5966dd6d95e5506e41643edb819492803fb9"
+content-hash = "ceb137a060a9a1f6bbb5f1991669508e4d5dccbd23abce139afc96e5868b9478"
