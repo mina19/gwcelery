@@ -254,6 +254,194 @@ def _setup_dag_for_lalinference(coinc, rundir, event, superevent_id,
     return os.path.join(rundir, 'multidag.dag')
 
 
+def _dump_phenomd_settings(path):
+    settings = {
+        "likelihood_args": {
+            "likelihood_type": "ROQGravitationalWaveTransient",
+            "minimum_frequency": 20,
+            "maximum_frequency": 1024,
+            "roq_scale_factor": 1,
+            "waveform_approximant": "IMRPhenomD",
+        },
+        "likelihood_parameter_bounds": {
+            "mass_ratio_min": 0.125,
+            "a_1_max": 0.05,
+            "a_2_max": 0.05,
+            "spin_template": "aligned",
+        },
+        "trigger_dependent": {
+            "range": {
+                "chirp_mass": [
+                    [0.6, 1.012], [1.012, 1.54], [1.54, 2.31], [2.31, 4.0]
+                ],
+            },
+            "likelihood_args": [
+                {"roq_linear_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_512s.hdf5",
+                 "roq_quadratic_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_512s.hdf5",
+                 "duration": 512},
+                {"roq_linear_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_256s.hdf5",
+                 "roq_quadratic_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_256s.hdf5",
+                 "duration": 256},
+                {"roq_linear_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_128s.hdf5",
+                 "roq_quadratic_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_128s.hdf5",
+                 "duration": 128},
+                {"roq_linear_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_64s.hdf5",
+                 "roq_quadratic_matrix":
+                    "/home/roq/IMRPhenomD/lowspin_fhigh1024/basis_64s.hdf5",
+                 "duration": 64}
+            ],
+            "likelihood_parameter_bounds": [
+                {"chirp_mass_min": 0.6, "chirp_mass_max": 1.1},
+                {"chirp_mass_min": 0.92, "chirp_mass_max": 1.7},
+                {"chirp_mass_min": 1.4, "chirp_mass_max": 2.6},
+                {"chirp_mass_min": 2.1, "chirp_mass_max": 4.0}
+            ],
+        },
+    }
+    with open(path, 'w') as f:
+        json.dump(settings, f, indent=2)
+
+
+def _dump_high_mass_ratio_pv2_settings(path):
+    settings = {
+        "likelihood_args": {
+            "likelihood_type": "ROQGravitationalWaveTransient",
+            "minimum_frequency": 20,
+            "maximum_frequency": 1024,
+            "roq_scale_factor": 1,
+            "waveform_approximant": "IMRPhenomPv2",
+        },
+        "likelihood_parameter_bounds": {
+            "mass_ratio_min": 0.05,
+            "a_1_max": 0.99,
+            "a_2_max": 0.99,
+            "spin_template": "precessing",
+        },
+        "trigger_dependent": {
+            "range": {
+                "chirp_mass": [[1.4, 2.31], [2.31, 3.63], [3.63, 5.72],
+                               [5.72, 9.57], [9.57, 21]],
+            },
+            "likelihood_args": [
+                {"roq_linear_matrix":
+                    "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_128s.hdf5",
+                 "roq_quadratic_matrix":
+                    "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_128s.hdf5",
+                 "duration": 128},
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_64s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_64s.hdf5",
+                    "duration": 64,
+                },
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_32s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_32s.hdf5",
+                    "duration": 32,
+                },
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_16s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_16s.hdf5",
+                    "duration": 16,
+                },
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_8s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomPv2/low_mass_ratio/basis_8s.hdf5",
+                    "duration": 8,
+                },
+            ],
+            "likelihood_parameter_bounds": [
+                {"chirp_mass_min": 1.4, "chirp_mass_max": 2.6},
+                {"chirp_mass_min": 2.1, "chirp_mass_max": 4.0},
+                {"chirp_mass_min": 3.3, "chirp_mass_max": 6.3},
+                {"chirp_mass_min": 5.2, "chirp_mass_max": 11.0},
+                {"chirp_mass_min": 8.7, "chirp_mass_max": 21.0},
+            ],
+        },
+    }
+    with open(path, 'w') as f:
+        json.dump(settings, f, indent=2)
+
+
+def _dump_xphm_settings(path):
+    settings = {
+        "likelihood_args": {
+            "likelihood_type": "ROQGravitationalWaveTransient",
+            "minimum_frequency": 20,
+            "maximum_frequency": 4096,
+            "reference_frequency": 20,
+            "roq_scale_factor": 1,
+            "waveform_approximant": "IMRPhenomXPHM",
+            "waveform_arguments_dict": {"PhenomXHMReleaseVersion": 122019},
+            "phase_marginalization": False,
+        },
+        "likelihood_parameter_bounds": {
+            "mass_ratio_min": 0.05,
+            "a_1_max": 0.99,
+            "a_2_max": 0.99,
+            "spin_template": "precessing",
+        },
+        "trigger_dependent": {
+            "range": {
+                "chirp_mass": [[10.03, 16], [16, 25],
+                               [25, 45], [45, np.inf]],
+            },
+            "likelihood_args": [
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_32s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_32s.hdf5",
+                    "duration": 32,
+                },
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_16s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_16s.hdf5",
+                    "duration": 16,
+                },
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_8s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_8s.hdf5",
+                    "duration": 8,
+                },
+                {
+                    "roq_linear_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_4s.hdf5",
+                    "roq_quadratic_matrix":
+                        "/home/roq/IMRPhenomXPHM/basis_4s.hdf5",
+                    "duration": 4,
+                },
+            ],
+            "likelihood_parameter_bounds": [
+                {"chirp_mass_min": 10.03, "chirp_mass_max": 19.04},
+                {"chirp_mass_min": 13, "chirp_mass_max": 31.85},
+                {"chirp_mass_min": 20, "chirp_mass_max": 62.86},
+                {"chirp_mass_min": 30, "chirp_mass_max": 200},
+            ],
+        },
+    }
+    with open(path, 'w') as f:
+        json.dump(settings, f, indent=2)
+
+
 @app.task(shared=False)
 def _setup_dag_for_bilby(
     coinc, rundir, event, superevent_id, mode="production"
@@ -339,7 +527,8 @@ def _setup_dag_for_bilby(
         # use low-spin IMRPhenomD below chirp mass of m1=3Msun, m2=1Msun
         # assuming binary neutron star
         if trigger_chirp_mass < 1.465:
-            likelihood_mode = 'lowspin_phenomd_fhigh1024_roq'
+            likelihood_mode = os.path.join(rundir, "likelihood_mode.json")
+            _dump_phenomd_settings(likelihood_mode)
             settings['sampler_kwargs']['naccept'] = 10
         # use IMRPhenomPv2 with mass ratio upper bound of 8 below chirp mass of
         # m1=8Msun, m2=1Msun
@@ -348,9 +537,11 @@ def _setup_dag_for_bilby(
         # use IMRPhenomPv2 with mass ratio upper bound of 20 in chirp-mass
         # range where IMRPhenomXPHM ROQ bases are not available
         elif trigger_chirp_mass < 12:
-            likelihood_mode = 'low_q_phenompv2_roq'
+            likelihood_mode = os.path.join(rundir, "likelihood_mode.json")
+            _dump_high_mass_ratio_pv2_settings(likelihood_mode)
         else:
-            likelihood_mode = 'phenomxphm_roq'
+            likelihood_mode = os.path.join(rundir, "likelihood_mode.json")
+            _dump_xphm_settings(likelihood_mode)
             settings['request_memory_generation'] = 36.0
             settings['request_memory'] = 16.0
         setup_arg += ['--cbc-likelihood-mode', likelihood_mode]
