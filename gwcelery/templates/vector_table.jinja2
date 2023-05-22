@@ -10,11 +10,4 @@
 {% for bit in unknown_bit_list %}
     <tr><td>{{ bit }}</td><td bgcolor="yellow">unknown</td></tr>
 {% endfor %}
-{% if low_bit_list != [] %}
-    <tr bgcolor="red"><th>Overall state for all detectors</th><th>bad</th></tr>
-{% elif unknown_bit_list != [] %}
-    <tr bgcolor="yellow"><th>Overall state for all detectors</th><th>unknown</th></tr>
-{% else %}
-    <tr bgcolor="#0f0"><th>Overall state for all detectors</th><th>good</th></tr>
-{% endif %}
 </table>

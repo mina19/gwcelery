@@ -385,8 +385,6 @@ def test_detchar_generate_table():
               '<td bgcolor="yellow">unknown</td></tr>\n'
               '    <tr><td>unknown_bit_2</td>'
               '<td bgcolor="yellow">unknown</td></tr>\n'
-              '    <tr bgcolor="red"><th>Overall state for all '
-              'detectors</th><th>bad</th></tr>\n'
               '</table>')
     assert detchar.generate_table(
         'title', ['good_bit_1', 'good_bit_2'],
