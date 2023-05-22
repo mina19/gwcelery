@@ -864,9 +864,40 @@ def start_pe(event, superevent_id, pe_pipeline):
     pipeline_dir = os.path.expanduser('~/.cache/{}'.format(pe_pipeline))
     mkpath(pipeline_dir)
     event_dir = os.path.join(pipeline_dir, superevent_id)
-    os.mkdir(event_dir)
 
     if pe_pipeline == 'bilby':
+        if (
+            app.conf['gracedb_host'] == 'gracedb-playground.ligo.org' and
+            event['extra_attributes']['CoincInspiral']['mchirp'] >= 12
+        ):
+            # Count the number of BBH jobs and do not start a run if it exceeds
+            # 5 so that we do not use up disk space. We assume that the job is
+            # running if a data dump pickle file exists under the run
+            # directory, which is the largest file produced by PE and removed
+            # when the run completes.
+            number_of_bbh_running = 0
+            for p in glob.glob(
+                os.path.join(
+                    pipeline_dir,
+                    "*/*/data/*_generation_data_dump.pickle"
+                )
+            ):
+                path_to_ev = os.path.join(os.path.dirname(p), "../event.json")
+                if os.path.exists(path_to_ev):
+                    with open(path_to_ev, "r") as f:
+                        ev = json.load(f)
+                        mc = ev['extra_attributes']['CoincInspiral']['mchirp']
+                    if mc >= 12:
+                        number_of_bbh_running += 1
+            if number_of_bbh_running > 5:
+                gracedb.upload.delay(
+                    filecontents=None, filename=None, graceid=superevent_id,
+                    message='Parameter estimation will not start to save disk '
+                            f'space (There are {number_of_bbh_running} BBH '
+                            'jobs running).',
+                    tags='pe'
+                )
+                return
         modes = ["production"]
         rundirs = [os.path.join(event_dir, m) for m in modes]
         kwargs_list = [{'bilby_mode': m} for m in modes]
@@ -876,6 +907,7 @@ def start_pe(event, superevent_id, pe_pipeline):
         kwargs_list = [{}]
         analyses = [pe_pipeline]
 
+    os.mkdir(event_dir)
     for rundir, kwargs, analysis in zip(rundirs, kwargs_list, analyses):
         mkpath(rundir)
 

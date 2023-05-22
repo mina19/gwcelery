@@ -551,8 +551,7 @@ def test_start_pe(monkeypatch, tmp_path, pipeline):
     condor_submit = Mock(side_effect=mock_condor_submit)
     dag_finished = Mock()
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', Mock())
-    monkeypatch.setattr('distutils.dir_util.mkpath',
-                        Mock(return_value=str(tmp_path)))
+    monkeypatch.setattr('os.path.expanduser', Mock(return_value=str(tmp_path)))
     monkeypatch.setattr('gwcelery.tasks.inference.dag_prepare_task',
                         dag_prepare_task)
     monkeypatch.setattr('gwcelery.tasks.condor.submit.run', condor_submit)
@@ -563,3 +562,54 @@ def test_start_pe(monkeypatch, tmp_path, pipeline):
     dag_prepare_task.assert_called_once()
     condor_submit.assert_called_once()
     dag_finished.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    'host', ["gracedb-playground.ligo.org", "gracedb.ligo.org"])
+def test_bbh_rate_limit(monkeypatch, tmp_path, host):
+    monkeypatch.setitem(app.conf, 'gracedb_host', host)
+    monkeypatch.setattr('os.path.expanduser', Mock(return_value=str(tmp_path)))
+    event = {'gpstime': 1187008882, 'graceid': 'G1234',
+             'extra_attributes': {'CoincInspiral': {'mchirp': 20}}}
+    for i in range(6):
+        rundir = os.path.join(str(tmp_path), f"{i}/production")
+        os.makedirs(rundir)
+        os.mkdir(os.path.join(rundir, "data"))
+        with open(
+            os.path.join(rundir, "data/pe_generation_data_dump.pickle"), "wb"
+        ) as f:
+            f.write(b"test")
+        with open(os.path.join(rundir, "event.json"), "w") as f:
+            json.dump(event, f, indent=2)
+
+    path_to_sub = 'pe.dag.condor.sub'
+
+    @app.task
+    def mock_task():
+        return path_to_sub
+
+    dag_prepare_task = Mock(return_value=mock_task.s())
+
+    def mock_condor_submit(path):
+        assert path == path_to_sub
+
+    condor_submit = Mock(side_effect=mock_condor_submit)
+    dag_finished = Mock()
+    monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', Mock())
+    monkeypatch.setattr('distutils.dir_util.mkpath',
+                        Mock(return_value=str(tmp_path)))
+    monkeypatch.setattr('gwcelery.tasks.inference.dag_prepare_task',
+                        dag_prepare_task)
+    monkeypatch.setattr('gwcelery.tasks.condor.submit.run', condor_submit)
+    monkeypatch.setattr('gwcelery.tasks.inference.dag_finished.run',
+                        dag_finished)
+
+    inference.start_pe(event, 'S1234', 'bilby')
+    if host == "gracedb-playground.ligo.org":
+        dag_prepare_task.assert_not_called()
+        condor_submit.assert_not_called()
+        dag_finished.assert_not_called()
+    else:
+        dag_prepare_task.assert_called_once()
+        condor_submit.assert_called_once()
+        dag_finished.assert_called_once()
