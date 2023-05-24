@@ -6,6 +6,9 @@ Changelog
 
 -   Upgrade ligo-followup-advocate to v1.2.3
 
+-   Bump ligo.em-bright to v1.1.3 to be compatible with schema of online PE files
+    with spinning waveforms.
+
 2.1.0 "Jersey Devil" (2023-05-19)
 ---------------------------------
 
