@@ -413,7 +413,7 @@ def handle_posterior_samples(alert):
     info = '{} {}'.format(alert['data']['comment'], filename)
     prefix, _ = filename.rsplit('.posterior_samples.')
     skymap_filename = f'{prefix}.multiorder.fits'
-    labels = ['pe', 'sky_loc', 'public']
+    labels = ['pe', 'sky_loc']
 
     (
         gracedb.download.si(filename, superevent_id)
