@@ -4,7 +4,7 @@ Changelog
 2.1.1 (unreleased)
 ------------------
 
--   No changes yet.
+-   Upgrade ligo-followup-advocate to v1.2.3
 
 2.1.0 "Jersey Devil" (2023-05-19)
 ---------------------------------

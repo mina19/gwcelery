@@ -2493,14 +2493,14 @@ scikit-learn = "1.2.1"
 
 [[package]]
 name = "ligo-followup-advocate"
-version = "1.2.2"
+version = "1.2.3"
 description = "LIGO/Virgo/KAGRA Follow-up Advocate Tools"
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "ligo-followup-advocate-1.2.2.tar.gz", hash = "sha256:39b4f6c0e99d9a3bdd34daa23b7d203a0a6ecff887e9e22e1752a9ae383246e3"},
-    {file = "ligo_followup_advocate-1.2.2-py3-none-any.whl", hash = "sha256:74aa5380ee930991c5b1b80e4c425c96ed3b92ab3fe4491aea9c22f496d7093a"},
+    {file = "ligo-followup-advocate-1.2.3.tar.gz", hash = "sha256:9deee30f9e3de1875119705e813b84498cdf101f23fdbb246e14984edfc172bc"},
+    {file = "ligo_followup_advocate-1.2.3-py3-none-any.whl", hash = "sha256:71cfdfc8588219cf74cc497241375f34324cc329ef7c4573b5498dd54f27acf2"},
 ]
 
 [package.dependencies]
