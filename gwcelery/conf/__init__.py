@@ -237,6 +237,10 @@ llhoft_channels = {
 """Low-latency h(t) state vector configuration. This is a dictionary consisting
 of a channel and its bitmask, as defined in :mod:`gwcelery.tasks.detchar`."""
 
+idq_ok_channels = ['H1:IDQ-OK_OVL_10_2048',
+                   'L1:IDQ-OK_OVL_10_2048']
+"""Low-latency iDQ OK channel names for O4. High bit indicates iDQ is ok."""
+
 idq_channels = ['H1:IDQ-FAP_OVL_10_2048',
                 'L1:IDQ-FAP_OVL_10_2048']
 """Low-latency iDQ false alarm probability channel names for O4."""

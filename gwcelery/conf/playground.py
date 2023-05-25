@@ -37,6 +37,10 @@ options, see `GCN's list of available VOEvent servers
 <https://gcn.gsfc.nasa.gov/voevent.html#tc2>`_. If this is an empty string,
 then completely disable the GCN listener."""
 
+idq_ok_channels = ['H1:IDQ-OK_OVL_16_4096',
+                   'L1:IDQ-OK_OVL_16_4096']
+"""Low-latency iDQ OK channel names for O3 replay."""
+
 idq_channels = ['H1:IDQ-FAP_OVL_16_4096',
                 'L1:IDQ-FAP_OVL_16_4096']
 """Low-latency iDQ false alarm probability channel names for O3 replay."""

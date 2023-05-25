@@ -477,8 +477,27 @@ def check_vectors(self, event, graceid, start, end):
                     channel, start, end)
                     for channel in app.conf['idq_channels']
                     if channel.split(':')[0] in instruments)
+    idq_oks = dict(check_idq(caches[channel.split(':')[0]],
+                   channel, start, end)
+                   for channel in app.conf['idq_ok_channels']
+                   if channel.split(':')[0] in instruments)
 
     # Logging iDQ to GraceDB
+    # Checking the IDQ-OK vector
+    idq_not_ok_ifos = []
+    for ok_channel, min_value in idq_oks.items():
+        if min_value == 0 or min_value is None:
+            ifo = ok_channel[:2]
+            idq_not_ok_ifos.append(ifo)
+            fap_chans = [chan for chan in idq_faps.keys() if chan[:2] == ifo]
+            for chan in fap_chans:
+                idq_faps.pop(chan)
+    if len(idq_not_ok_ifos) > 0:
+        idq_ok_msg = (f"Not checking iDQ for {', '.join(idq_not_ok_ifos)} "
+                      "because it has times where IDQ_OK = 0. ")
+    else:
+        idq_ok_msg = ''
+
     if None not in idq_faps.values() and len(idq_faps) > 0:
         idq_faps_readable = {k: round(v, 3) for k, v in idq_faps.items()}
         if min(idq_faps.values()) <= app.conf['idq_fap_thresh']:
@@ -504,10 +523,13 @@ def check_vectors(self, event, graceid, start, end):
                        "Minimum FAP is {}. ").format(
                            app.conf['idq_fap_thresh'],
                            json.dumps(idq_faps_readable)[1:-1])
-    else:
+    elif None in idq_faps.values():
         idq_msg = "iDQ false alarm probabilities unknown. "
+    else:
+        idq_msg = ''
     gracedb.upload.delay(
-        None, None, graceid, idq_msg + prepost_msg, ['data_quality'])
+        None, None, graceid,
+        idq_ok_msg + idq_msg + prepost_msg, ['data_quality'])
 
     # Labeling INJ to GraceDB
     if False in active_inj_states.values():
@@ -583,7 +605,8 @@ def check_vectors(self, event, graceid, start, end):
         state = "unknown"
 
     # Create and upload DQR-compatible json
-    state_summary = '{} {} {}'.format(inj_msg, idq_msg, msg)
+    state_summary = '{} {} {}'.format(
+        inj_msg, idq_ok_msg + idq_msg, msg)
     if state == "unknown":
         json_state = "error"
     else:

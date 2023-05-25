@@ -28,6 +28,12 @@ def llhoft_glob_fail(monkeypatch):
 
 
 @pytest.fixture
+def llhoft_glob_idq_bad(monkeypatch):
+    path = str(Path(__file__).parent / 'data/llhoft/idqbad/{detector}/*.gwf')
+    yield monkeypatch.setitem(app.conf, 'llhoft_glob', path)
+
+
+@pytest.fixture
 def ifo_h1(monkeypatch):
     monkeypatch.setitem(app.conf, 'llhoft_channels', {
         'H1:DMT-DQ_VECTOR': 'dmt_dq_vector_bits',
@@ -45,12 +51,16 @@ def ifo_l1(monkeypatch):
 def ifo_h1_idq(monkeypatch):
     monkeypatch.setitem(
         app.conf, 'idq_channels', ['H1:IDQ-FAP_OVL_32_2048'])
+    monkeypatch.setitem(
+        app.conf, 'idq_ok_channels', ['H1:IDQ-OK_OVL_32_2048'])
 
 
 @pytest.fixture
 def ifo_l1_idq(monkeypatch):
     monkeypatch.setitem(
         app.conf, 'idq_channels', ['L1:IDQ-FAP_OVL_32_2048'])
+    monkeypatch.setitem(
+        app.conf, 'idq_ok_channels', ['L1:IDQ-OK_OVL_32_2048'])
 
 
 @pytest.fixture
@@ -323,6 +333,22 @@ def test_check_vectors_fails(
     mock_upload.assert_has_calls(calls, any_order=True)
     mock_create_label.assert_called_with('DQV', 'S12345a')
     mock_remove_label.assert_called_with('DQOK', 'S12345a')
+
+
+@patch('gwcelery.tasks.gracedb.upload.run')
+def test_check_vectors_idq_not_ok(
+        mock_upload, llhoft_glob_idq_bad, ifo_h1, ifo_h1_idq):
+    event = {'search': 'AllSky', 'instruments': 'H1', 'pipeline': 'oLIB'}
+    superevent_id = 'S12345a'
+    start, end = 1216577978, 1216577978.1
+    detchar.check_vectors(event, superevent_id, start, end)
+    mock_upload.assert_any_call(
+        None, None, 'S12345a',
+        ('Not checking iDQ for H1 '
+            'because it has times where IDQ_OK = 0. '
+            'Check looked within -1.5/+1.5 seconds of superevent. '),
+        ['data_quality']
+    )
 
 
 @patch('gwcelery.tasks.gracedb.upload.run')
