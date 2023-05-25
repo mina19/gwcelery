@@ -140,9 +140,11 @@ def make_omegascan(ifo, t0, durs):
             for before, after in durs]
     except (IndexError, FloatingPointError, ValueError):
         # data from cache can't be properly read, or data is weird
-        fig = plt.figure()
+        fig = plt.figure(figsize=(4, 1))
         plt.axis("off")
-        plt.text(0.1, 0.45, f"Failed to create {ifo} omegascan", fontsize=17)
+        plt.text(0.5, 0.5, "Failed to create V1 omegascan",
+                 horizontalalignment='center', verticalalignment='center',
+                 fontsize=17)
     else:
         fig = Plot(*qgrams,
                    figsize=(12 * len(durs), 6),
