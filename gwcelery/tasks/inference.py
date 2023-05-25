@@ -354,8 +354,10 @@ def _setup_dag_for_rapidpe(rundir, superevent_id):
         'gracedb.ligo.org', 'gracedb-test.ligo.org'
     }:
         run_mode = 'o3replay'
+        accounting_group = "ligo.dev.o4.cbc.pe.lalinferencerapid"
     else:
         run_mode = 'online'
+        accounting_group = "ligo.prod.o4.cbc.pe.lalinferencerapid"
 
     # dump ini file
     ini_template = env.get_template('rapidpe.jinja2')
@@ -367,7 +369,8 @@ def _setup_dag_for_rapidpe(rundir, superevent_id):
          'gracedb_url': f'https://{app.conf["gracedb_host"]}/api',
          'superevent_id': superevent_id,
          'run_mode': run_mode,
-         'frame_data_types': app.conf['low_latency_frame_types']})
+         'frame_data_types': app.conf['low_latency_frame_types'],
+         'accounting_group': accounting_group})
     path_to_ini = os.path.join(rundir, 'rapidpe.ini')
     with open(path_to_ini, 'w') as f:
         f.write(ini_contents)
