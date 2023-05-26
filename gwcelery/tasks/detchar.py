@@ -269,6 +269,24 @@ def dqr_json(state, summary):
     )
 
 
+def ifo_from_channel(channel):
+    '''Get detector prefix from a channel.
+
+    Parameters
+    ----------
+    channel : str
+        Channel, e.g., H1:GDS-CALIB_STRAIN.
+
+    Returns
+    -------
+    str
+        Detector prefix, e.g., H1.
+    '''
+    ifo = channel.split(':')[0]
+    assert len(ifo) == 2, "Detector name should be two letters"
+    return ifo
+
+
 def check_idq(cache, channel, start, end):
     """Looks for iDQ frame and reads them.
 
@@ -365,14 +383,14 @@ def check_vector(cache, channel, start, end, bits, logic_type='all'):
             # production environment?
             statevector = statevector.astype(np.uint32)
             if len(statevector) > 0:  # statevector must not be empty
-                return {bitname.format(channel.split(':')[0], key):
+                return {bitname.format(ifo_from_channel(channel), key):
                         bool(logic_map[logic_type](
                             value.value if len(value.value) > 0 else None))
                         for key, value in statevector.get_bit_series().items()}
     # FIXME: figure out how to get access to low-latency frames outside
     # of the cluster. Until we figure that out, actual I/O errors have
     # to be non-fatal.
-    return {bitname.format(channel.split(':')[0], key):
+    return {bitname.format(ifo_from_channel(channel), key):
             None for key in bits if key is not None}
 
 
@@ -438,7 +456,7 @@ def check_vectors(self, event, graceid, start, end):
     prepost_msg = "Check looked within -{}/+{} seconds of superevent. ".format(
         pre, post)
 
-    ifos = {key.split(':')[0] for key, val in
+    ifos = {ifo_from_channel(key) for key, val in
             app.conf['llhoft_channels'].items()}
     caches = {ifo: create_cache(ifo, start, end) for ifo in ifos}
     bit_defs = {channel_type: Bits(channel=bitdef['channel'],
@@ -456,7 +474,7 @@ def check_vectors(self, event, graceid, start, end):
     for channel, bits in analysis_channels:
         try:
             states.update(check_vector(
-                caches[channel.split(':')[0]], channel,
+                caches[ifo_from_channel(channel)], channel,
                 start, end, bit_defs[bits]))
         except ValueError as exc:
             # check_vector likely failed to find the requested data
@@ -468,30 +486,32 @@ def check_vectors(self, event, graceid, start, end):
     inj_states = {key: value for key, value in states.items()
                   if key.split('_')[-1] == 'INJ'}
     active_dq_states = {key: value for key, value in dq_states.items()
-                        if key.split(':')[0] in instruments}
+                        if ifo_from_channel(key) in instruments}
     active_inj_states = {key: value for key, value in inj_states.items()
-                         if key.split(':')[0] in instruments}
+                         if ifo_from_channel(channel) in instruments}
 
     # Check iDQ states and filter for active instruments
-    idq_faps = dict(check_idq(caches[channel.split(':')[0]],
+    idq_faps = dict(check_idq(caches[ifo_from_channel(channel)],
                     channel, start, end)
                     for channel in app.conf['idq_channels']
-                    if channel.split(':')[0] in instruments)
-    idq_oks = dict(check_idq(caches[channel.split(':')[0]],
+                    if ifo_from_channel(channel) in instruments)
+    idq_oks = dict(check_idq(caches[ifo_from_channel(channel)],
                    channel, start, end)
                    for channel in app.conf['idq_ok_channels']
-                   if channel.split(':')[0] in instruments)
+                   if ifo_from_channel(channel) in instruments)
 
     # Logging iDQ to GraceDB
     # Checking the IDQ-OK vector
-    idq_not_ok_ifos = []
-    for ok_channel, min_value in idq_oks.items():
-        if min_value == 0 or min_value is None:
-            ifo = ok_channel[:2]
-            idq_not_ok_ifos.append(ifo)
-            fap_chans = [chan for chan in idq_faps.keys() if chan[:2] == ifo]
-            for chan in fap_chans:
-                idq_faps.pop(chan)
+    idq_not_ok_ifos = [
+        ifo_from_channel(ok_channel)
+        for ok_channel, min_value in idq_oks.items()
+        if min_value == 0 or min_value is None]
+    idq_not_ok_fap_chans = [
+        chan for chan in idq_faps.keys()
+        if ifo_from_channel(chan) in idq_not_ok_ifos]
+    # Remove iDQ FAP channels if their IDQ_OK values are bad
+    for idq_not_ok_chan in idq_not_ok_fap_chans:
+        del idq_faps[idq_not_ok_chan]
     if len(idq_not_ok_ifos) > 0:
         idq_ok_msg = (f"Not checking iDQ for {', '.join(idq_not_ok_ifos)} "
                       "because it has times where IDQ_OK = 0. ")

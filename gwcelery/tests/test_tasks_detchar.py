@@ -134,6 +134,14 @@ def test_omegascan(mock_upload, mock_fig):
     )
 
 
+def test_ifo_from_channel():
+    channels = [
+        'H1:GDS-CALIB_STRAIN', 'L1:DMT-DQ_VECTOR',
+        'V1:DQ_ANALYSIS_STATE_VECTOR', 'K1:TEST-CHAN']
+    ifos = [detchar.ifo_from_channel(chan) for chan in channels]
+    assert ifos == ['H1', 'L1', 'V1', 'K1']
+
+
 def test_omegascan_skips_ew(caplog):
     """Test that omegascans are delayed for events in the future."""
     caplog.set_level(logging.INFO)
