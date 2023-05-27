@@ -1088,9 +1088,12 @@ def earlywarning_preliminary_initial_update_alert(
         skymap, em_bright, p_astro = filecontents
 
         # check high profile and apply label if true
-        high_profile_canvas = rrt_utils.check_high_profile.si(
-            skymap, em_bright, p_astro, superevent
-        )
+        if alert_type == 'preliminary':
+            high_profile_canvas = rrt_utils.check_high_profile.si(
+                skymap, em_bright, p_astro, superevent
+            )
+        else:
+            high_profile_canvas = identity.si()
 
         download_andor_expose_group = []
 

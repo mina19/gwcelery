@@ -37,6 +37,8 @@ from . import data
          ['H1', 'L1', 'V1'], 'S1234', ['SIGNIF_LOCKED']],
      ['label_added', 'LOW_SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-9,
          ['H1', 'L1', 'V1'], 'S1234', []],
+     ['label_added', 'LOW_SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-5,
+         ['H1', 'L1', 'V1'], 'S1234', []],
      ['label_added', 'LOW_SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-10,
          ['H1', 'L1', 'V1'], 'S1234', ['EARLY_WARNING']],
      ['label_added', 'LOW_SIGNIF_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-9,
@@ -316,6 +318,8 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             gcn_send.assert_not_called()
             create_tag.assert_not_called()
             create_initial_circular.assert_not_called()
+            check_high_profile.assert_not_called()
+        elif far > 3.8e-7:
             check_high_profile.assert_not_called()
         else:
             annotate_fits.assert_called_once()

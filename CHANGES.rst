@@ -4,6 +4,8 @@ Changelog
 2.1.2 (Unreleased)
 ------------------
 
+-   HIGH_PROFILE label only applied to preliminary alert
+
 -   Do not make pe skymap public automatically before approved.
 
 -   Make image created when omegascan fails smaller.
