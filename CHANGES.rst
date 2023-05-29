@@ -1,13 +1,16 @@
 Changelog
 =========
 
-2.1.1 (unreleased)
-------------------
+2.1.1 "Lone Island Mountain Devil" (2023-05-29)
+-----------------------------------------------
 
 -   Upgrade ligo-followup-advocate to v1.2.3
 
--   Bump ligo.em-bright to v1.1.3 to be compatible with schema of online PE files
-    with spinning waveforms.
+-   Bump ligo.em-bright to v1.1.3 to be compatible with schema of online PE
+    files with spinning waveforms.
+
+-   Pin astropy to "!=5.3" until a bug plotting omega scans with gwpy is
+    resolved.
 
 2.1.0 "Jersey Devil" (2023-05-19)
 ---------------------------------
