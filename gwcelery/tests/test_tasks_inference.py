@@ -222,7 +222,6 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
                                        'no_ligo_skymap': True},
             'queue': 'Online_PE',
             'accounting_user': 'soichiro.morisaki',
-            'enforce_signal_duration': False
         }
         if host != 'gracedb.ligo.org':
             ans['queue'] = 'Online_PE_MDC'
@@ -235,22 +234,17 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
                  'spline_calibration_nodes': 10,
                  'request_memory_generation': 8.0}
             )
-            if 1.465 < mc < 2.243:
+            if 0.6 < mc < 1.465:
+                assert 'lowspin_phenomd_fhigh1024_roq' in cmd
+                ans['sampler_kwargs']['naccept'] = 10
+            elif mc < 2.243:
                 assert 'phenompv2_bns_roq' in cmd
+            elif mc < 12:
+                assert 'low_q_phenompv2_roq' in cmd
             else:
-                path_to_mode = cmd[cmd.index("--cbc-likelihood-mode") + 1]
-                assert os.path.exists(path_to_mode)
-                with open(path_to_mode, 'r') as f:
-                    w = json.load(f)["likelihood_args"]["waveform_approximant"]
-                if 0.6 < mc < 1.465:
-                    assert w == "IMRPhenomD"
-                    ans['sampler_kwargs']['naccept'] = 10
-                elif mc < 11.033:
-                    assert w == "IMRPhenomPv2"
-                else:
-                    assert w == "IMRPhenomXPHM"
-                    ans['request_memory_generation'] = 36.0
-                    ans['request_memory'] = 16.0
+                assert 'phenomxphm_roq' in cmd
+                ans['request_memory_generation'] = 36.0
+                ans['request_memory'] = 16.0
         elif mode == 'fast_test' and mc < 3.9:
             ans['request_memory_generation'] = 8.0
         with open(path_to_settings, 'r') as f:

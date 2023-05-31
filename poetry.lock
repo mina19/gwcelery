@@ -385,14 +385,14 @@ numpy = "*"
 
 [[package]]
 name = "bilby-pipe"
-version = "1.0.10"
+version = "1.1.1"
 description = "Automating the running of bilby for gravitational wave signals"
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "bilby_pipe-1.0.10-py3-none-any.whl", hash = "sha256:d88902c755bf501f4a834a26b0293b65dd3fffda822c08a798fb1f4b7babc7b6"},
-    {file = "bilby_pipe-1.0.10.tar.gz", hash = "sha256:e63f1a9da033496e9a31bdd363f366fcca9b75bb75f0c990f4c7242e300de423"},
+    {file = "bilby_pipe-1.1.1-py3-none-any.whl", hash = "sha256:e2568fd2f0815b9c826b6f5a5dd7e5d6cbb66436b5c37721fe7e83b4d47f3215"},
+    {file = "bilby_pipe-1.1.1.tar.gz", hash = "sha256:19ba582148de588165becb7a0ac8ba3270c5427f5486989787a4d8cb07bd6aaf"},
 ]
 
 [package.dependencies]
@@ -409,6 +409,7 @@ ligo-gracedb = "*"
 matplotlib = "*"
 numpy = "*"
 pesummary = ">=0.13.10"
+plotly = "*"
 pycondor = ">=0.6"
 python-ligo-lw = ">=1.8.0"
 scipy = ">=1.2.0"
@@ -5828,4 +5829,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.11"
-content-hash = "197d9a3f9a56f3bc7bf982af0ae705525dd79d079951a64941dc85d1dc58547b"
+content-hash = "3d7f80e3c183a2bfde29a8ec1ec9b857d5db6af557adcc842f7b3ac7c4a04c05"
