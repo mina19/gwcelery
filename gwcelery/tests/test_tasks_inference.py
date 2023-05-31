@@ -508,11 +508,16 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline, host):
             with open(path, 'wb') as f:
                 f.write(b'result')
 
-        inference.dag_finished(rundir, sid, pipeline, **kwargs)
-
         if pipeline == 'rapidpe':
+            for event_pipeline in ['gstlal', 'pycbc']:
+                kwargs['event_pipeline'] = event_pipeline
+                inference.dag_finished(rundir, sid, pipeline, **kwargs)
+        else:
+            inference.dag_finished(rundir, sid, pipeline, **kwargs)
+
+        if pipeline == "rapidpe":
             # +1 corresponds to summary page link
-            assert upload.call_count == len(paths) + 1
+            assert upload.call_count == 2 * (len(paths) + 1)
         elif pipeline == 'bilby':
             # +1 corresponds to pesummary link
             assert upload.call_count == len(paths) + 1
@@ -543,25 +548,55 @@ def test_start_pe(monkeypatch, tmp_path, pipeline):
     def mock_task():
         return path_to_sub
 
-    dag_prepare_task = Mock(return_value=mock_task.s())
-
     def mock_condor_submit(path):
         assert path == path_to_sub
 
-    condor_submit = Mock(side_effect=mock_condor_submit)
-    dag_finished = Mock()
-    monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', Mock())
-    monkeypatch.setattr('os.path.expanduser', Mock(return_value=str(tmp_path)))
-    monkeypatch.setattr('gwcelery.tasks.inference.dag_prepare_task',
-                        dag_prepare_task)
-    monkeypatch.setattr('gwcelery.tasks.condor.submit.run', condor_submit)
-    monkeypatch.setattr('gwcelery.tasks.inference.dag_finished.run',
-                        dag_finished)
+    if pipeline == 'rapidpe':
+        event_pipeline_info = {
+            'gstlal': {'sid': 'S1234', 'graceid': 'G1234'},
+            'pycbc': {'sid': 'S1235', 'graceid': 'G1235'}}
+        for event_pipeline in event_pipeline_info:
+            dag_prepare_task = Mock(return_value=mock_task.s())
 
-    inference.start_pe({'graceid': 'G1234'}, 'S1234', pipeline)
-    dag_prepare_task.assert_called_once()
-    condor_submit.assert_called_once()
-    dag_finished.assert_called_once()
+            condor_submit = Mock(side_effect=mock_condor_submit)
+            dag_finished = Mock()
+            monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', Mock())
+            monkeypatch.setattr('os.path.expanduser', Mock(
+                return_value=str(tmp_path)))
+            monkeypatch.setattr('gwcelery.tasks.inference.dag_prepare_task',
+                                dag_prepare_task)
+            monkeypatch.setattr(
+                    'gwcelery.tasks.condor.submit.run', condor_submit)
+            monkeypatch.setattr(
+                    'gwcelery.tasks.inference.dag_finished.run',
+                    dag_finished)
+
+            inference.start_pe({
+                'graceid': event_pipeline_info[event_pipeline]['graceid'],
+                'pipeline': event_pipeline},
+                event_pipeline_info[event_pipeline]['sid'], pipeline)
+            dag_prepare_task.assert_called_once()
+            condor_submit.assert_called_once()
+            dag_finished.assert_called_once()
+    else:
+        dag_prepare_task = Mock(return_value=mock_task.s())
+
+        condor_submit = Mock(side_effect=mock_condor_submit)
+        dag_finished = Mock()
+        monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', Mock())
+        monkeypatch.setattr('distutils.dir_util.mkpath',
+                            Mock(return_value=str(tmp_path)))
+        monkeypatch.setattr('gwcelery.tasks.inference.dag_prepare_task',
+                            dag_prepare_task)
+        monkeypatch.setattr('gwcelery.tasks.condor.submit.run', condor_submit)
+        monkeypatch.setattr(
+                'gwcelery.tasks.inference.dag_finished.run',
+                dag_finished)
+
+        inference.start_pe({'graceid': 'G1234'}, 'S1234', pipeline)
+        dag_prepare_task.assert_called_once()
+        condor_submit.assert_called_once()
+        dag_finished.assert_called_once()
 
 
 @pytest.mark.parametrize(

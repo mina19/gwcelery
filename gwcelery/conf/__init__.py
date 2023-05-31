@@ -193,6 +193,12 @@ pe_timeout = 345.0
 creation of a new superevent to the time that parameter estimation begins, in
 case the preferred event is updated with high latency."""
 
+rapidpe_timeout = 30.0
+"""The orchestrator will wait this many seconds from the time of the
+creation of a new superevent to the time rapidpe parameter estimation begins,
+in case the preferred event is updated with high latency."""
+
+
 check_vector_prepost = {'gstlal': [2, 2],
                         'spiir': [2, 2],
                         'pycbc': [2, 2],

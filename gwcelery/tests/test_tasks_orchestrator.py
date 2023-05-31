@@ -422,7 +422,7 @@ def _mock_get_log(se_id):
             {'tag_names': ['em_bright'],
              'filename': 'em_bright.json',
              'file_version': 0},
-            {'tag_names': ['p_astro'],
+            {'tag_names': ['p_astro', 'public'],
              'filename': 'p_astro.json',
              'file_version': 0}]
     if se_id == 'S2468':
@@ -719,16 +719,28 @@ def test_only_mdc_alerts_switch(mock_alert, mock_upload, mock_download,
 
 
 @pytest.mark.parametrize(
-    'far,event',
-    [[1, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'AllSky'}],
-     [1e-30, {'gpstime': 1187008882, 'group': 'Burst', 'search': 'AllSky'}],
-     [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'MDC'}],
+    'far,event,pe_pipeline',
+    [[1, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'AllSky'}, 'bilby'],
+     [1e-30, {'gpstime': 1187008882, 'group': 'Burst', 'search': 'AllSky'},
+         'bilby'],
+     [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'MDC'},
+         'bilby'],
      [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
-              'search': 'AllSky', 'pipeline': 'gstlal'}],
+              'search': 'AllSky', 'pipeline': 'gstlal'}, 'bilby'],
      [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
-              'search': 'AllSky', 'pipeline': 'pycbc'}]]
+              'search': 'AllSky', 'pipeline': 'pycbc'}, 'bilby'],
+     [1, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'AllSky'},
+         'rapidpe'],
+     [1e-30, {'gpstime': 1187008882, 'group': 'Burst', 'search': 'AllSky'},
+         'rapidpe'],
+     [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'MDC'},
+         'rapidpe'],
+     [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
+              'search': 'AllSky', 'pipeline': 'gstlal'}, 'rapidpe'],
+     [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
+              'search': 'AllSky', 'pipeline': 'pycbc'}, 'rapidpe']]
 )
-def test_parameter_estimation(monkeypatch, far, event):
+def test_parameter_estimation(monkeypatch, far, event, pe_pipeline):
     superevent_id = 'S1234'
     mock_upload = Mock()
     mock_start_pe = Mock()
@@ -736,7 +748,8 @@ def test_parameter_estimation(monkeypatch, far, event):
     monkeypatch.setattr('gwcelery.tasks.inference.start_pe.run', mock_start_pe)
 
     orchestrator.parameter_estimation.delay(
-        far_event=(far, event), superevent_id=superevent_id)
+        far_event=(far, event), superevent_id=superevent_id,
+        pe_pipeline=pe_pipeline)
 
     threshold = (app.conf['significant_alert_far_threshold']['cbc'] /
                  app.conf['significant_alert_trials_factor']['cbc'])
@@ -744,12 +757,9 @@ def test_parameter_estimation(monkeypatch, far, event):
         far <= threshold and event['group'] == 'CBC' and
         event['search'] != 'MDC'
     ):
-        mock_start_pe.assert_any_call(event, superevent_id, 'bilby')
-        if event['pipeline'] == 'gstlal':
-            mock_start_pe.assert_any_call(event, superevent_id, 'rapidpe')
-            assert mock_start_pe.call_count == 2
-        else:
-            assert mock_start_pe.call_count == 1
+        mock_start_pe.assert_any_call(
+            event, superevent_id, pe_pipeline)
+        assert mock_start_pe.call_count == 1
     else:
         mock_upload.assert_called_once()
 

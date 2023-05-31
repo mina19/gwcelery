@@ -4379,24 +4379,25 @@ six = "*"
 
 [[package]]
 name = "rapidpe-rift-pipe"
-version = "0.3.0"
+version = "0.5.1"
 description = "Pipeline for running RapidPE and RIFT parameter estimation codes"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "rapidpe_rift_pipe-0.3.0-py3-none-any.whl", hash = "sha256:a3cb24da6109fa12bfa0d27a583617531d4007da01722907e563224483bc26b6"},
-    {file = "rapidpe_rift_pipe-0.3.0.tar.gz", hash = "sha256:ea0ff7bf6221218866caa7d3437e2a0362d6e6bfcc7d500aa38d46f9e57b2aa6"},
+    {file = "rapidpe_rift_pipe-0.5.1-py3-none-any.whl", hash = "sha256:3027012b9bf6096b26c8590c46be4afbc7035e2aecd2c3890c4ac5c4b876d9b9"},
+    {file = "rapidpe_rift_pipe-0.5.1.tar.gz", hash = "sha256:c84f91078bba70574c8de5b4d40ec4a690d369599ae9814c025f4da15d7bbb67"},
 ]
 
 [package.dependencies]
 astropy = "*"
+gwpy = ">=3.0.4"
 h5py = "*"
 lalsuite = "*"
 matplotlib = "*"
 numpy = "*"
 rapid-pe = ">=0.1.0,<0.2.0"
-rift = ">=0.0.15.7,<0.0.15.9"
+rift = "0.0.15.8"
 tabulate = "*"
 
 [[package]]
@@ -4560,13 +4561,13 @@ rsa = ["oauthlib[signedtoken] (>=3.0.0)"]
 
 [[package]]
 name = "rift"
-version = "0.0.15.7"
+version = "0.0.15.8"
 description = "RIFT parameter estimation pipeline. Note branch used is temp-RIT-Tides-port_python3_restructure_package (which will become master shortly)!"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "RIFT-0.0.15.7.tar.gz", hash = "sha256:0708ceda136281e9e0c05d13281b9f0ee497d064c4b3b72ba365b5518d93b9c9"},
+    {file = "RIFT-0.0.15.8.tar.gz", hash = "sha256:d749f667aebb457ca5a9fc7a76987363ba0448acb042a90adf26dffbf3de30f9"},
 ]
 
 [package.dependencies]
@@ -4578,7 +4579,7 @@ lalsuite = "*"
 ligo-segments = "*"
 "ligo.skymap" = "*"
 matplotlib = "*"
-numba = "*"
+numba = ">=0.56"
 numpy = "*"
 pandas = "*"
 precession = "*"
@@ -5829,4 +5830,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.11"
-content-hash = "409ebbc27e1bb1e10b810adf9a5d9197d9ea39903eaa3c6e2c1c713903bef462"
+content-hash = "b37fc0afce2e3a44a6d28566b6898a8d75fa88532317671bb10a1484d6907577"

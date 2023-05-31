@@ -730,17 +730,25 @@ def _upload_tasks_rapidpe(rundir, superevent_id):
         None, None, superevent_id,
         f'Summary page for RapidPE-RIFT is available <a href={url}>here</a>',
         ('pe',))
-
+    pipeline = gracedb.get_superevent(superevent_id)[
+            'preferred_event_data']['pipeline']
+    if pipeline == 'gstlal':
+        pastro_tags = (
+            "pe", "lvem",
+            "public", "p_astro"
+        )
+    else:
+        pastro_tags = ("pe", "p_astro")
     to_upload = [
         (
             "p_astro.json", "RapidPE_RIFT.p_astro.json",
             "RapidPE-RIFT Pastro results",
-            ("pe", "lvem", "public", "p_astro"),
+            pastro_tags,
         ),
         (
             "p_astro.png", "RapidPE_RIFT.p_astro.png",
             "RapidPE-RIFT Pastro results",
-            ("pe", "lvem", "public", "p_astro"),
+            pastro_tags,
         ),
     ]
     tasks = []
@@ -902,6 +910,10 @@ def start_pe(event, superevent_id, pe_pipeline):
         rundirs = [os.path.join(event_dir, m) for m in modes]
         kwargs_list = [{'bilby_mode': m} for m in modes]
         analyses = [f'{m}-mode bilby' for m in modes]
+    elif pe_pipeline == 'rapidpe':
+        rundirs = [event_dir]
+        kwargs_list = [{'event_pipeline': event["pipeline"]}]
+        analyses = [pe_pipeline]
     else:
         rundirs = [event_dir]
         kwargs_list = [{}]

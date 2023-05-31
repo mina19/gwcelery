@@ -32,6 +32,12 @@ Changelog
 
 -   Upgrade lalsuite to v7.15.
 
+-   Updated rapidpe-rift-pipe version to 0.5.1. rapidpe will be
+    submitted on superevents with gstlal/non-gstlal preferred event.
+    Launching rapidpe 30s after merger. `query_shm=True` will run on lower
+    latency data on `/dev/shm/kafka/` if it is available, if not it will
+    default to `/ifocache/llcache/kafka/`.
+
 2.1.1 "Lone Island Mountain Devil" (2023-05-29)
 -----------------------------------------------
 

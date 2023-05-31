@@ -27,6 +27,7 @@ from . import skymaps
 from . import superevents
 
 from ligo.rrt_chat import channel_creation
+from astropy.time import Time
 
 
 @igwn_alert.handler('superevent',
@@ -45,6 +46,24 @@ def handle_superevent(alert):
     superevent_id = alert['uid']
     # launch PE and detchar based on new type superevents
     if alert['alert_type'] == 'new':
+        # launching rapidpe 30s after merger.
+        timeout = max(
+            alert['object']['t_0'] - Time.now().gps +
+            app.conf['rapidpe_timeout'], 0
+        )
+        (
+            _get_preferred_event.si(superevent_id).set(
+                countdown=timeout
+            )
+            |
+            group(
+                _get_lowest_far.si(superevent_id),
+                gracedb.get_event.s()
+            )
+            |
+            parameter_estimation.s(superevent_id, 'rapidpe')
+        ).apply_async()
+
         (
             _get_preferred_event.si(superevent_id).set(
                 countdown=app.conf['pe_timeout']
@@ -55,7 +74,7 @@ def handle_superevent(alert):
                 gracedb.get_event.s()
             )
             |
-            parameter_estimation.s(superevent_id)
+            parameter_estimation.s(superevent_id, 'bilby')
         ).apply_async()
 
         # run check_vectors. Create and upload omegascans
@@ -876,7 +895,7 @@ def _get_lowest_far(superevent_id):
 
 
 @app.task(ignore_result=True, shared=False)
-def parameter_estimation(far_event, superevent_id):
+def parameter_estimation(far_event, superevent_id, pe_pipeline):
     """Parameter Estimation with Bilby and RapidPE-RIFT. Parameter estimation
     runs are triggered for CBC triggers which pass the FAR threshold and are
     not mock uploads. For those which do not pass these criteria, this task
@@ -910,12 +929,7 @@ def parameter_estimation(far_event, superevent_id):
             tags='pe'
         )
     else:
-        pe_pipelines = ['bilby']
-        # Currently rapidpe works only for gstlal triggers
-        if event['pipeline'] == 'gstlal':
-            pe_pipelines += ['rapidpe']
-        for p in pe_pipelines:
-            inference.start_pe.delay(event, superevent_id, p)
+        inference.start_pe.delay(event, superevent_id, pe_pipeline)
 
 
 @gracedb.task(shared=False)
@@ -989,6 +1003,7 @@ def earlywarning_preliminary_initial_update_alert(
                     and f.endswith('.json'):
                 em_bright_filename = fv
             if p_astro_needed \
+                    and {'public'}.issubset(t) \
                     and 'p_astro' in t \
                     and f.endswith('.json'):
                 p_astro_filename = fv
