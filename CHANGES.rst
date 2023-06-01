@@ -4,7 +4,8 @@ Changelog
 2.1.3 (unreleased)
 ----------------------------
 
--   No changes yet.
+-   Make calls to FROZEN_LABEL inside the handle_superevent asynchronous
+    so that they are retries for RetryableHTTPErrors.
 
 2.1.2 "Ogopogo" (2023-06-09)
 ----------------------------

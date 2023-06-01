@@ -48,6 +48,10 @@ from . import data
      ['new', '', 'CBC', 'gstlal', False, 1.e-9, ['H1', 'L1'], 'S1234',
          ['LOW_SIGNIF_LOCKED']],
      ['label_added', 'EARLY_WARNING', 'CBC', 'gstlal', False, 1.e-10,
+         ['H1', 'L1', 'V1'], 'S1234', []],
+     ['label_added', 'EARLY_WARNING', 'CBC', 'gstlal', False, 1.e-10,
+         ['H1', 'L1', 'V1'], 'S1234', ['SIGNIF_LOCKED']],
+     ['label_added', 'SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-10,
          ['H1', 'L1', 'V1'], 'S1234', []]])
 def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                            alert_type, alert_label, group, pipeline,
@@ -253,6 +257,9 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         )
 
     elif alert_label == 'SIGNIF_LOCKED':
+        if superevents.FROZEN_LABEL not in superevent_labels:
+            create_label.assert_has_calls(
+                [call(superevents.FROZEN_LABEL, superevent_id)])
         annotate_fits.assert_called_once()
         _event_info = get_event('G1234')  # this gets the preferred event info
         assert superevents.should_publish(_event_info)

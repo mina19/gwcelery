@@ -135,10 +135,12 @@ def handle_superevent(alert):
         # launch significant alert on SIGNIF_LOCKED
         elif label_name == superevents.SIGNIFICANT_LABEL:
             # ensure superevent is locked before starting alert workflow
+            r = chain()
             if superevents.FROZEN_LABEL not in alert['object']['labels']:
-                gracedb.create_label(superevents.FROZEN_LABEL, superevent_id)
+                r |= gracedb.create_label.si(superevents.FROZEN_LABEL,
+                                             superevent_id)
 
-            (
+            r |= (
                 gracedb.get_events.si(query)
                 |
                 superevents.select_preferred_event.s()
@@ -165,7 +167,8 @@ def handle_superevent(alert):
                 |
                 earlywarning_preliminary_alert.s(
                     alert, alert_type='preliminary')
-            ).apply_async()
+            )
+            r.apply_async()
 
         # launch second preliminary on GCN_PRELIM_SENT
         elif label_name == 'GCN_PRELIM_SENT':
@@ -226,10 +229,12 @@ def handle_superevent(alert):
                 return
             # start the EW alert pipeline; is blocked by SIGNIF_LOCKED
             # ensure superevent is locked before starting pipeline
+            r = chain()
             if superevents.FROZEN_LABEL not in alert['object']['labels']:
-                gracedb.create_label(superevents.FROZEN_LABEL, superevent_id)
+                r |= gracedb.create_label.si(superevents.FROZEN_LABEL,
+                                             superevent_id)
 
-            (
+            r |= (
                 gracedb.get_events.si(query)
                 |
                 superevents.select_preferred_event.s()
@@ -243,7 +248,8 @@ def handle_superevent(alert):
                 |
                 earlywarning_preliminary_alert.s(
                     alert, alert_type='earlywarning')
-            ).apply_async()
+            )
+            r.apply_async()
 
         # launch initial/retraction alert on ADVOK/ADVNO
         elif label_name == 'ADVOK':
