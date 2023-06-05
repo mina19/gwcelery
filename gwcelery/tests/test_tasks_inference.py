@@ -225,6 +225,8 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
         }
         if host != 'gracedb.ligo.org':
             ans['queue'] = 'Online_PE_MDC'
+        else:
+            ans['accounting'] = 'ligo.prod.o4.cbc.pe.bilby'
         if mode == 'production':
             ans.update(
                 {'sampler_kwargs': {'naccept': 60, 'nlive': 500,

@@ -312,6 +312,7 @@ def _setup_dag_for_bilby(
         settings['queue'] = 'Online_PE_MDC'
     else:
         settings['queue'] = 'Online_PE'
+        settings['accounting'] = 'ligo.prod.o4.cbc.pe.bilby'
     # FIXME: using live data for gracedb-test events should be reconsidered
     # when we have a better idea to differentiate MDC and real events.
     if app.conf['gracedb_host'] not in [

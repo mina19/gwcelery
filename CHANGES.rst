@@ -17,6 +17,8 @@ Changelog
 
 -   Upgrade bilby_pipe to v1.1.1
 
+-   Use production accounting tag for bilby running on real events.
+
 2.1.1 "Lone Island Mountain Devil" (2023-05-29)
 -----------------------------------------------
 
