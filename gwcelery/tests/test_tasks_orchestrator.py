@@ -157,7 +157,6 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                            ('p-astro', 'p-astro-filename')))
     gcn_send = Mock()
     alerts_send = Mock()
-    query_data = Mock()
     setup_dag = Mock()
     start_pe = Mock()
     create_voevent = Mock(return_value='S1234-1-Preliminary.xml')
@@ -209,8 +208,6 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                         create_initial_circular)
     monkeypatch.setattr('gwcelery.tasks.circulars.create_emcoinc_circular.run',
                         create_emcoinc_circular)
-    monkeypatch.setattr('gwcelery.tasks.inference.query_data.run',
-                        query_data)
     monkeypatch.setattr('gwcelery.tasks.inference._setup_dag_for_bilby.run',
                         setup_dag)
     monkeypatch.setattr('gwcelery.tasks.inference.start_pe.run',
@@ -348,7 +345,6 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             assert _alert_type == 'less-significant'
 
     if alert_type == 'new' and group == 'CBC':
-        query_data.assert_called_once()
         threshold = (
             app.conf['preliminary_alert_far_threshold']['cbc'] /
             app.conf['preliminary_alert_trials_factor']['cbc']
@@ -356,7 +352,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         if far <= threshold:
             assert start_pe.call_count == 2
             call_args = [
-                call_args.args[1:] for call_args in start_pe.call_args_list]
+                call_args.args for call_args in start_pe.call_args_list]
             assert all(
                 [(get_event('G1234'), superevent_id, pipeline) in call_args
                  for pipeline in ('bilby', 'rapidpe')])
@@ -734,13 +730,9 @@ def test_only_mdc_alerts_switch(mock_alert, mock_upload, mock_download,
 )
 def test_parameter_estimation(monkeypatch, far, event):
     superevent_id = 'S1234'
-    frametype_dict = {'H1': 'H1_llhoft', 'L1': 'L1_llhoft', 'V1': 'V1_llhoft'}
     mock_upload = Mock()
-    mock_query_data = Mock(return_value=frametype_dict)
     mock_start_pe = Mock()
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', mock_upload)
-    monkeypatch.setattr(
-        'gwcelery.tasks.inference.query_data.run', mock_query_data)
     monkeypatch.setattr('gwcelery.tasks.inference.start_pe.run', mock_start_pe)
 
     orchestrator.parameter_estimation.delay(
@@ -752,12 +744,9 @@ def test_parameter_estimation(monkeypatch, far, event):
         far <= threshold and event['group'] == 'CBC' and
         event['search'] != 'MDC'
     ):
-        mock_query_data.assert_called_once()
-        mock_start_pe.assert_any_call(
-            frametype_dict, event, superevent_id, 'bilby')
+        mock_start_pe.assert_any_call(event, superevent_id, 'bilby')
         if event['pipeline'] == 'gstlal':
-            mock_start_pe.assert_any_call(
-                frametype_dict, event, superevent_id, 'rapidpe')
+            mock_start_pe.assert_any_call(event, superevent_id, 'rapidpe')
             assert mock_start_pe.call_count == 2
         else:
             assert mock_start_pe.call_count == 1

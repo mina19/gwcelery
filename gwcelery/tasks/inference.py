@@ -10,72 +10,12 @@ import urllib
 from bilby_pipe.utils import convert_string_to_dict
 from bilby_pipe.bilbyargparser import BilbyConfigFileParser
 from celery import group
-from gwdatafind import find_urls
 import numpy as np
 
 from .. import app
 from ..jinja import env
 from . import condor
 from . import gracedb
-
-
-def _data_exists(gpstime, frametype_dict):
-    """Check whether data at input GPS time can be found with gwdatafind and
-    return true if it is found.
-    """
-    return min(
-        len(
-            find_urls(ifo[0], frametype_dict[ifo], gpstime, gpstime + 1)
-        ) for ifo in frametype_dict.keys()
-    ) > 0
-
-
-class NotEnoughData(Exception):
-    """Raised if found data is not enough due to the latency of data
-    transfer
-    """
-
-
-@app.task(bind=True, autoretry_for=(NotEnoughData, ),
-          retry_backoff=True, retry_backoff_max=600, max_retries=16)
-def query_data(self, trigtime):
-    """Continues to query data until it is found with gwdatafind and return
-    frametypes for the data. This query will be retried for ~4600 seconds,
-    which is longer than the expected latency of transfer of high-latency data
-    with length of ~4000 seconds.
-    """
-    end = trigtime + 2
-    if _data_exists(end, app.conf['low_latency_frame_types']):
-        return app.conf['low_latency_frame_types']
-    elif _data_exists(end, app.conf['high_latency_frame_types']):
-        return app.conf['high_latency_frame_types']
-    else:
-        raise NotEnoughData
-
-
-@app.task(ignore_result=True, shared=False)
-def upload_no_frame_files(request, exc, traceback, superevent_id):
-    """Upload notification when no frame files are found.
-
-    Parameters
-    ----------
-    request : Context (placeholder)
-        Task request variables
-    exc : Exception
-        Exception raised by query_data
-    traceback : str (placeholder)
-        Traceback message from a task
-    superevent_id : str
-        The GraceDB ID of a target superevent
-
-    """
-    if isinstance(exc, NotEnoughData):
-        gracedb.upload.delay(
-            filecontents=None, filename=None,
-            graceid=superevent_id,
-            message='Frame files have not been found.',
-            tags='pe'
-        )
 
 
 def _find_appropriate_cal_env(trigtime, dir_name):
@@ -115,13 +55,11 @@ def _find_appropriate_cal_env(trigtime, dir_name):
     return os.path.join(dir_name, appropriate_cal.decode('utf-8'))
 
 
-def prepare_lalinference_ini(frametype_dict, event, superevent_id):
+def prepare_lalinference_ini(event, superevent_id):
     """Determine LALInference configurations and return ini file content
 
     Parameters
     ----------
-    frametype_dict : dict
-        Dictionary whose keys are ifos and values are frame types
     event : dict
         The json contents of a target G event retrieved from
         gracedb.get_event(), whose mass and spin information are used to
@@ -164,7 +102,7 @@ def prepare_lalinference_ini(frametype_dict, event, superevent_id):
                    'bayeswavepost': 'BayesWavePost'}
     ini_settings = {
         'gracedb_host': app.conf['gracedb_host'],
-        'types': frametype_dict,
+        'types': app.conf['low_latency_frame_types'],
         'channels': app.conf['strain_channel_names'],
         'state_vector_channels': app.conf['state_vector_channel_names'],
         'webdir': os.path.join(
@@ -193,8 +131,7 @@ def prepare_lalinference_ini(frametype_dict, event, superevent_id):
 
 
 @app.task(shared=False)
-def _setup_dag_for_lalinference(coinc, rundir, event, superevent_id,
-                                frametype_dict):
+def _setup_dag_for_lalinference(coinc, rundir, event, superevent_id):
     """Create DAG for a lalinference run and return the path to DAG.
 
     Parameters
@@ -209,8 +146,6 @@ def _setup_dag_for_lalinference(coinc, rundir, event, superevent_id,
         determine analysis settings.
     superevent_id : str
         The GraceDB ID of a target superevent
-    frametype_dict : dict
-        Dictionary whose keys are ifos and values are frame types
 
     Returns
     -------
@@ -224,8 +159,7 @@ def _setup_dag_for_lalinference(coinc, rundir, event, superevent_id,
         f.write(coinc)
 
     # write down and upload ini file
-    ini_contents = prepare_lalinference_ini(
-        frametype_dict, event, superevent_id)
+    ini_contents = prepare_lalinference_ini(event, superevent_id)
     path_to_ini = os.path.join(rundir, 'online_lalinference_pe.ini')
     with open(path_to_ini, 'w') as f:
         f.write(ini_contents)
@@ -396,7 +330,7 @@ def _setup_dag_for_bilby(
 
 
 @app.task(shared=False)
-def _setup_dag_for_rapidpe(rundir, superevent_id, frametype_dict):
+def _setup_dag_for_rapidpe(rundir, superevent_id):
     """Create DAG for a rapidpe run and return the path to DAG.
 
     Parameters
@@ -405,8 +339,6 @@ def _setup_dag_for_rapidpe(rundir, superevent_id, frametype_dict):
         The path to a run directory where the DAG file is created
     superevent_id : str
         The GraceDB ID of a target superevent
-    frametype_dict : dict
-        Dictionary whose keys are ifos and values are frame types
 
     Returns
     -------
@@ -431,7 +363,7 @@ def _setup_dag_for_rapidpe(rundir, superevent_id, frametype_dict):
          'gracedb_url': f'https://{app.conf["gracedb_host"]}/api',
          'superevent_id': superevent_id,
          'run_mode': run_mode,
-         'frame_data_types': frametype_dict})
+         'frame_data_types': app.conf['low_latency_frame_types']})
     path_to_ini = os.path.join(rundir, 'rapidpe.ini')
     with open(path_to_ini, 'w') as f:
         f.write(ini_contents)
@@ -469,8 +401,7 @@ def _condor_no_submit(path_to_dag):
     return '{}.condor.sub'.format(path_to_dag)
 
 
-def dag_prepare_task(rundir, event, superevent_id, pe_pipeline,
-                     frametype_dict=None, **kwargs):
+def dag_prepare_task(rundir, event, superevent_id, pe_pipeline, **kwargs):
     """Return a canvas of tasks to prepare DAG.
 
     Parameters
@@ -486,8 +417,6 @@ def dag_prepare_task(rundir, event, superevent_id, pe_pipeline,
     pe_pipeline : str
         The parameter estimation pipeline used,
         lalinference, bilby, or rapidpe.
-    frametype_dict : dict
-        Dictionary whose keys are ifos and values are frame types
 
     Returns
     -------
@@ -497,15 +426,13 @@ def dag_prepare_task(rundir, event, superevent_id, pe_pipeline,
     """
     if pe_pipeline == 'lalinference':
         canvas = gracedb.download.si('coinc.xml', event['graceid']) | \
-            _setup_dag_for_lalinference.s(rundir, event, superevent_id,
-                                          frametype_dict)
+            _setup_dag_for_lalinference.s(rundir, event, superevent_id)
     elif pe_pipeline == 'bilby':
         canvas = gracedb.download.si('coinc.xml', event['graceid']) | \
             _setup_dag_for_bilby.s(
                 rundir, event, superevent_id, kwargs['bilby_mode'])
     elif pe_pipeline == 'rapidpe':
-        canvas = _setup_dag_for_rapidpe.s(
-            rundir, superevent_id, frametype_dict)
+        canvas = _setup_dag_for_rapidpe.s(rundir, superevent_id)
     else:
         raise NotImplementedError(f'Unknown PE pipeline {pe_pipeline}.')
     canvas |= _condor_no_submit.s()
@@ -917,13 +844,11 @@ def _pesummary_task(webdir, samples, **pesummary_kwargs):
 
 
 @app.task(ignore_result=True, shared=False)
-def start_pe(frametype_dict, event, superevent_id, pe_pipeline):
+def start_pe(event, superevent_id, pe_pipeline):
     """Run Parameter Estimation on a given event.
 
     Parameters
     ----------
-    frametype_dict : dict
-        Dictionary whose keys are ifos and values are frame types
     event : dict
         The json contents of a target G event retrieved from
         gracedb.get_event(), whose mass and spin information are used to
@@ -963,8 +888,7 @@ def start_pe(frametype_dict, event, superevent_id, pe_pipeline):
 
         (
             dag_prepare_task(
-                rundir, event, superevent_id, pe_pipeline, frametype_dict,
-                **kwargs
+                rundir, event, superevent_id, pe_pipeline, **kwargs
             )
             |
             condor.submit.s().on_error(

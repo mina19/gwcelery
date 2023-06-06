@@ -13,54 +13,6 @@ from ..tasks import condor
 from ..tasks import inference
 
 
-def mock_find_urls(available_frametypes):
-    """Return mock gwdatafind.find_urls, which returns 'path_to_data' when
-    input ifo and frametype are in available_frametypes.
-
-    available_frametypes : dictionary
-        Dictionary whose key is ifo and item is frametype
-    """
-    _available_frametypes = dict(
-        (ifo[0], frametype) for ifo, frametype in available_frametypes.items())
-
-    def _mock_find_url(ifo, frametype, start, end):
-        data_exists = (ifo in _available_frametypes.keys() and
-                       frametype == _available_frametypes[ifo])
-        if data_exists:
-            return ['path_to_data']
-        else:
-            return []
-
-    return _mock_find_url
-
-
-@pytest.mark.parametrize(
-    'available_frametypes,answer',
-    [[{}, None],
-     [{'H1': app.conf['low_latency_frame_types']['H1']}, None],
-     [app.conf['low_latency_frame_types'],
-      app.conf['low_latency_frame_types']],
-     [app.conf['high_latency_frame_types'],
-      app.conf['high_latency_frame_types']]]
-)
-def test_query_data(monkeypatch, available_frametypes, answer):
-    monkeypatch.setattr('gwcelery.tasks.inference.find_urls',
-                        mock_find_urls(available_frametypes))
-    if answer is None:
-        with pytest.raises(inference.NotEnoughData):
-            inference.query_data(1187008882)
-    else:
-        assert inference.query_data(1187008882) == answer
-
-
-def test_upload_no_frametypes(monkeypatch):
-    upload = Mock()
-    monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
-    inference.upload_no_frame_files(
-        None, inference.NotEnoughData(), 'test', 'S1234')
-    upload.assert_called_once()
-
-
 def test_find_appropriate_cal_env(tmp_path):
     filepath = tmp_path / 'H_CalEnvs.txt'
     t1, cal1 = 1126259462, 'O1_calibration.txt'
@@ -126,8 +78,7 @@ def test_prepare_lalinference_ini(monkeypatch, mc, q, answers):
     }
     config = configparser.ConfigParser()
     config.read_string(
-        inference.prepare_lalinference_ini(
-            app.conf['low_latency_frame_types'], event, 'S1234'))
+        inference.prepare_lalinference_ini(event, 'S1234'))
     for section, key, answer in answers:
         assert config[section][key] == answer
 
@@ -167,7 +118,7 @@ def test_setup_dag_for_lalinference(monkeypatch, tmp_path):
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
 
     path_to_dag = inference._setup_dag_for_lalinference(
-        coinc, rundir, {}, 'S1234', {})
+        coinc, rundir, {}, 'S1234')
 
     assert os.path.exists(path_to_dag)
     with open(path_to_dag, 'r') as f:
@@ -305,7 +256,7 @@ def test_setup_dag_for_rapidpe(monkeypatch, tmp_path):
     monkeypatch.setattr('subprocess.run', _subprocess_run)
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
 
-    path_to_dag = inference._setup_dag_for_rapidpe(rundir, 'S1234', {})
+    path_to_dag = inference._setup_dag_for_rapidpe(rundir, 'S1234')
     with open(path_to_dag, 'r') as f:
         assert f.read() == dag_content
     upload.assert_called_once()
@@ -333,12 +284,12 @@ def test_setup_dag_for_failure(monkeypatch, tmp_path, pipeline):
     with pytest.raises(subprocess.CalledProcessError):
         if pipeline == 'lalinference':
             inference._setup_dag_for_lalinference(
-                b'coinc', rundir, event, 'S1234', {})
+                b'coinc', rundir, event, 'S1234')
         elif pipeline == 'bilby':
             inference._setup_dag_for_bilby(
                 (b'psd'), rundir, event, 'S1234', 'production')
         elif pipeline == 'rapidpe':
-            inference._setup_dag_for_rapidpe(rundir, 'S1234', {})
+            inference._setup_dag_for_rapidpe(rundir, 'S1234')
     if pipeline == 'bilby':
         assert upload.call_count == 1
     else:
@@ -354,7 +305,6 @@ def test_dag_prepare_task(monkeypatch, pipeline):
     coinc = b'coinc'
     event = {'gpstime': 1187008882, 'graceid': 'G1234'}
     rundir = 'rundir'
-    frametype_dict = {'H1': 'H1_llhoft', 'L1': 'L1_llhoft'}
     path_to_dag = os.path.join(rundir, 'parameter_estimation.dag')
     kwargs = {'bilby_mode': 'production'}
 
@@ -362,9 +312,8 @@ def test_dag_prepare_task(monkeypatch, pipeline):
         if filename == 'coinc.xml':
             return coinc
 
-    def _setup_dag_for_lalinference(c, r, e, s, f):
-        assert (c == coinc and r == rundir and e == event and s == sid and
-                f == frametype_dict)
+    def _setup_dag_for_lalinference(c, r, e, s):
+        assert (c == coinc and r == rundir and e == event and s == sid)
         return path_to_dag
 
     def _setup_dag_for_bilby(c, r, e, s, m):
@@ -372,8 +321,8 @@ def test_dag_prepare_task(monkeypatch, pipeline):
             m == kwargs['bilby_mode']
         return path_to_dag
 
-    def _setup_dag_for_rapidpe(r, s, f):
-        assert r == rundir and s == sid and f == frametype_dict
+    def _setup_dag_for_rapidpe(r, s):
+        assert r == rundir and s == sid
         return path_to_dag
 
     def _subprocess_run(cmd, **kwargs):
@@ -396,7 +345,7 @@ def test_dag_prepare_task(monkeypatch, pipeline):
     monkeypatch.setattr('subprocess.run', _subprocess_run)
     if pipeline in ['lalinference', 'bilby', 'rapidpe']:
         inference.dag_prepare_task(
-            rundir, event, sid, pipeline, frametype_dict, **kwargs).delay()
+            rundir, event, sid, pipeline, **kwargs).delay()
         if pipeline == 'lalinference':
             mock_setup_dag_for_lalinference.assert_called_once()
         elif pipeline == 'bilby':
@@ -406,7 +355,7 @@ def test_dag_prepare_task(monkeypatch, pipeline):
     else:
         with pytest.raises(NotImplementedError):
             inference.dag_prepare_task(
-                rundir, event, sid, pipeline, frametype_dict).delay()
+                rundir, event, sid, pipeline).delay()
 
 
 @pytest.mark.parametrize(
@@ -610,7 +559,7 @@ def test_start_pe(monkeypatch, tmp_path, pipeline):
     monkeypatch.setattr('gwcelery.tasks.inference.dag_finished.run',
                         dag_finished)
 
-    inference.start_pe({}, {'graceid': 'G1234'}, 'S1234', pipeline)
+    inference.start_pe({'graceid': 'G1234'}, 'S1234', pipeline)
     dag_prepare_task.assert_called_once()
     condor_submit.assert_called_once()
     dag_finished.assert_called_once()

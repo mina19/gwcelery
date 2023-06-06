@@ -910,17 +910,12 @@ def parameter_estimation(far_event, superevent_id):
             tags='pe'
         )
     else:
-        canvas = inference.query_data.s(event['gpstime']).on_error(
-            inference.upload_no_frame_files.s(superevent_id)
-        )
         pe_pipelines = ['bilby']
         # Currently rapidpe works only for gstlal triggers
         if event['pipeline'] == 'gstlal':
             pe_pipelines += ['rapidpe']
-        canvas |= group(
-            inference.start_pe.s(event, superevent_id, p)
-            for p in pe_pipelines)
-        canvas.apply_async()
+        for p in pe_pipelines:
+            inference.start_pe.delay(event, superevent_id, p)
 
 
 @gracedb.task(shared=False)
