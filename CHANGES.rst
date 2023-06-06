@@ -4,7 +4,7 @@ Changelog
 2.1.2 (Unreleased)
 ------------------
 
--   HIGH_PROFILE label only applied to preliminary alert
+-   Do not apply HIGH_PROFILE label to less-significant alerts.
 
 -   Do not make pe skymap public automatically before approved.
 
