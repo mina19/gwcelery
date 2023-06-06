@@ -4,6 +4,9 @@ Changelog
 2.1.2 (Unreleased)
 ------------------
 
+-   Update the low-significance threshold to be 2/day pre-trials factor. Update
+    low-siginificance trials factors to 7.
+
 -   Do not apply HIGH_PROFILE label to less-significant alerts.
 
 -   Do not make pe skymap public automatically before approved.

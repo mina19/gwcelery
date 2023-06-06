@@ -408,6 +408,8 @@ def test_upload_same_event():
         ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY'], True, True],
      ['CBC', 'gstlal', 'AllSky', False, 1.e-6, 'H1',  # complete less-signif
         ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY'], False, True],
+     ['CBC', 'gstlal', 'AllSky', False, 2.5e-5, 'H1',  # complete noise
+        ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY'], False, False],
      ['CBC', 'gstlal', 'AllSky', False, 1.e-6, 'H1',  # incomplete less-signif
         ['PASTRO_READY', 'SKYMAP_READY'], False, False],
      ['CBC', 'gstlal', 'AllSky', False, 1.e-6, 'H1,L1',  # incomplete CBC

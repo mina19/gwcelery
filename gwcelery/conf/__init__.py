@@ -149,12 +149,6 @@ significant_alert_far_threshold = {'cbc': 1 / (30 * 86400),
 """Group specific maximum false alarm rate to consider
 sending significant alerts."""
 
-preliminary_alert_far_threshold = {'cbc': 2 / (1 * 86400),
-                                   'burst': 2 / (1 * 86400),
-                                   'test': 2 / (1 * 86400)}
-"""Group specific maximum false alarm rate to consider
-sending less significant alerts."""
-
 early_warning_alert_trials_factor = 4.0
 """Trials factor for early warning alerts. There are two pipelines that are
 producing early warning events: gstlal and spiir."""
@@ -167,8 +161,18 @@ significant_alert_trials_factor = dict(cbc=5.0, burst=4.0)
 factor is the number of pipelines. CBC pipelines are gstlal, pycbc, mbta and
 spiir. Burst searches are cwb.allsky, cwb.imbh, and olib."""
 
-preliminary_alert_trials_factor = dict(cbc=8.0, burst=8.0)
+preliminary_alert_trials_factor = dict(cbc=7.0, burst=7.0)
 """Trials factor for less significant alerts."""
+
+preliminary_alert_far_threshold = {
+    'cbc': 2 / (1 * 86400) * preliminary_alert_trials_factor['cbc'],
+    'burst': 2 / (1 * 86400) * preliminary_alert_trials_factor['burst'],
+    'test': 2 / (1 * 86400) * preliminary_alert_trials_factor['cbc']
+}
+"""Group specific maximum false alarm rate to consider sending less significant
+alerts. Trials factors are included here to ensure events are sent with the
+false alarm rate initially listed and removing trials factors are from the
+threshold calculation."""
 
 snews_gw_far_threshold = 1 / (3600 * 24)
 """Maximum false alarm rate for a superevent to send out a coincidence alert
