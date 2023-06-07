@@ -35,8 +35,7 @@ COMBINED_SKYMAP_FILENAME_PNG = 'combined-ext.png'
 """Filename of combined sky map plot"""
 
 
-@app.task(shared=False,
-          queue='exttrig')
+@app.task(shared=False)
 def create_combined_skymap(se_id, ext_id, preferred_event=None):
     """Creates and uploads the combined LVK-external skymap, uploading to the
     external trigger GraceDB page. The filename used for the combined sky map
@@ -97,7 +96,6 @@ def create_combined_skymap(se_id, ext_id, preferred_event=None):
 
 
 @app.task(autoretry_for=(ValueError,), retry_backoff=10,
-          queue='exttrig',
           retry_backoff_max=600)
 def get_skymap_filename(graceid, is_gw):
     """Get the skymap fits filename.
@@ -144,7 +142,7 @@ def get_skymap_filename(graceid, is_gw):
     raise ValueError('No skymap available for {0} yet.'.format(graceid))
 
 
-@app.task(shared=False, queue='exttrig')
+@app.task(shared=False)
 def _download_skymaps(gw_filename, ext_filename, gw_id, ext_id):
     """Download both superevent and external sky map to be combined."""
     gw_skymap = gracedb.download(gw_filename, gw_id)
@@ -194,7 +192,7 @@ def combine_skymaps_moc_flat(gw_sky, ext_sky, ext_header):
     return gw_sky
 
 
-@app.task(shared=False, queue='exttrig')
+@app.task(shared=False)
 def combine_skymaps(skymapsbytes, gw_moc=True):
     """This task combines the two input skymaps, in this case the external
     trigger skymap and the LVK skymap and writes to a temporary output file. It
@@ -244,7 +242,7 @@ def external_trigger(graceid):
     raise ValueError('No associated GRB EM event(s) for {0}.'.format(graceid))
 
 
-@app.task(shared=False, queue='exttrig')
+@app.task(shared=False)
 def external_trigger_heasarc(external_id):
     """Returns the HEASARC fits file link."""
     gracedb_log = gracedb.get_log(external_id)
@@ -262,7 +260,6 @@ def external_trigger_heasarc(external_id):
 
 
 @app.task(autoretry_for=(urllib.error.HTTPError,), retry_backoff=10,
-          queue='exttrig',
           retry_backoff_max=600)
 def get_external_skymap(link, search):
     """Download the Fermi sky map fits file and return the contents as a byte
@@ -290,7 +287,6 @@ def get_external_skymap(link, search):
 
 
 @app.task(autoretry_for=(urllib.error.HTTPError, urllib.error.URLError,),
-          queue='exttrig',
           retry_backoff=10, retry_backoff_max=1200)
 def get_upload_external_skymap(event, skymap_link=None):
     """If a Fermi sky map is not uploaded yet, tries to download one and upload
@@ -486,7 +482,7 @@ def write_to_fits(skymap, event, notice_type, notice_date):
             return file.read()
 
 
-@app.task(shared=False, queue='exttrig')
+@app.task(shared=False)
 def create_upload_external_skymap(event, notice_type, notice_date):
     """Create and upload external sky map using
     RA, dec, and error radius information.

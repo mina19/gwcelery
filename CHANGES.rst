@@ -23,6 +23,9 @@ Changelog
     stream and PE timeout is long enough for low-latency frame data to be
     produced.
 
+-   Move RAVEN tasks to main worker and make GCN ingestion sequential.
+
+
 2.1.1 "Lone Island Mountain Devil" (2023-05-29)
 -----------------------------------------------
 

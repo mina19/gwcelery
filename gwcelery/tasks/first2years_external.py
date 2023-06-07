@@ -119,7 +119,6 @@ def _is_joint_mdc(graceid, se_search):
 
 @igwn_alert.handler('mdc_superevent',
                     'superevent',
-                    queue='exttrig',
                     shared=False)
 def upload_external_event(alert):
     """Upload a random GRB event for a certain percentage of MDC
@@ -168,8 +167,7 @@ def upload_external_event(alert):
     return events, pipelines
 
 
-@app.task(queue='exttrig',
-          ignore_result=True,
+@app.task(ignore_result=True,
           shared=False)
 def upload_snews_event():
     """Create and upload a SNEWS-like MDC external event."""

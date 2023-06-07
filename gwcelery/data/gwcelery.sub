@@ -31,7 +31,7 @@ arguments = "gwcelery worker -l info -n gwcelery-worker@%h -f %n.log -Q celery -
 description = gwcelery-worker
 queue
 
-arguments = "gwcelery worker -l info -n gwcelery-exttrig-worker@%h -f %n.log -Q exttrig -c 1"
+arguments = "gwcelery worker -l info -n gwcelery-exttrig-worker@%h -f %n.log -Q exttrig -c 1 --prefetch-multiplier 1"
 description = gwcelery-exttrig-worker
 queue
 

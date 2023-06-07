@@ -233,7 +233,6 @@ def handle_grb_gcn(payload):
                     'external_swift',
                     'external_integral',
                     'external_agile',
-                    queue='exttrig',
                     shared=False)
 def handle_grb_igwn_alert(alert):
     """Parse an IGWN alert message related to superevents/GRB external triggers
@@ -432,7 +431,6 @@ def handle_grb_igwn_alert(alert):
 @igwn_alert.handler('superevent',
                     'mdc_superevent',
                     'external_snews',
-                    queue='exttrig',
                     shared=False)
 def handle_snews_igwn_alert(alert):
     """Parse an IGWN alert message related to superevents/SN external triggers
@@ -493,8 +491,7 @@ def _get_superevent_ext_ids(graceid, event):
     return se_id, ext_id
 
 
-@app.task(queue='exttrig',
-          shared=False)
+@app.task(shared=False)
 def _launch_external_detchar(event):
     start = event['gpstime']
     if event['pipeline'] == 'SNEWS':

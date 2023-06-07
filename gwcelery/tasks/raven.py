@@ -11,8 +11,7 @@ from . import gracedb
 log = get_task_logger(__name__)
 
 
-@app.task(queue='exttrig',
-          shared=False)
+@app.task(shared=False)
 def calculate_coincidence_far(superevent, exttrig, tl, th,
                               use_superevent_skymap=None):
     """Compute coincidence FAR for external trigger and superevent
@@ -73,8 +72,7 @@ def calculate_coincidence_far(superevent, exttrig, tl, th,
                    far_grb=exttrig['far'])
 
 
-@app.task(queue='exttrig',
-          shared=False)
+@app.task(shared=False)
 def coincidence_search(gracedb_id, alert_object, group=None, pipelines=[],
                        searches=[], se_searches=[]):
     """Perform ligo-raven search for coincidences. Determines time window to
@@ -153,8 +151,7 @@ def _time_window(gracedb_id, group, pipelines, searches):
     return tl, th
 
 
-@app.task(queue='exttrig',
-          shared=False)
+@app.task(shared=False)
 def search(gracedb_id, alert_object, tl=-5, th=5, group=None,
            pipelines=[], searches=[], se_searches=[]):
     """Perform ligo-raven search for coincidences.
@@ -192,8 +189,7 @@ def search(gracedb_id, alert_object, tl=-5, th=5, group=None,
                                     se_searches=se_searches)
 
 
-@app.task(queue='exttrig',
-          shared=False)
+@app.task(shared=False)
 def raven_pipeline(raven_search_results, gracedb_id, alert_object, tl, th,
                    gw_group, use_superevent_skymap=None):
     """Executes much of the full raven pipeline, including adding
@@ -253,8 +249,7 @@ def raven_pipeline(raven_search_results, gracedb_id, alert_object, tl, th,
         canvas.delay()
 
 
-@app.task(queue='exttrig',
-          shared=False)
+@app.task(shared=False)
 def preferred_superevent(raven_search_results):
     """Chooses the superevent with the lowest far for an external
     event to be added to. This is to prevent errors from trying to
@@ -271,8 +266,7 @@ def preferred_superevent(raven_search_results):
     return [raven_search_results[idx]]
 
 
-@app.task(queue='exttrig',
-          shared=False)
+@app.task(shared=False)
 def update_coinc_far(coinc_far_dict, superevent, ext_event):
     """Update joint info in superevent based on the current preferred
     coincidence. This prefers a spacetime joint FAR over a time-only joint
@@ -350,8 +344,7 @@ def update_coinc_far(coinc_far_dict, superevent, ext_event):
     return coinc_far_dict
 
 
-@app.task(queue='exttrig',
-          shared=False)
+@app.task(shared=False)
 def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
                         ext_event, gw_group):
     """Determine whether an event should be published as a preliminary alert.
@@ -501,8 +494,7 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
     ).delay()
 
 
-@app.task(queue='exttrig',
-          shared=False)
+@app.task(shared=False)
 def sog_paper_pipeline(ext_event, superevent):
     """Determine whether an a speed of gravity measurment manuscript should be
     triggered for a given coincidence.
