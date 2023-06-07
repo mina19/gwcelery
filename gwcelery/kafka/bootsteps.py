@@ -176,9 +176,9 @@ class KafkaWriter(KafkaBase):
         if kafka_error is None:
             self.kafka_delivery_failures = False
         else:
-            log.error(f'Received error code {kafka_error.error_code} '
-                      f'({kafka_error.reason}) when delivering '
-                      f'{record["superevent_id"]} '
+            log.error(f'Received error code {kafka_error.code()} '
+                      f'({kafka_error.name()}, {kafka_error.str()}) '
+                      f'when delivering {record["superevent_id"]} '
                       f'{record["alert_type"]} alert to {kafka_url}')
             self.kafka_delivery_failures = True
 
