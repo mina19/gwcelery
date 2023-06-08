@@ -678,7 +678,7 @@ def _annotate_fits_and_return_input(input_list, superevent_id):
     return input_list
 
 
-@app.task(shared=False)
+@gracedb.task(shared=False)
 def _unpack_args_and_send_earlywarning_preliminary_alert(input_list, alert,
                                                          alert_type):
     """Unpack the output of the skymap, embright, p-astro download group in the
