@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.1.2 (Unreleased)
-------------------
+2.1.2 "Ogopogo" (2023-06-09)
+----------------------------
 
 -   Update the low-significance threshold to be 2/day pre-trials factor. Update
     low-siginificance trials factors to 7.
@@ -14,11 +14,15 @@ Changelog
 -   Make image created when omegascan fails smaller.
 
 -   Remove "overall state of detectors" line from detchar vector table,
-    since without Virgo being online it will always be "bad."
+    since without Virgo being online it will always be "bad".
 
 -   Check the iDQ OK vector before checking the value of iDQ timeseries.
 
--   Upgrade bilby_pipe to v1.1.1
+-   Upgrade bilby_pipe to v1.1.1.
+
+-   Enable SCiMMA kafka on minikube.
+
+-   Use real KafkaError methods in delivery callback.
 
 -   Use production accounting tag for bilby running on real events.
 
@@ -27,6 +31,9 @@ Changelog
     produced.
 
 -   Move RAVEN tasks to main worker and make GCN ingestion sequential.
+
+-   Update low-significance FAR threshold and trials factors to ensure these
+    will go out at a rate of 2/day pre-trials factors.
 
 -   Limit the number of MDC BBH bilby jobs to less than 5 to save disk usage.
 
@@ -37,6 +44,8 @@ Changelog
     Launching rapidpe 30s after merger. `query_shm=True` will run on lower
     latency data on `/dev/shm/kafka/` if it is available, if not it will
     default to `/ifocache/llcache/kafka/`.
+
+-   When updating the preferred event, also update t_0.
 
 2.1.1 "Lone Island Mountain Devil" (2023-05-29)
 -----------------------------------------------
