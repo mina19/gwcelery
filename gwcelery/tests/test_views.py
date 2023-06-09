@@ -43,7 +43,12 @@ def test_send_preliminary_gcn_post_no_data(client, monkeypatch):
 def test_send_preliminary_gcn_post(client, monkeypatch):
     """Test send_update_gcn endpoint with complete form data."""
     mock_update_superevent = Mock()
-    mock_event = Mock()
+    mock_event = MagicMock()
+    event_dict_spoofer = {
+        'pipeline': 'gstlal',
+        'gpstime': 12345.
+    }
+    mock_event.__getitem__.side_effect = event_dict_spoofer.__getitem__
     mock_superevent = Mock()
     mock_get_event = Mock(return_value=mock_event)
     mock_get_superevent = Mock(return_value=mock_superevent)
@@ -68,8 +73,8 @@ def test_send_preliminary_gcn_post(client, monkeypatch):
     assert get_flashed_messages() == [
         'Queued preliminary alert for MS190208a.']
     mock_update_superevent.assert_called_once_with(
-        'MS190208a', preferred_event='M12345')
-    mock_get_event.assert_called_once_with('M12345')
+        'MS190208a', preferred_event='M12345', t_0=12345.)
+    mock_get_event.assert_has_calls([call('M12345'), call('M12345')])
     mock_get_superevent.assert_called_once_with('MS190208a')
 
     alert = {
@@ -89,6 +94,7 @@ def test_change_preferred_event_post(client, monkeypatch):
     mock_superevent = MagicMock()
     event_dict_spoofer = {
         'pipeline': 'gstlal',
+        'gpstime': 12345.
     }
     superevent_dict_spoofer = {
         'pipeline_preferred_events': {'gstlal': {'graceid': 'M12345'}}
@@ -122,7 +128,7 @@ def test_change_preferred_event_post(client, monkeypatch):
     assert get_flashed_messages() == [
         'Changed preferred event for MS190208a.']
     mock_update_superevent.assert_called_once_with(
-        'MS190208a', preferred_event='M12345')
+        'MS190208a', preferred_event='M12345', t_0=12345.)
     mock_get_event.assert_called_once_with('M12345')
     mock_get_superevent.assert_called_once_with('MS190208a')
     mock_preliminary_alert.assert_called_once_with([mock_superevent,
@@ -141,7 +147,7 @@ def test_change_preferred_event_pipeline_preferred_event_post(client,
     mock_add_pipeline_pref_event = Mock()
     mock_event = MagicMock()
     mock_superevent = MagicMock()
-    event_dict_spoofer = {'pipeline': 'gstlal'}
+    event_dict_spoofer = {'pipeline': 'gstlal', 'gpstime': 12345.}
     superevent_dict_spoofer = {
         'pipeline_preferred_events': {'gstlal': {'graceid': 'M12344'}}
     }
@@ -174,7 +180,7 @@ def test_change_preferred_event_pipeline_preferred_event_post(client,
     assert get_flashed_messages() == [
         'Changed preferred event for MS190208a.']
     mock_update_superevent.assert_called_once_with(
-        'MS190208a', preferred_event='M12345')
+        'MS190208a', preferred_event='M12345', t_0=12345.)
     mock_get_event.assert_called_once_with('M12345')
     mock_get_superevent.assert_called_once_with('MS190208a')
     mock_preliminary_alert.assert_called_once_with([mock_superevent,

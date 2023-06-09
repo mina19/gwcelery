@@ -208,6 +208,13 @@ def send_preliminary_gcn():
     keys = ('superevent_id', 'event_id')
     superevent_id, event_id, *_ = tuple(request.form.get(key) for key in keys)
     if superevent_id and event_id:
+        try:
+            event = gracedb.get_event(event_id)
+        except HTTPError as e:
+            flash(f'No action performed. GraceDB query for {event_id} '
+                  f'returned error code {e.response.status_code}.', 'danger')
+            return redirect(url_for('index'))
+
         (
             gracedb.upload.s(
                 None, None, superevent_id,
@@ -216,7 +223,7 @@ def send_preliminary_gcn():
                 tags=['em_follow'])
             |
             gracedb.update_superevent.si(
-                superevent_id, preferred_event=event_id)
+                superevent_id, preferred_event=event_id, t_0=event['gpstime'])
             |
             group(
                 gracedb.get_superevent.si(superevent_id),
@@ -260,7 +267,8 @@ def change_preferred_event():
                 tags=['em_follow'])
             |
             gracedb.update_superevent.si(
-                superevent_id, preferred_event=event_id)
+                superevent_id, preferred_event=event_id,
+                t_0=event['gpstime'])
             |
             _construct_igwn_alert_and_send_prelim_alert.si(
                 [superevent, event],

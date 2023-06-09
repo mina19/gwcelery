@@ -595,7 +595,7 @@ def _create_label_and_return_filename(filename, label, graceid):
 @app.task(shared=False)
 def _leave_log_message_and_return_event_dict(event, superevent_id,
                                              message, **kwargs):
-    """Wrapper around :meth:`gracedb.update_superevent`
+    """Wrapper around :meth:`gracedb.upload`
     that returns the event dictionary.
     """
     gracedb.upload.delay(None, None, superevent_id, message, **kwargs)
@@ -608,7 +608,8 @@ def _update_superevent_and_return_event_dict(event, superevent_id):
     that returns the event dictionary.
     """
     gracedb.update_superevent(superevent_id,
-                              preferred_event=event['graceid'])
+                              preferred_event=event['graceid'],
+                              t_0=event['gpstime'])
     return event
 
 

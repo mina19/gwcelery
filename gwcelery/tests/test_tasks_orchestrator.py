@@ -79,7 +79,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             'graceid': 'G1234',
             'offline': offline,
             'far': far,
-            'gpstime': 1234,
+            'gpstime': 1234.,
             'extra_attributes': {},
             'labels': ['PASTRO_READY', 'EMBRIGHT_READY', 'SKYMAP_READY']
         }
@@ -294,7 +294,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         else:
             annotate_fits.assert_called_once()
             update_superevent_task.assert_called_once_with(
-                'S1234', preferred_event='G1234'
+                'S1234', preferred_event='G1234', t_0=1234.
             )
             expose.assert_called_once_with('S1234')
             create_tag.assert_has_calls(
