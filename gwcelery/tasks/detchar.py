@@ -142,7 +142,7 @@ def make_omegascan(ifo, t0, durs):
         # data from cache can't be properly read, or data is weird
         fig = plt.figure(figsize=(4, 1))
         plt.axis("off")
-        plt.text(0.5, 0.5, "Failed to create V1 omegascan",
+        plt.text(0.5, 0.5, f"Failed to create {ifo} omegascan",
                  horizontalalignment='center', verticalalignment='center',
                  fontsize=17)
     else:
