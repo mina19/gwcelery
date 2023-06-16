@@ -2605,14 +2605,14 @@ files = [
 
 [[package]]
 name = "ligo-em-bright"
-version = "1.1.4"
+version = "1.1.4.post2"
 description = "Possibility and properties of Electromagnetically-bright sources of gravitational-wave events"
 category = "main"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "ligo_em_bright-1.1.4-py3-none-any.whl", hash = "sha256:6eb0d59adc15cff6a4e891cf3f589e639f8e8d9a31a1edff8e2f060c47426503"},
-    {file = "ligo_em_bright-1.1.4.tar.gz", hash = "sha256:c73d5c2f8a1b5c729db10c9369f52913db83aa37baddba16c96ae2a6919173c2"},
+    {file = "ligo_em_bright-1.1.4.post2-py3-none-any.whl", hash = "sha256:9e2d28a2d5c663b3642a2276e1863f8eaf02605c233b4b0b80126d7d72998c49"},
+    {file = "ligo_em_bright-1.1.4.post2.tar.gz", hash = "sha256:8fe27e624e06ace2f4615cacda397249c38acb5d919411c25ea2c4888ae6a638"},
 ]
 
 [package.dependencies]
@@ -5955,4 +5955,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.11"
-content-hash = "609cead34278d5391d53819eeb0f4b295c390602878fb63f6d05e42b8d0dfe51"
+content-hash = "5b125f01f7957c6d7121d527ddd10c2c1cfca113d70b53a7f5cc0a794cebdcb3"
