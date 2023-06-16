@@ -7,6 +7,8 @@ Changelog
 -   Make calls to FROZEN_LABEL inside the handle_superevent asynchronous
     so that they are retries for RetryableHTTPErrors.
 
+-   Log failed omegascan exceptions to Sentry
+
 2.1.2 "Ogopogo" (2023-06-09)
 ----------------------------
 

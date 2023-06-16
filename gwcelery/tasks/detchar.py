@@ -30,6 +30,7 @@ from gwpy.timeseries import Bits, StateVector, TimeSeries
 from gwpy.plot import Plot
 import matplotlib.pyplot as plt
 import numpy as np
+import sentry_sdk
 
 from . import gracedb
 from ..import app
@@ -138,8 +139,9 @@ def make_omegascan(ifo, t0, durs):
             frange=(20, 4096), gps=t0,
             outseg=(t0 - before, t0 + after), logf=True)
             for before, after in durs]
-    except (IndexError, FloatingPointError, ValueError):
+    except (IndexError, FloatingPointError, ValueError) as err:
         # data from cache can't be properly read, or data is weird
+        sentry_sdk.capture_exception(err)
         fig = plt.figure(figsize=(4, 1))
         plt.axis("off")
         plt.text(0.5, 0.5, f"Failed to create {ifo} omegascan",
