@@ -16,6 +16,11 @@ Changelog
 -   Add handling for ValueErrors in detchar.check_vector to allow for frames
     without the requested channel.
 
+-   Change logging level of StateVector reading errors in detchar.check_vector
+    back to log.exception now that https://github.com/gwpy/gwpy/issues/1211
+    is fixed.
+
+
 2.1.2 "Ogopogo" (2023-06-09)
 ----------------------------
 

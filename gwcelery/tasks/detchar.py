@@ -373,12 +373,7 @@ def check_vector(cache, channel, start, end, bits, logic_type='all'):
             statevector = StateVector.read(cache, channel,
                                            start=start, end=end, bits=bits)
         except (IndexError, TypeError, ValueError):
-            # FIXME: TypeError above is due to
-            # https://github.com/gwpy/gwpy/issues/1211
-            #
-            # FIXME: Change from log.exception to log.warning until this fixed,
-            # because it's saturating Sentry.
-            log.warning('Failed to read from low-latency frame files')
+            log.exception('Failed to read from low-latency frame files')
         else:
             # FIXME: In the playground environment, the Virgo state vector
             # channel is stored as a float. Is this also the case in the
