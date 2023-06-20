@@ -13,6 +13,9 @@ Changelog
     shared creation and replacement workflow used by various external trigger
     listeners into a single function.
 
+-   Add handling for ValueErrors in detchar.check_vector to allow for frames
+    without the requested channel.
+
 2.1.2 "Ogopogo" (2023-06-09)
 ----------------------------
 

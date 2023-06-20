@@ -372,7 +372,7 @@ def check_vector(cache, channel, start, end, bits, logic_type='all'):
         try:
             statevector = StateVector.read(cache, channel,
                                            start=start, end=end, bits=bits)
-        except (IndexError, TypeError):
+        except (IndexError, TypeError, ValueError):
             # FIXME: TypeError above is due to
             # https://github.com/gwpy/gwpy/issues/1211
             #
