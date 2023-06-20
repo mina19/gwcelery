@@ -7,7 +7,7 @@ Changelog
 -   Make calls to FROZEN_LABEL inside the handle_superevent asynchronous
     so that they are retries for RetryableHTTPErrors.
 
--   Log failed omegascan exceptions to Sentry
+-   Log failed omegascan exceptions to Sentry.
 
 -   Add ingestion of Fermi and Swift subthreshold targeted events. Generalize
     shared creation and replacement workflow used by various external trigger
