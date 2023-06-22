@@ -20,6 +20,7 @@ Changelog
     back to log.exception now that https://github.com/gwpy/gwpy/issues/1211
     is fixed.
 
+-   Fix HTTP Error raised while grabbing Fermi skymaps.
 
 2.1.2 "Ogopogo" (2023-06-09)
 ----------------------------

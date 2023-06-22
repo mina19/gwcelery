@@ -17,6 +17,7 @@ import lxml.etree
 import re
 import ssl
 import urllib
+from urllib.error import HTTPError
 
 from ..import app
 from . import gracedb
@@ -260,15 +261,15 @@ def external_trigger_heasarc(external_id):
         external_id))
 
 
-@app.task(autoretry_for=(urllib.error.HTTPError,), retry_backoff=10,
-          retry_backoff_max=600)
+@app.task(autoretry_for=(gracedb.RetryableHTTPError,), retry_backoff=10,
+          max_retries=14)
 def get_external_skymap(link, search):
     """Download the Fermi sky map fits file and return the contents as a byte
     array. If GRB, will construct a HEASARC url, while if SubGRB, will use the
     link directly.
 
     If not available, will try again 10 seconds later, then 20, then 40, etc.
-    until up to 10 minutes after initial attempt.
+    until up to 15 minutes after initial attempt.
     """
     if search == 'GRB':
         # if Fermi GRB, determine final HEASARC link
@@ -284,7 +285,15 @@ def get_external_skymap(link, search):
     context.options |= ssl.OP_NO_TLSv1_3
     #  return astropy.utils.data.get_file_contents(
     #      (skymap_link), encoding='binary', cache=False)
-    return urllib.request.urlopen(skymap_link, context=context).read()
+    try:
+        response = urllib.request.urlopen(skymap_link, context=context)
+        return response.read()
+    except HTTPError as e:
+        if e.code == 404:
+            raise gracedb.RetryableHTTPError("Failed to download the sky map."
+                                             "Retrying...")
+        else:
+            raise
 
 
 @app.task(shared=False)

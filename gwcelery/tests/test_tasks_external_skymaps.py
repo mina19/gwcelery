@@ -4,12 +4,14 @@ from unittest.mock import patch
 from astropy.table import Table
 import numpy as np
 import pytest
+from urllib.error import HTTPError
 
 from . import data
 from ..util import read_json
 from .test_tasks_skymaps import toy_fits_filecontents  # noqa: F401
 from .test_tasks_skymaps import toy_3d_fits_filecontents  # noqa: F401
 from ..tasks import external_skymaps
+from ..tasks import gracedb
 
 
 true_heasarc_link = ('http://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/'
@@ -195,6 +197,28 @@ def test_get_external_skymap(mock_urlopen, search):
     """Assert that the correct call to astropy.get_file_contents is used"""
     external_skymaps.get_external_skymap(true_heasarc_link, search)
     mock_urlopen.assert_called_once()
+
+
+class File(object):
+    def close(self):
+        pass
+
+
+class HTTPError_404(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def read(self):
+        raise HTTPError('', 404, '', '', File)
+
+
+@pytest.mark.parametrize('search', ['GRB', 'SubGRB', 'FromURL'])
+@patch('urllib.request.urlopen', HTTPError_404)
+def test_get_external_skymap_404(search):
+    """Assert that when urllib.request raises 404 error, we raise
+    gracedb.RetryableHTTPError."""
+    with pytest.raises(gracedb.RetryableHTTPError):
+        external_skymaps.get_external_skymap(true_heasarc_link, search)
 
 
 @pytest.mark.parametrize('search', ['GRB', 'SubGRB', 'FromURL'])
