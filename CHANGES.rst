@@ -22,6 +22,8 @@ Changelog
 
 -   Fix HTTP Error raised while grabbing Fermi skymaps.
 
+-   Bump ligo-followup-advocate version to 1.2.4.
+
 2.1.2 "Ogopogo" (2023-06-09)
 ----------------------------
 
