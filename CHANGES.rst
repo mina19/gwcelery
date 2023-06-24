@@ -1,28 +1,31 @@
 Changelog
 =========
 
-2.1.3 (unreleased)
-----------------------------
+2.1.3 "Thunderbird" (2023-06-24)
+--------------------------------
 
--   Make calls to FROZEN_LABEL inside the handle_superevent asynchronous
-    so that they are retries for RetryableHTTPErrors.
+-   Update to celery version 5.3.
 
--   Log failed omegascan exceptions to Sentry.
+-   Update ligo.em-bright to version 1.1.4.post2, ligo-followup-advocate
+    to version 1.2.4.
+
+-   Apply FROZEN_LABEL inside the handle_superevent as a part of the alert
+    canvas so that they are retries for RetryableHTTPErrors.
 
 -   Add ingestion of Fermi and Swift subthreshold targeted events. Generalize
     shared creation and replacement workflow used by various external trigger
     listeners into a single function.
 
+-   Handle HTTP Error raised while grabbing Fermi skymaps.
+
 -   Add handling for ValueErrors in detchar.check_vector to allow for frames
     without the requested channel.
+
+-   Log failed omegascan exceptions to Sentry.
 
 -   Change logging level of StateVector reading errors in detchar.check_vector
     back to log.exception now that https://github.com/gwpy/gwpy/issues/1211
     is fixed.
-
--   Fix HTTP Error raised while grabbing Fermi skymaps.
-
--   Bump ligo-followup-advocate version to 1.2.4.
 
 2.1.2 "Ogopogo" (2023-06-09)
 ----------------------------
