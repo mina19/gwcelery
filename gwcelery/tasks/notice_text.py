@@ -21,13 +21,18 @@ log = get_task_logger(__name__)
 
 def _trigger_datetime(gcn_notice_mail):
     """Get trigger data and time from a GCN email notice."""
+
+    # We now add Z to ISOtime
+    # TRIGGER_DATE:     20123 TJD;   179 DOY;   2023/06/28 (yyyy/mm/dd)
+    # TRIGGER_TIME:     83520.000000 SOD {23:12:00.000000} UT
+    # <ISOTime>2023-06-28T23:12:00Z</ISOTime>
     trigger_date = gcn_notice_mail[
         "TRIGGER_DATE"].split()[4].replace("/", "-")
 
     trigger_time = gcn_notice_mail[
         "TRIGGER_TIME"].split()[2].replace("{", "").replace("}", "")
 
-    trigger_datetime = (f'{trigger_date}T{trigger_time}')
+    trigger_datetime = (f'{trigger_date}T{trigger_time}Z')
 
     return trigger_datetime
 
@@ -204,6 +209,11 @@ def validate_text_notice(message):
     except KeyError as err:
         # Since there was an exeception, the gcn was not annnotated
         error = f'Email notice {filename} missing key: {err}'
+    except Exception as err:
+        # Since there are other possible exceptions
+        # we also catch generic error not to stop exection
+        # and record the exception
+        error = f'Email notice {filename} generated exception: {err}'
 
     if error:
         gracedb.create_tag.delay(filename, 'gcn_email_notok', trigger_num)
