@@ -4,7 +4,7 @@ Changelog
 2.1.4 (unreleased)
 ------------------
 
-- No changes yet.
+-   Add nagios check for presence of recent MDC superevents.
 
 2.1.3 "Thunderbird" (2023-06-24)
 --------------------------------

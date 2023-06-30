@@ -1,6 +1,7 @@
 from distutils.spawn import find_executable
 from unittest.mock import Mock
 
+import lal
 import pytest
 
 from .. import app, main
@@ -150,6 +151,26 @@ def test_nagios(capsys, monkeypatch, request, socket_enabled, starter,
     monkeypatch.setattr(
         'gwcelery.tools.nagios.get_celery_queue_length',
         Mock(return_value=0))
+
+    # no superevents in last hour
+    monkeypatch.setattr(
+        'gwcelery.tools.nagios.get_recent_mdc_superevents',
+        Mock(return_value=(
+            [{'superevent_id': 'MS123456',
+              't_0': lal.GPSTimeNow() - 7200}],
+            lal.GPSTimeNow() - 6 * 3600, lal.GPSTimeNow())))
+    with pytest.raises(SystemExit) as excinfo:
+        main(['gwcelery', 'nagios'])
+    assert excinfo.value.code == nagios.NagiosPluginStatus.CRITICAL
+    out, err = capsys.readouterr()
+    assert 'CRITICAL: No MDC superevents found in last one hour' in out
+    # reset to expected behavior for later checks
+    monkeypatch.setattr(
+        'gwcelery.tools.nagios.get_recent_mdc_superevents',
+        Mock(return_value=(
+            [{'superevent_id': 'MS123456',
+              't_0': lal.GPSTimeNow() - 100}],
+            lal.GPSTimeNow() - 6 * 3600, lal.GPSTimeNow())))
 
     # Kafka broker, topic or broker are down
     monkeypatch.setattr(

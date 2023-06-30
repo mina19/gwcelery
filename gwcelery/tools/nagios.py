@@ -7,7 +7,9 @@ from sys import exit
 from traceback import format_exc, format_exception
 
 import click
+from gwpy.time import tconvert
 import kombu.exceptions
+import lal
 
 # Make sure that all tasks are registered
 from .. import tasks  # noqa: F401
@@ -100,6 +102,15 @@ def get_celery_queue_length(app):
     return app.backend.client.llen("celery")
 
 
+def get_recent_mdc_superevents():
+    """Get MDC superevents in last six hours"""
+    t_upper = lal.GPSTimeNow()
+    t_lower = t_upper - 6 * 3600
+    query = "{} .. {} {}".format(t_lower, t_upper, 'MDC')
+    recent_superevents = tasks.gracedb.get_superevents(query)
+    return recent_superevents, t_lower, t_upper
+
+
 def check_status(app):
     connection = app.connection()
     try:
@@ -160,6 +171,25 @@ def check_status(app):
         raise NagiosCriticalError(
             'Tasks are piled up in Celery queue') from AssertionError(
                 'Length of celery queue is {}'.format(celery_queue_length))
+
+    recent_mdc_superevents, t_lower, t_now = get_recent_mdc_superevents()
+    no_superevents = len(recent_mdc_superevents) == 0
+    to_utc = lambda t: tconvert(t).isoformat()  # noqa E731
+    if no_superevents:
+        raise NagiosCriticalError(
+                'No MDC superevents found in past six hours') \
+            from AssertionError(
+                f'Last entry earlier than GPSTime {t_lower} = '
+                f'{to_utc(t_lower)} UTC')
+    last_superevent = recent_mdc_superevents[0]
+    # check presence in last hour with a tolerance
+    none_in_last_hour = (t_now - last_superevent['t_0']) > (3600 + 60)
+    if none_in_last_hour:
+        raise NagiosCriticalError(
+                'No MDC superevents found in last one hour') \
+            from AssertionError(
+                f"Last entry is at GPSTime {last_superevent['superevent_id']}"
+                f" = {to_utc(last_superevent['t_0'])} UTC")
 
     active = get_active_kafka_consumer_bootstep_names(inspector)
     expected = get_expected_kafka_consumer_bootstep_names(app)
