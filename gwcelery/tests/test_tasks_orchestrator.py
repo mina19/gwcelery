@@ -371,9 +371,22 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         check_vectors.assert_called_once()
 
 
-@patch('gwcelery.tasks.gracedb.get_labels', return_value={'DQV', 'ADVREQ'})
-@patch('gwcelery.tasks.detchar.check_vectors.run')
-def test_handle_superevent_event_added(mock_check_vectors, mock_get_labels):
+@pytest.mark.parametrize(
+        "orig_labels,overall_dq_active_state",
+        [[["ADVREQ"], None],
+         [["DQV", "ADVREQ"], False],
+         [["DQV", "ADVREQ"], True]])
+@patch('gwcelery.tasks.gracedb.update_superevent.run')
+@patch('gwcelery.tasks.gracedb.upload.run')
+def test_handle_superevent_event_added(mock_upload,
+                                       mock_update_superevent,
+                                       monkeypatch, orig_labels,
+                                       overall_dq_active_state):
+    # make a copy of orig_labels that we mutate in order to change the result
+    # of get_labels calls. In actuality, the second call will make an API
+    # request.
+    labels = orig_labels.copy()
+
     alert = {
         'alert_type': 'event_added',
         'uid': 'TS123456a',
@@ -388,12 +401,51 @@ def test_handle_superevent_event_added(mock_check_vectors, mock_get_labels):
                    't_0': 2.,
                    't_end': 3.,
                    'preferred_event_data': {
-                       'graceid': 'G123456'
+                       'graceid': 'G123456',
+                       'gpstime': 2.1,
+                       'labels': labels
                    }}
     }
+
+    # mocks the effect of detchar.check_vectors on the result of get_labels
+    def _mock_check_vectors(event, *args):
+        if overall_dq_active_state is True:
+            labels.append('DQOK')
+            try:
+                labels.remove('DQV')
+            except ValueError:  # not in list
+                pass
+        elif overall_dq_active_state is False:
+            labels.append('DQV')
+            try:
+                labels.remove('DQOK')
+            except ValueError:  # not in list
+                pass
+        return event
+    check_vectors = Mock(side_effect=_mock_check_vectors)
+    monkeypatch.setattr('gwcelery.tasks.detchar.check_vectors.run',
+                        check_vectors)
+
+    get_labels = Mock(return_value=labels)
+    monkeypatch.setattr('gwcelery.tasks.gracedb.get_labels.run',
+                        get_labels)
+
     orchestrator.handle_superevent(alert)
-    mock_check_vectors.assert_called_once_with(
-        {'graceid': 'G123456'}, 'TS123456a', 1., 3.)
+
+    if "DQV" in orig_labels:
+        check_vectors.assert_called_once_with(
+            {'graceid': 'G123456', 'gpstime': 2.1, 'labels': labels},
+            'TS123456a', 1., 3.)
+    else:
+        check_vectors.assert_not_called()
+
+    if overall_dq_active_state is True:
+        mock_update_superevent.assert_called_once_with(
+            'TS123456a', preferred_event='G123456', t_0=2.1)
+        mock_upload.assert_called_once()
+    else:
+        mock_update_superevent.assert_not_called()
+        mock_upload.assert_not_called()
 
 
 def superevent_initial_alert_download(filename, graceid):

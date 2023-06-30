@@ -278,10 +278,7 @@ def handle_superevent(alert):
                     end
                 )
                 |
-                _update_if_dqok.si(
-                    superevent_id,
-                    alert['object']['preferred_event_data']['graceid']
-                )
+                _update_if_dqok.s(superevent_id)
             ).apply_async()
 
 
@@ -512,14 +509,18 @@ def _set_pipeline_preferred_events(pipeline_event, superevent_id):
 
 
 @app.task(shared=False, ignore_result=True)
-def _update_if_dqok(superevent_id, event_id):
+def _update_if_dqok(event, superevent_id):
     """Update `preferred_event` of `superevent_id` to `event_id` if `DQOK`
     label has been applied.
     """
     if 'DQOK' in gracedb.get_labels(superevent_id):
-        gracedb.update_superevent(superevent_id, preferred_event=event_id)
-        gracedb.create_log.delay(
-            f'DQOK applied based on new event {event_id}', superevent_id)
+        event_id = event['graceid']
+        gracedb.update_superevent(superevent_id,
+                                  preferred_event=event_id,
+                                  t_0=event["gpstime"])
+        gracedb.upload.delay(
+            None, None, superevent_id,
+            comment=f'DQOK applied based on new event {event_id}')
 
 
 @gracedb.task(shared=False)
