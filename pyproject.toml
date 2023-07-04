@@ -74,7 +74,7 @@ igwn-gwalert-schema = "^1.0.0"
 imapclient = "*"
 importlib-metadata = { version = "*"}
 jinja2 = ">=2.11.2"  # https://github.com/pallets/jinja/issues/1168
-lalsuite = ">=7.15"  # https://git.ligo.org/lscsoft/lalsuite/-/merge_requests/2120
+lalsuite = ">=7.16"  # https://git.ligo.org/lscsoft/lalsuite/-/merge_requests/2120
 ligo-followup-advocate = ">=1.2.4"
 ligo-gracedb = ">=2.7.5"  # https://git.ligo.org/lscsoft/gracedb-client/-/issues/28
 ligo-raven = ">=3.2"
@@ -92,9 +92,9 @@ pygcn = ">=1.0.1"
 python-ligo-lw = "^1.8.3"
 pyxdg = "*"
 rapid-pe = ">=0.1.0,<0.2.0"  # https://git.ligo.org/computing/sccb/-/issues/1154
-rapidpe-rift-pipe = ">=0.5.1"  # https://git.ligo.org/computing/sccb/-/issues/1231
+rapidpe-rift-pipe = ">=0.5.3"  # https://git.ligo.org/computing/sccb/-/issues/1261
 redis = "!=4.5.2,!=4.5.3"  # https://git.ligo.org/emfollow/gwcelery/-/issues/556
-RIFT = ">=0.0.15.8"
+RIFT = ">=0.0.15.9"
 scipy = "<1.10"  # https://github.com/astropy/astropy/issues/14230
 safe-netrc = "*"
 sentry-sdk = {version = "*", extras = ["flask", "tornado"]}

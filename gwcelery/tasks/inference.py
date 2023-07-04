@@ -10,12 +10,16 @@ import urllib
 from bilby_pipe.utils import convert_string_to_dict
 from bilby_pipe.bilbyargparser import BilbyConfigFileParser
 from celery import group
+from celery.exceptions import Ignore
 import numpy as np
 
 from .. import app
 from ..jinja import env
 from . import condor
 from . import gracedb
+
+
+_RAPIDPE_NO_GSTLAL_TRIGGER_EXIT_CODE = 100
 
 
 def _find_appropriate_cal_env(trigtime, dir_name):
@@ -381,12 +385,26 @@ def _setup_dag_for_rapidpe(rundir, superevent_id):
     except subprocess.CalledProcessError as e:
         contents = b'args:\n' + json.dumps(e.args[1]).encode('utf-8') + \
                    b'\n\nstdout:\n' + e.stdout + b'\n\nstderr:\n' + e.stderr
+
+        message = 'Failed to prepare DAG for Rapid PE'
+
+        fail_gracefully = False
+        if e.returncode == _RAPIDPE_NO_GSTLAL_TRIGGER_EXIT_CODE:
+            fail_gracefully = True
+            message += ": no GstLAL trigger available"
+
         gracedb.upload.delay(
             filecontents=contents, filename='rapidpe_dag.log',
             graceid=superevent_id,
-            message='Failed to prepare DAG for Rapid PE', tags='pe'
+            message=message, tags='pe'
         )
-        raise
+
+        if fail_gracefully:
+            # Ends task but without logging as a failure
+            raise Ignore()
+        else:
+            # Ends task with the unhandled error logged
+            raise
 
     # return path to dag
     dag = os.path.join(rundir, "event_all_iterations.dag")

@@ -4,6 +4,8 @@ from itertools import product
 import os
 import subprocess
 
+from celery.exceptions import Ignore
+from contextlib import nullcontext as does_not_raise
 import json
 import pytest
 from unittest.mock import Mock
@@ -241,13 +243,29 @@ def test_setup_dag_for_bilby_unknown_mode(tmp_path):
         )
 
 
-def test_setup_dag_for_rapidpe(monkeypatch, tmp_path):
+@pytest.mark.parametrize(
+    'returncode,expectation',
+    [
+        (0, does_not_raise()),
+        (1, pytest.raises(subprocess.CalledProcessError)),
+        (inference._RAPIDPE_NO_GSTLAL_TRIGGER_EXIT_CODE,
+         pytest.raises(Ignore)),
+    ],
+)
+def test_setup_dag_for_rapidpe(returncode, expectation, monkeypatch, tmp_path):
     rundir = str(tmp_path)
     dag_filename = 'event_all_iterations.dag'
     dag_content = 'rapidpe dag'
 
-    def _subprocess_run(cmd, **kwargs):
-        path_to_ini = cmd[1]
+    def _subprocess_run(args, *, capture_output=False, check=False):
+        # Simulate failed subprocess
+        if returncode != 0:
+            raise subprocess.CalledProcessError(
+                returncode, args,
+                output=b"STDOUT", stderr=b"STDERR",
+            )
+
+        path_to_ini = args[1]
         assert os.path.exists(path_to_ini)
         with open(os.path.join(rundir, dag_filename), 'w') as f:
             f.write(dag_content)
@@ -256,10 +274,18 @@ def test_setup_dag_for_rapidpe(monkeypatch, tmp_path):
     monkeypatch.setattr('subprocess.run', _subprocess_run)
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
 
-    path_to_dag = inference._setup_dag_for_rapidpe(rundir, 'S1234')
-    with open(path_to_dag, 'r') as f:
-        assert f.read() == dag_content
-    upload.assert_called_once()
+    with expectation:
+        path_to_dag = inference._setup_dag_for_rapidpe(rundir, 'S1234')
+
+        if returncode == 0:
+            # The DAG should be generated
+            with open(path_to_dag, 'r') as f:
+                assert f.read() == dag_content
+            # The ini file should be uploaded
+            upload.assert_called_once()
+        else:
+            # The ini file and error log should be uploaded
+            assert upload.call_count == 2
 
 
 @pytest.mark.parametrize('pipeline', ['lalinference', 'bilby', 'rapidpe'])
@@ -578,11 +604,14 @@ def test_start_pe(monkeypatch, tmp_path, pipeline):
             dag_prepare_task.assert_called_once()
             condor_submit.assert_called_once()
             dag_finished.assert_called_once()
-    else:
-        dag_prepare_task = Mock(return_value=mock_task.s())
 
-        condor_submit = Mock(side_effect=mock_condor_submit)
-        dag_finished = Mock()
+    else:
+        dag_prepare_task = Mock(return_value=mock_task.si(),
+                                name="dag_prepare_task")
+
+        condor_submit = Mock(side_effect=mock_condor_submit,
+                             name="condor_submit")
+        dag_finished = Mock(name="dag_finished")
         monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', Mock())
         monkeypatch.setattr('distutils.dir_util.mkpath',
                             Mock(return_value=str(tmp_path)))

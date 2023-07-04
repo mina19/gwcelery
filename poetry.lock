@@ -2430,27 +2430,27 @@ zookeeper = ["kazoo (>=2.8.0)"]
 
 [[package]]
 name = "lalsuite"
-version = "7.15"
+version = "7.16"
 description = "LIGO Scientific Collaboration Algorithm Library - minimal Python package"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "lalsuite-7.15-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:861c95423af8ccd00569386325cf53da209882cf7a9c92785cf22b9335494c9c"},
-    {file = "lalsuite-7.15-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:44ff86663ffa9e419731602536729b601a5f370b0acf31bf97e4890510b69534"},
-    {file = "lalsuite-7.15-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:08f6885a13f3fef8d526a9cea30550ccb335c12d881304a98d1684d015414b1f"},
-    {file = "lalsuite-7.15-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:6b650dc5d064a3485dbb7f788a753e8e2ff4d4ea9ea36125f58f14da656ad2bb"},
-    {file = "lalsuite-7.15-cp311-cp311-macosx_10_15_x86_64.whl", hash = "sha256:9fcb89844790c12bc12e92c44cfea65528af224486128e02dec8956aa09b3b7d"},
-    {file = "lalsuite-7.15-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:dffa5ee6e89628952df0da3c2299bf93fb82ad7cf59c1b5d299d8078bbda98e4"},
-    {file = "lalsuite-7.15-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:c53eb078fea6fa2f5d322a6811e97b1096932d04c8bc67254617d854e25491f5"},
-    {file = "lalsuite-7.15-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:2628968456af66f1597a2286645fba11e747d883207734a2f6e5a58dc335ca64"},
-    {file = "lalsuite-7.15-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:921f271fa1f73e055e5c028f5a32a8308f6c747059fbc57f47c19c287c2a936d"},
-    {file = "lalsuite-7.15-cp38-cp38-macosx_12_0_arm64.whl", hash = "sha256:22da75b2521139f1e70aa6e4dfcb5c9a1fb711d7a49651790bd0be176b048fda"},
-    {file = "lalsuite-7.15-cp38-cp38-manylinux_2_28_aarch64.whl", hash = "sha256:f89e14cb7810ff462dd3f1860ea88e706437b172bb916a17b2bf9cbac3a0c96c"},
-    {file = "lalsuite-7.15-cp38-cp38-manylinux_2_28_x86_64.whl", hash = "sha256:3c29b10ba09e3287b3086f52b657dff876831775574eeeaa1c1c5a12f851b013"},
-    {file = "lalsuite-7.15-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:32cbc8a176da9c582b8adfb99bd77dcae7db6e6fdc6a0424bc517874ec7b7fbf"},
-    {file = "lalsuite-7.15-cp39-cp39-macosx_12_0_arm64.whl", hash = "sha256:3728604ce4bf6e4e4b8bdbe0b256898922ca8c796de1f14a741930aa1a3371ba"},
-    {file = "lalsuite-7.15-cp39-cp39-manylinux_2_28_aarch64.whl", hash = "sha256:636bd41d90e0be5d1a068c0321ce2e23b9321860d98b82adbe83679711053e21"},
-    {file = "lalsuite-7.15-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:172ace080dab2632faf5f4663897fe79aee77491d7678be277954bc760625627"},
+    {file = "lalsuite-7.16-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:ec94f4d698c4261b4c0d91910b1aaf3d83ebbc75a795d5f2bfec3254b3ec9c83"},
+    {file = "lalsuite-7.16-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:b6cf00ef92cdaf2ca0d461fe7fa8bcc9aeed7cebf904ee18ec793d2d044a1d54"},
+    {file = "lalsuite-7.16-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:55b865e71fc54d5285c83ce46ae1830b72a0c1d4663f08e3cae61f263519d0b7"},
+    {file = "lalsuite-7.16-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:7225ca330f5ddfe79e614794e1183e55309b7db2cd13215448473e3c99227dec"},
+    {file = "lalsuite-7.16-cp311-cp311-macosx_10_15_x86_64.whl", hash = "sha256:bec1add48c5ad63c806a747a8e67955e88a54816b0f8e79ead55b955e442c2ba"},
+    {file = "lalsuite-7.16-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:7ff82f81137da0573042133cf33322e2c30c52c23f466205bfae7774c2a29dd0"},
+    {file = "lalsuite-7.16-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:c766f91c662f4f01874a51a5036b7ea74cbe28eb71f5cf88368de8edcbc32577"},
+    {file = "lalsuite-7.16-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:9ea83a9c9f5cd04cd1ed062e2412d86550977176b5de18a4a83abf9684da1252"},
+    {file = "lalsuite-7.16-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:3bf5c49578792bfdf0aae87b5b6b47a3885ac9804edf9ec93e29ca12b7f0e24e"},
+    {file = "lalsuite-7.16-cp38-cp38-macosx_12_0_arm64.whl", hash = "sha256:2b937791e4ef4c45724c750620655428208913662b612a37e5683884b37ffabd"},
+    {file = "lalsuite-7.16-cp38-cp38-manylinux_2_28_aarch64.whl", hash = "sha256:e537188d1cddaf9e08b1900d5c1d950168708aecc4707c134c0196e530b35fd7"},
+    {file = "lalsuite-7.16-cp38-cp38-manylinux_2_28_x86_64.whl", hash = "sha256:e07956f6cb53a1c231b2e24c0e9acf594b59d360badab3c8f20d7a4dcdc4d3f8"},
+    {file = "lalsuite-7.16-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:0af22cdf7f561b0b1ec59a42f2bfa2b7779fd305d0702a6a7b3edd2da26c2990"},
+    {file = "lalsuite-7.16-cp39-cp39-macosx_12_0_arm64.whl", hash = "sha256:8ab2f8f03f86c3b24d60b0d81e01b59d0638252d01c0540b94af5522af141e6e"},
+    {file = "lalsuite-7.16-cp39-cp39-manylinux_2_28_aarch64.whl", hash = "sha256:f95abbd823cda96f931a0567bba4de79392780e9c6da43d039481f21eb8440a3"},
+    {file = "lalsuite-7.16-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:557169972ddb20ac5788d005ef823f91d8f6a717843734cbcc417ca9f31920e6"},
 ]
 
 [package.dependencies]
@@ -4338,13 +4338,13 @@ six = "*"
 
 [[package]]
 name = "rapidpe-rift-pipe"
-version = "0.5.1"
+version = "0.5.3"
 description = "Pipeline for running RapidPE and RIFT parameter estimation codes"
 optional = false
 python-versions = "*"
 files = [
-    {file = "rapidpe_rift_pipe-0.5.1-py3-none-any.whl", hash = "sha256:3027012b9bf6096b26c8590c46be4afbc7035e2aecd2c3890c4ac5c4b876d9b9"},
-    {file = "rapidpe_rift_pipe-0.5.1.tar.gz", hash = "sha256:c84f91078bba70574c8de5b4d40ec4a690d369599ae9814c025f4da15d7bbb67"},
+    {file = "rapidpe_rift_pipe-0.5.3-py3-none-any.whl", hash = "sha256:a129b064306dac79c90da04f2da392aa2a133b2c1f6670d0bbb66671a173737e"},
+    {file = "rapidpe_rift_pipe-0.5.3.tar.gz", hash = "sha256:8155b20818507d5fc8be4d8b3c7bfe740f09acc78ffea2f7edd96f962daa517f"},
 ]
 
 [package.dependencies]
@@ -4355,7 +4355,7 @@ lalsuite = "*"
 matplotlib = "*"
 numpy = "*"
 rapid-pe = ">=0.1.0,<0.2.0"
-rift = "0.0.15.8"
+rift = "0.0.15.9"
 tabulate = "*"
 
 [[package]]
@@ -4517,12 +4517,12 @@ rsa = ["oauthlib[signedtoken] (>=3.0.0)"]
 
 [[package]]
 name = "rift"
-version = "0.0.15.8"
+version = "0.0.15.9"
 description = "RIFT parameter estimation pipeline. Note branch used is temp-RIT-Tides-port_python3_restructure_package (which will become master shortly)!"
 optional = false
 python-versions = "*"
 files = [
-    {file = "RIFT-0.0.15.8.tar.gz", hash = "sha256:d749f667aebb457ca5a9fc7a76987363ba0448acb042a90adf26dffbf3de30f9"},
+    {file = "RIFT-0.0.15.9.tar.gz", hash = "sha256:46ab32275b91d071d0eef41176d17c61c6590fabbbd0bece4b9856199ccec24b"},
 ]
 
 [package.dependencies]
@@ -5700,4 +5700,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.11"
-content-hash = "9490f2ce6f1cc2e5a461ed094866240440ac113765097723173fb79ee84aa832"
+content-hash = "d856a6a0b427f7d2136c9885e328f33596670022ea84197076e5f901de68d0db"
