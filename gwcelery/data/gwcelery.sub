@@ -43,8 +43,12 @@ arguments = "gwcelery worker -l info -n gwcelery-voevent-worker@%h -f %n.log -Q 
 description = gwcelery-voevent-worker
 queue
 
-arguments = "gwcelery worker -l info -n gwcelery-kafka-worker@%h -f %n.log -Q kafka -P solo"
-description = gwcelery-kafka-worker
+arguments = "gwcelery worker -l info -n gwcelery-kafka-producer-worker@%h -f %n.log -Q kafka-producer -P solo"
+description = gwcelery-kafka-producer-worker
+queue
+
+arguments = "gwcelery worker -l info -n gwcelery-kafka-consumer-worker@%h -f %n.log -Q kafka-consumer -P solo"
+description = gwcelery-kafka-consumer-worker
 queue
 
 # Jobs defined below this point will run on specially configured cluster nodes.

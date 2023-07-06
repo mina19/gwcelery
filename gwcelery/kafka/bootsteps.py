@@ -195,9 +195,6 @@ class KafkaBootStep(bootsteps.ConsumerStep):
     ``kafka`` queue.
     """
 
-    def include_if(self, consumer):
-        return 'kafka' in consumer.app.amqp.queues
-
     def create(self, consumer):
         if not isinstance(consumer.pool, solo.TaskPool):
             raise RuntimeError(
@@ -210,6 +207,9 @@ class Consumer(KafkaBootStep):
     """
 
     name = 'Kafka consumer'
+
+    def include_if(self, consumer):
+        return 'kafka-consumer' in consumer.app.amqp.queues
 
     def start(self, consumer):
         log.info(f'Starting {self.name}, topics: ' +
@@ -257,6 +257,9 @@ class Producer(KafkaBootStep):
     """
 
     name = 'Kafka producer'
+
+    def include_if(self, consumer):
+        return 'kafka-producer' in consumer.app.amqp.queues
 
     def start(self, consumer):
         log.info(f'Starting {self.name}, topics: ' +
