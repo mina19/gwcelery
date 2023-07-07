@@ -12,6 +12,8 @@ Changelog
     additional trials factors. Prevent GRB candidates that fall outside of FAR
     thresholds from triggering an alert.
 
+-   Update bilby_pipe to 1.1.2.
+
 2.1.3 "Thunderbird" (2023-06-24)
 --------------------------------
 

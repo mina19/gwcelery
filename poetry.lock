@@ -382,13 +382,13 @@ numpy = "*"
 
 [[package]]
 name = "bilby-pipe"
-version = "1.1.1"
+version = "1.1.2"
 description = "Automating the running of bilby for gravitational wave signals"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "bilby_pipe-1.1.1-py3-none-any.whl", hash = "sha256:e2568fd2f0815b9c826b6f5a5dd7e5d6cbb66436b5c37721fe7e83b4d47f3215"},
-    {file = "bilby_pipe-1.1.1.tar.gz", hash = "sha256:19ba582148de588165becb7a0ac8ba3270c5427f5486989787a4d8cb07bd6aaf"},
+    {file = "bilby_pipe-1.1.2-py3-none-any.whl", hash = "sha256:0eda8f9b085c9dcc250093399a981ebec6c764eeb191358e48d683f9df319941"},
+    {file = "bilby_pipe-1.1.2.tar.gz", hash = "sha256:94976424b8d908265c69e7759d9963656cc595d2d7080f141b7f369f79a1346c"},
 ]
 
 [package.dependencies]
@@ -5700,4 +5700,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.11"
-content-hash = "2df2520960ca288f26529bf73f8f84a593ed14f66a34369b8ed4c66abd890a39"
+content-hash = "9490f2ce6f1cc2e5a461ed094866240440ac113765097723173fb79ee84aa832"
