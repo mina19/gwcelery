@@ -6,6 +6,8 @@ Changelog
 
 -   Add nagios check for presence of recent MDC superevents.
 
+-   Add new celery worker for Kafka consumer.
+
 2.1.3 "Thunderbird" (2023-06-24)
 --------------------------------
 
