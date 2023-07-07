@@ -80,7 +80,7 @@ ligo-gracedb = ">=2.7.5"  # https://git.ligo.org/lscsoft/gracedb-client/-/issues
 ligo-raven = ">=3.2"
 ligo-segments = "*"
 "ligo.em-bright" = ">=1.1.4.post2"  # https://git.ligo.org/emfollow/gwcelery/-/issues/653
-"ligo.skymap" = ">=1.0.4"  # https://git.ligo.org/lscsoft/ligo.skymap/-/merge_requests/299
+"ligo.skymap" = ">=1.1.0"  # https://git.ligo.org/lscsoft/ligo.skymap/-/merge_requests/327
 lscsoft-glue = "*"
 lxml = "*"
 matplotlib = "<3.7"  # Matplotlib changed an axes behaviour which breaks some of our plotting scripts. When gwpy has a new release, we can unpin this.

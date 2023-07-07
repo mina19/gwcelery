@@ -9,6 +9,7 @@ from celery import group
 import numpy as np
 from ligo.skymap.io import fits
 from ligo.skymap.distance import parameters_to_marginal_moments
+from ligo.skymap.plot.bayes_factor import plot_bayes_factor
 from ligo.skymap.tool import ligo_skymap_combine
 import gcn
 import healpy as hp
@@ -611,7 +612,7 @@ def plot_overlap_integral(coinc_far_dict, superevent, ext_event,
     logI_string = np.format_float_positional(log_overlap, 1, trim='0',
                                              sign=True)
     # Create plot
-    fig, _ = skymaps.plot_bayes_factor(
+    fig, _ = plot_bayes_factor(
         log_overlap, values=(1, 3, 5), xlim=7, var_label=var_label,
         title=(r'Sky Map Overlap between %s and %s [$\ln\,%s = %s$]' %
                (superevent_id, ext_id, var_label, logI_string)))

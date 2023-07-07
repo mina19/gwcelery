@@ -1,5 +1,4 @@
 """Annotations for sky maps."""
-import io
 import os
 import tempfile
 
@@ -11,9 +10,9 @@ from ligo.skymap.tool import ligo_skymap_flatten
 from ligo.skymap.tool import ligo_skymap_unflatten
 from ligo.skymap.tool import ligo_skymap_from_samples
 from ligo.skymap.tool import ligo_skymap_plot
+from ligo.skymap.tool import ligo_skymap_plot_coherence
 from ligo.skymap.tool import ligo_skymap_plot_volume
 from matplotlib import pyplot as plt
-import numpy as np
 
 from . import external_skymaps
 from . import gracedb
@@ -192,96 +191,6 @@ def skymap_from_samples(samplefilecontents):
             return f.read()
 
 
-def plot_bayes_factor(logb,
-                      values=(1, 3, 5),
-                      labels=('', 'strong', 'very strong'),
-                      xlim=7, title=None, palette='RdYlBu',
-                      var_label="B"):
-    """Visualize a Bayes factor as a `bullet graph`_.
-
-    Make a bar chart of a log Bayes factor as compared to a set of subjective
-    threshold values. By default, use the thresholds from
-    Kass & Raftery (1995).
-
-    .. _`bullet graph`: https://en.wikipedia.org/wiki/Bullet_graph
-
-    Parameters
-    ----------
-    logb : float
-        The natural logarithm of the Bayes factor.
-    values : list
-        A list of floating point values for human-friendly confidence levels.
-    labels : list
-        A list of string labels for human-friendly confidence levels.
-    xlim : float
-        Limits of plot (`-xlim` to `+xlim`).
-    title : str
-        Title for plot.
-    palette : str
-        Color palette.
-    var_label : str
-        The variable symbol used in plotting
-
-    Returns
-    -------
-    fig : Matplotlib figure
-    ax : Matplotlib axes
-
-    Example
-    -------
-    .. plot::
-        :alt: Example Bayes factor plot
-
-        from gwcelery.tasks.skymaps import plot_bayes_factor
-        plot_bayes_factor(6.3, title='GWCelery is awesome')
-
-    """
-    with plt.style.context('seaborn-notebook'):
-        fig, ax = plt.subplots(figsize=(6, 1.7), tight_layout=True)
-        ax.set_xlim(-xlim, xlim)
-        ax.set_ylim(-0.5, 0.5)
-        ax.set_yticks([])
-        ax.set_title(title)
-        ax.set_ylabel(r'$\ln\,{}$'.format(var_label), rotation=0,
-                      rotation_mode='anchor',
-                      ha='right', va='center')
-
-        # Add human-friendly labels
-        ticks = (*(-x for x in reversed(values)), 0, *values)
-        ticklabels = (
-            *(f'{s}\nevidence\nagainst'.strip() for s in reversed(labels)), '',
-            *(f'{s}\nevidence\nfor'.strip() for s in labels))
-        ax.set_xticks(ticks)
-        ax.set_xticklabels(ticklabels)
-        plt.setp(ax.get_xticklines(), visible=False)
-        plt.setp(ax.get_xticklabels()[:len(ticks) // 2], ha='right')
-        plt.setp(ax.get_xticklabels()[len(ticks) // 2:], ha='left')
-
-        # Plot colored bands for confidence thresholds
-        fmt = plt.FuncFormatter(lambda x, _: f'{x:+g}'.replace('+0', '0'))
-        ax2 = ax.twiny()
-        ax2.set_xlim(*ax.get_xlim())
-        ax2.set_xticks(ticks)
-        ax2.xaxis.set_major_formatter(fmt)
-        levels = (-xlim, *ticks, xlim)
-        colors = plt.get_cmap(palette)(np.arange(1, len(levels)) / len(levels))
-        ax.barh(0, np.diff(levels), 1, levels[:-1],
-                linewidth=plt.rcParams['xtick.major.width'],
-                color=colors, edgecolor='white')
-
-        # Plot bar for log Bayes factor value
-        ax.barh(0, logb, 0.5, color='black',
-                linewidth=plt.rcParams['xtick.major.width'],
-                edgecolor='white')
-
-        for ax_ in fig.axes:
-            ax_.grid(False)
-            for spine in ax_.spines.values():
-                spine.set_visible(False)
-
-    return fig, ax
-
-
 @app.task(shared=False)
 @closing_figures()
 def plot_coherence(filecontents):
@@ -305,20 +214,15 @@ def plot_coherence(filecontents):
     # Explicitly use a non-interactive Matplotlib backend.
     plt.switch_backend('agg')
 
-    with NamedTemporaryFile(content=filecontents) as fitsfile:
+    with NamedTemporaryFile(mode='rb', suffix='.png') as pngfile, \
+            NamedTemporaryFile(content=filecontents) as fitsfile:
         header = fits.getheader(fitsfile, 1)
-    try:
-        logb = header['LOGBCI']
-    except KeyError:
-        raise Ignore('FITS file does not have a LOGBCI field')
-
-    objid = header['OBJECT']
-    logb_string = np.format_float_positional(logb, 1, trim='0', sign=True)
-    fig, _ = plot_bayes_factor(
-        logb, title=rf'Coherence of {objid} $[\ln\,B = {logb_string}]$')
-    outfile = io.BytesIO()
-    fig.savefig(outfile, format='png')
-    return outfile.getvalue()
+        try:
+            header['LOGBCI']
+        except KeyError:
+            raise Ignore('FITS file does not have a LOGBCI field')
+        ligo_skymap_plot_coherence.main([fitsfile.name, '-o', pngfile.name])
+        return pngfile.read()
 
 
 @igwn_alert.handler('superevent',
