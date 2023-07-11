@@ -622,7 +622,7 @@ def test_handle_grb_exttrig_creation(mock_raven_coincidence_search):
 
     # Check that the correct tasks were dispatched.
     mock_raven_coincidence_search.assert_has_calls([
-        call('E1234', alert['object'], group='Burst', se_searches=['Allsky']),
+        call('E1234', alert['object'], group='Burst', se_searches=['AllSky']),
         call('E1234', alert['object'], group='CBC', searches=['GRB'])])
 
 
@@ -637,9 +637,8 @@ def test_handle_subgrb_exttrig_creation(mock_raven_coincidence_search):
 
     # Check that the correct tasks were dispatched.
     mock_raven_coincidence_search.assert_has_calls([
-        call('E1234', alert['object'], group='Burst', se_searches=['Allsky']),
-        call('E1234', alert['object'], group='CBC',
-             searches=['SubGRB', 'SubGRBTargeted'], pipelines=['Fermi'])])
+        call('E1234', alert['object'], searches=['SubGRB', 'SubGRBTargeted'],
+             se_searches=['AllSky'], pipelines=['Fermi'])])
 
 
 @patch('gwcelery.tasks.external_skymaps.create_upload_external_skymap')
@@ -655,8 +654,7 @@ def test_handle_subgrb_targeted_creation(mock_raven_coincidence_search,
 
     # Check that the correct tasks were dispatched.
     mock_raven_coincidence_search.assert_has_calls([
-        call('E1234', alert['object'], group='Burst', se_searches=['Allsky']),
-        call('E1234', alert['object'], group='CBC',
+        call('E1234', alert['object'], se_searches=['AllSky'],
              searches=['SubGRB', 'SubGRBTargeted'],
              pipelines=['Swift'])])
 
@@ -712,18 +710,19 @@ def test_handle_superevent_cbc_creation(mock_raven_coincidence_search,
     # Check that the correct tasks were dispatched.
     mock_raven_coincidence_search.assert_has_calls([
         call('S180616h', alert['object'], group='CBC',
+             searches=['GRB'], se_searches=[]),
+        call('S180616h', alert['object'], group='CBC',
              pipelines=['Fermi'], searches=['SubGRB', 'SubGRBTargeted']),
         call('S180616h', alert['object'], group='CBC',
-             pipelines=['Swift'], searches=['SubGRB', 'SubGRBTargeted']),
-        call('S180616h', alert['object'], group='CBC',
-             searches=['GRB'], se_searches=[])])
+             pipelines=['Swift'], searches=['SubGRB', 'SubGRBTargeted'])])
 
 
+@pytest.mark.parametrize('search', ['AllSky', 'BBH', 'IMBH'])
 @patch('gwcelery.tasks.gracedb.get_superevent',
        return_value={'preferred_event': 'M4634'})
 @patch('gwcelery.tasks.raven.coincidence_search')
 def test_handle_superevent_burst_creation(mock_raven_coincidence_search,
-                                          mock_get_superevent):
+                                          mock_get_superevent, search):
     """
     Test dispatch of an IGWN alert message for a burst superevent
     creation.
@@ -731,14 +730,22 @@ def test_handle_superevent_burst_creation(mock_raven_coincidence_search,
     # Test IGWN alert payload.
     alert = read_json(data, 'igwn_alert_superevent_creation.json')
     alert['object']['preferred_event_data']['group'] = 'Burst'
+    alert['object']['preferred_event_data']['search'] = search
 
     # Run function under test
     external_triggers.handle_grb_igwn_alert(alert)
 
-    # Check that the correct tasks were dispatched.
-    mock_raven_coincidence_search.assert_has_calls([
-        call('S180616h', alert['object'], group='Burst', searches=['GRB'],
-             se_searches=['Allsky'])])
+    if search == 'AllSky':
+        # Check that the correct tasks were dispatched.
+        mock_raven_coincidence_search.assert_has_calls([
+            call('S180616h', alert['object'], group='Burst',
+                 searches=['GRB'], se_searches=['AllSky']),
+            call('S180616h', alert['object'], group='Burst',
+                 pipelines=['Fermi'], searches=['SubGRBTargeted']),
+            call('S180616h', alert['object'], group='Burst',
+                 pipelines=['Swift'], searches=['SubGRBTargeted'])])
+    else:
+        mock_raven_coincidence_search.assert_not_called()
 
 
 def _mock_get_events(query):

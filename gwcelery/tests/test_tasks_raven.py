@@ -17,7 +17,9 @@ from ..tasks import raven
      ['Burst', 'T4', ['SNEWS'], 'Supernova', [], -10, 10],
      ['CBC', 'MS4', ['Fermi'], ['MDC'], [], -1, 5],
      ['CBC', 'E1', ['Fermi'], [], ['GRB'], -5, 1],
-     ['CBC', 'M1', ['Fermi'], [], ['MDC'], -5, 1]])
+     ['CBC', 'M1', ['Fermi'], [], ['MDC'], -5, 1],
+     ['CBC', 'E1', ['Fermi'], ['SubGRB'], [], -11, 1],
+     ['Burst', 'E1', ['Swift'], ['SubGRBTargeted'], [], -20, 10]])
 @patch('gwcelery.tasks.gracedb.create_label')
 @patch('gwcelery.tasks.raven.raven_pipeline.s')
 @patch('gwcelery.tasks.raven.search.si', return_value=[{'superevent_id': 'S5',

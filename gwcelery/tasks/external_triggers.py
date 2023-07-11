@@ -230,45 +230,48 @@ def handle_grb_igwn_alert(alert):
                                          group='Burst', se_searches=['MDC'])
                 return
 
-            # launch standard Burst-GRB search
-            raven.coincidence_search(graceid, alert['object'], group='Burst',
-                                     se_searches=['Allsky'])
-
             if alert['object']['search'] in ['SubGRB', 'SubGRBTargeted']:
                 # if sub-threshold GRB, launch search with that pipeline
                 raven.coincidence_search(
-                    graceid, alert['object'], group='CBC',
+                    graceid, alert['object'],
                     searches=['SubGRB', 'SubGRBTargeted'],
+                    se_searches=['AllSky'],
                     pipelines=[alert['object']['pipeline']])
             else:
-                # if threshold GRB, launch standard CBC-GRB search
+                # launch standard Burst-GRB search
+                raven.coincidence_search(graceid, alert['object'],
+                                         group='Burst', se_searches=['AllSky'])
+
+                # launch standard CBC-GRB search
                 raven.coincidence_search(graceid, alert['object'],
                                          group='CBC', searches=['GRB'])
         elif 'S' in graceid:
             # launch standard GRB search based on group
             gw_group = alert['object']['preferred_event_data']['group']
+            search = alert['object']['preferred_event_data']['search']
 
             # launch search with MDC events and exit
             if alert['object']['preferred_event_data']['search'] == 'MDC':
                 raven.coincidence_search(graceid, alert['object'],
                                          group=gw_group, searches=['MDC'])
                 return
+            # Don't run search for BBH or IMBH Burst search
+            elif gw_group == 'Burst' and search.lower() != 'allsky':
+                return
 
-            if gw_group == 'CBC':
-                # launch subthreshold searches if CBC
-                # for Fermi and Swift separately to use different time windows
-                for pipeline in ['Fermi', 'Swift']:
-                    raven.coincidence_search(
-                        graceid, alert['object'], group='CBC',
-                        searches=['SubGRB', 'SubGRBTargeted'],
-                        pipelines=[pipeline])
-                se_searches = []
-            else:
-                se_searches = ['Allsky']
+            se_searches = [] if gw_group == 'CBC' else ['AllSky']
+            searches = (['SubGRB', 'SubGRBTargeted'] if gw_group == 'CBC' else
+                        ['SubGRBTargeted'])
             # launch standard GRB search
             raven.coincidence_search(graceid, alert['object'],
                                      group=gw_group, searches=['GRB'],
                                      se_searches=se_searches)
+            # launch subthreshold search for Fermi and Swift separately to use
+            # different time windows, for both CBC and Burst
+            for pipeline in ['Fermi', 'Swift']:
+                raven.coincidence_search(
+                    graceid, alert['object'], group=gw_group,
+                    searches=searches, pipelines=[pipeline])
     # re-run raven pipeline and create combined sky map (if not a Swift event)
     # when sky maps are available
     elif alert['alert_type'] == 'label_added' and \

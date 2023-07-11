@@ -32,6 +32,9 @@ Changelog
 
 -   Disable automatic playground deployment; enable automatic test deployment.
 
+-   Launch subthreshold targeted search for Burst events as well, using the same
+    search windows.
+
 2.1.3 "Thunderbird" (2023-06-24)
 --------------------------------
 

@@ -145,14 +145,17 @@ def _time_window(gracedb_id, group, pipelines, searches):
 
     if 'SNEWS' in pipelines:
         tl, th = tl_snews, th_snews
-    elif group == 'CBC':
-        if not {'SubGRB', 'SubGRBTargeted'}.isdisjoint(searches):
-            if 'Fermi' in pipelines:
-                tl, th = tl_subfermi, th_subfermi
-            elif 'Swift' in pipelines:
-                tl, th = tl_subswift, th_subswift
+    # Use Targeted search window if CBC or Burst
+    elif not {'SubGRB', 'SubGRBTargeted'}.isdisjoint(searches):
+        if 'Fermi' in pipelines:
+            tl, th = tl_subfermi, th_subfermi
+        elif 'Swift' in pipelines:
+            tl, th = tl_subswift, th_subswift
         else:
-            tl, th = tl_cbc, th_cbc
+            raise ValueError('Specify Fermi or Swift as pipeline when ' +
+                             'launching subthreshold search')
+    elif group == 'CBC':
+        tl, th = tl_cbc, th_cbc
     elif group == 'Burst':
         tl, th = tl_burst, th_burst
     else:
