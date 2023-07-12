@@ -18,6 +18,7 @@ Changelog
     triggers with a graceful failure.  Updated RIFT to 0.0.15.9 to fix
     compatibility with newer NumPy versions.  Updated LALSuite to 7.16 to fix
     bug in `XLALSimInspiralTDModesFromPolarizations` causing RIFT to fail.
+    Setting appropriate prod/dev accounting group depending on GraceDB URL.
 
 
 2.1.3 "Thunderbird" (2023-06-24)

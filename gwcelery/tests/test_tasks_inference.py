@@ -677,3 +677,42 @@ def test_bbh_rate_limit(monkeypatch, tmp_path, host):
         dag_prepare_task.assert_called_once()
         condor_submit.assert_called_once()
         dag_finished.assert_called_once()
+
+
+_rapidpe_accounting_prod = 'ligo.prod.o4.cbc.pe.lalinferencerapid'
+_rapidpe_accounting_dev = 'ligo.dev.o4.cbc.pe.lalinferencerapid'
+
+
+@pytest.mark.parametrize(
+    'gracedb_host,accounting_group',
+    [
+        ('gracedb.ligo.org', _rapidpe_accounting_prod),
+        ('gracedb-test.ligo.org', _rapidpe_accounting_prod),
+        ('gracedb-playground.ligo.org', _rapidpe_accounting_dev),
+    ],
+)
+def test_accounting_group_rapidpe(monkeypatch, tmp_path,
+                                  gracedb_host, accounting_group):
+    rundir = tmp_path
+    event = {}
+    superevent_id = 'S1234'
+    pe_pipeline = 'rapidpe'
+    config_path = os.path.join(rundir, 'rapidpe.ini')
+
+    # Set the GraceDB host appropriately
+    monkeypatch.setitem(app.conf, 'gracedb_host', gracedb_host)
+
+    # Confirm the config file doesn't exist yet
+    assert not os.path.isfile(config_path)
+
+    # Generates the config file
+    inference.dag_prepare_task(rundir, event, superevent_id, pe_pipeline).run()
+
+    # Confirm the config file now exists
+    assert os.path.isfile(config_path)
+
+    # Parse the config file to confirm the correct accounting group is set
+    config = configparser.ConfigParser()
+    config.read(config_path)
+
+    assert config.get('General', 'accounting_group') == accounting_group
