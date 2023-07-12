@@ -35,6 +35,7 @@ GWCelery's responsibilities include:
    gwcelery
    contributing
    deployment
+   operations
 
 .. toctree::
    :maxdepth: 1
