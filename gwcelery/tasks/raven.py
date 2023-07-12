@@ -46,9 +46,6 @@ def calculate_coincidence_far(superevent, exttrig, tl, th,
         far_thresholds = app.conf['raven_targeted_far_thresholds']
         far_gw_thresh = far_thresholds['GW'][exttrig['pipeline']]
         far_grb_thresh = far_thresholds['GRB'][exttrig['pipeline']]
-        # Penalize GRB FAR by additional trials from targeted search
-        far_grb *= \
-            app.conf['raven_targeted_grb_trials_factors'][exttrig['pipeline']]
     else:
         far_gw_thresh = None
         far_grb_thresh = None

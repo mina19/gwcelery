@@ -401,11 +401,6 @@ and Swift. Since we only listen to CBC low significance alerts, we use that
 FAR threshold for now. Note that Swift current listens to events with the
 threshold before and Fermi after trials factors."""
 
-raven_targeted_grb_trials_factors = {'Fermi': 3, 'Swift': 1}
-"""Trials factors for GRB pipelines involved in targeted search. Fermi-GBM
-has a trial factor of 3 due to using three independent templates (harder vs
-softer) while Swift does not."""
-
 mock_events_simulate_multiple_uploads = False
 """If True, then upload each mock event several times in rapid succession with
 random jitter in order to simulate multiple pipeline uploads."""

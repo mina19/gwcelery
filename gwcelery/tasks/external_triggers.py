@@ -448,8 +448,7 @@ def handle_targeted_kafka_alert(alert):
     payload, pipeline, time, trig_id = _kafka_to_voevent(alert)
 
     # Veto events that don't pass GRB FAR threshold
-    far_grb = \
-        alert['far'] * app.conf['raven_targeted_grb_trials_factors'][pipeline]
+    far_grb = alert['far']
     veto_event = \
         app.conf['raven_targeted_far_thresholds']['GRB'][pipeline] < far_grb
     label = ('NOT_GRB' if alert['alert_type'] == "retraction" or veto_event

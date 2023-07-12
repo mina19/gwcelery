@@ -96,7 +96,7 @@ def test_calculate_coincidence_far_subgrb(mock_calc_signif):
         'S1234', 'E4321', tl, th,
         se_dict=se, ext_dict=ext,
         incl_sky=False, grb_search='SubGRBTargeted',
-        gracedb=gracedb.client, far_grb=ext['far'] * 3,
+        gracedb=gracedb.client, far_grb=ext['far'],
         far_gw_thresh=(
             app.conf['raven_targeted_far_thresholds']['GW']['Fermi']),
         far_grb_thresh=(
