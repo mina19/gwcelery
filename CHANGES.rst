@@ -20,6 +20,9 @@ Changelog
     bug in `XLALSimInspiralTDModesFromPolarizations` causing RIFT to fail.
     Setting appropriate prod/dev accounting group depending on GraceDB URL.
 
+-   Disable online PE for MDC events from MBTA until multiple data sources can
+    be handled.
+
 
 2.1.3 "Thunderbird" (2023-06-24)
 --------------------------------

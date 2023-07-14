@@ -824,6 +824,38 @@ def test_parameter_estimation(monkeypatch, far, event, pe_pipeline):
 
 
 @pytest.mark.parametrize(
+    'search_pipeline,pe_pipeline',
+    [["MBTA", "bilby"], ["MBTA", "rapidpe"],
+     ["spiir", "bilby"], ["spiir", "rapidpe"]],
+)
+def test_mbta_disabled_on_playground(
+    monkeypatch, search_pipeline, pe_pipeline
+):
+    superevent_id = "S1234"
+    mock_upload = Mock()
+    mock_start_pe = Mock()
+    monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', mock_upload)
+    monkeypatch.setattr('gwcelery.tasks.inference.start_pe.run', mock_start_pe)
+    monkeypatch.setitem(
+        app.conf, "gracedb_host", "gracedb-playground.ligo.org"
+    )
+    far = 1e-30
+    event = {'gpstime': 1187008882, 'group': 'CBC',
+             'search': 'AllSky', 'pipeline': search_pipeline}
+
+    orchestrator.parameter_estimation.delay(
+        far_event=(far, event), superevent_id=superevent_id,
+        pe_pipeline=pe_pipeline)
+
+    if search_pipeline != 'MBTA':
+        mock_start_pe.assert_any_call(
+            event, superevent_id, pe_pipeline)
+        assert mock_start_pe.call_count == 1
+    else:
+        mock_upload.assert_called_once()
+
+
+@pytest.mark.parametrize(
     "superevent_labels,block_by_labels",
     [
         [["LOW_SIGNIF_LOCKED"], set()],

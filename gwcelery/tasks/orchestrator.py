@@ -936,6 +936,20 @@ def parameter_estimation(far_event, superevent_id, pe_pipeline):
                     'estimation is disabled for mock uploads.',
             tags='pe'
         )
+    elif (
+        app.conf['gracedb_host'] == 'gracedb-playground.ligo.org'
+        and event['pipeline'] == 'MBTA'
+    ):
+        # FIXME: Remove this block once multiple channels can be handled on
+        # one gracedb instance
+        gracedb.upload.delay(
+            filecontents=None, filename=None,
+            graceid=superevent_id,
+            message='Parameter estimation is disabled for MBTA triggers '
+                    'on playground as MBTA analyses live data + online '
+                    'injections not O3 replay data + MDC injections',
+            tags='pe'
+        )
     else:
         inference.start_pe.delay(event, superevent_id, pe_pipeline)
 
