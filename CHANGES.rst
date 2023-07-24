@@ -23,6 +23,9 @@ Changelog
 -   Disable online PE for MDC events from MBTA until multiple data sources can
     be handled.
 
+-   Ensure consistent clim between omegascans and annotate plots with Q used.
+    Add 2 seconds to start/end of data query to avoid whitening problems.
+
 
 2.1.3 "Thunderbird" (2023-06-24)
 --------------------------------

@@ -127,8 +127,8 @@ def make_omegascan(ifo, t0, durs):
     # Collect data
     durs = np.array(durs)
     longest_before, longest_after = durs[:, 0].max(), durs[:, 1].max()
-    # longest = max(np.array(durs).flatten())
-    long_start, long_end = t0 - longest_before, t0 + longest_after
+    # Add extra data buffer to avoid whitening window issues
+    long_start, long_end = t0 - longest_before - 2, t0 + longest_after + 2
     cache = create_cache(ifo, long_start, long_end)
     strain_name = app.conf['strain_channel_names'][ifo]
     try:
@@ -153,12 +153,14 @@ def make_omegascan(ifo, t0, durs):
                    geometry=(1, len(durs)),
                    yscale='log',
                    method='pcolormesh',
+                   clim=(0, 30),
                    cmap='viridis')
         for i, ax in enumerate(fig.axes):
+            ax.set_title(f'Q = {qgrams[i].q:.3g}')
             if i in [1, 2]:
                 ax.set_ylabel('')
             if i == 2:
-                fig.colorbar(ax=ax, label='Normalized energy', clim=(0, 30))
+                fig.colorbar(ax=ax, label='Normalized energy')
             ax.set_epoch(t0)
         fig.suptitle(f'Omegascans of {strain_name} at {t0}', fontweight="bold")
     plt.subplots_adjust(wspace=0.08)
@@ -183,7 +185,7 @@ def omegascan(t0, graceid):
     durs = np.array(durs)
 
     # Delay for early warning events (ie queries for times before now)
-    longest_after = durs[:, 1].max()
+    longest_after = durs[:, 1].max() + 2  # extra data for whitening window
     if t0 + longest_after > Time.now().gps:
         log.info("Delaying omegascan because %s is in the future",
                  graceid)
