@@ -84,12 +84,13 @@ create_mattermost_channel = False
 kafka_consumer_config = {
     'fermi': {'url': 'kafka://kafka.test.gcn.nasa.gov/'
               'fermi.gbm.targeted.private.igwn', 'suffix': 'json'},
-    'swift': {'url': 'kafka://kafka.test.gcn.nasa.gov/'
+    'swift': {'url': 'kafka://kafka.gcn.nasa.gov/'
               'gcn.notices.swift.bat.guano', 'suffix': 'json'}
 }
 """Kafka consumer configuration details. The keys describe the senders of the
 messages to be consumed. The values are a dictionary of the URL to listen to
-and information about the message serializer."""
+and information about the message serializer. NOTE: We will switch the Swift
+URL to a test topic once the topic is regularly written to."""
 
 views_manual_preferred_event_log_message = 'User {} queued a preferred event' \
                                            ' change to {}.'
