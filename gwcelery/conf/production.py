@@ -33,11 +33,12 @@ kafka_alert_config = {
 }
 """Kafka broker configuration details"""
 
-# FIXME kafka_consumer_config is only empty here as a safety precaution for
-# ER15 production deployment. We need to deploy a new release because we need
-# to enable alerts, but we haven't tested the Kafka consumer bootsteps enough
-# to deploy them on production yet.
-kafka_consumer_config = {}
+kafka_consumer_config = {
+    'fermi': {'url': 'kafka://kafka.gcn.nasa.gov/'
+              'fermi.gbm.targeted.private.igwn', 'suffix': 'json'},
+    'swift': {'url': 'kafka://kafka.gcn.nasa.gov/'
+              'gcn.notices.swift.bat.guano', 'suffix': 'json'}
+}
 """Kafka consumer configuration details. The keys describe the senders of the
 messages to be consumed. The values are a dictionary of the URL to listen to
 and information about the message serializer."""

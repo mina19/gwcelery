@@ -26,6 +26,10 @@ Changelog
 -   Ensure consistent clim between omegascans and annotate plots with Q used.
     Add 2 seconds to start/end of data query to avoid whitening problems.
 
+-   Change Kafka consumer configuration to listen to production Swift topic on
+    all deployments and to listen to Fermi production topic on production
+    deployment.
+
 
 2.1.3 "Thunderbird" (2023-06-24)
 --------------------------------
