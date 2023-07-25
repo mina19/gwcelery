@@ -30,6 +30,7 @@ Changelog
     all deployments and to listen to Fermi production topic on production
     deployment.
 
+-   Disable automatic playground deployment; enable automatic test deployment.
 
 2.1.3 "Thunderbird" (2023-06-24)
 --------------------------------

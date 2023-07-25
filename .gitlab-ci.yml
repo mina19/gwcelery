@@ -268,6 +268,7 @@ deploy to production at LHO:
 
 deploy to playground at CIT:
   <<: *deploy-start
+  when: manual
   environment:
     name: playground/CIT
     on_stop: stop deployment on playground at CIT
@@ -287,7 +288,6 @@ deploy to playground at LHO:
 
 deploy to test at CIT:
   <<: *deploy-start
-  when: manual
   environment:
     name: test/CIT
     on_stop: stop deployment on test at CIT
