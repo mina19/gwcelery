@@ -4,11 +4,13 @@ Changelog
 2.1.4 (unreleased)
 ------------------
 
+-   Use upload instead of create_log and update t_0 in update_if_dqok.
+
 -   Add nagios check for presence of recent MDC superevents.
 
 -   Add new celery worker for Kafka consumer.
 
--   For targeted search, add configuration variables for FAR thresholds and
+-   For the targeted search, add configuration variables for FAR thresholds and
     additional trials factors. Prevent GRB candidates that fall outside of FAR
     thresholds from triggering an alert.
 
@@ -34,6 +36,8 @@ Changelog
 
 -   Launch subthreshold targeted search for Burst events as well, using the same
     search windows.
+
+-   Update ligo-followup-advocate to 1.2.5.
 
 2.1.3 "Thunderbird" (2023-06-24)
 --------------------------------

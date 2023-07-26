@@ -2503,13 +2503,13 @@ scikit-learn = "1.2.1"
 
 [[package]]
 name = "ligo-followup-advocate"
-version = "1.2.4"
+version = "1.2.5"
 description = "LIGO/Virgo/KAGRA Follow-up Advocate Tools"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "ligo-followup-advocate-1.2.4.tar.gz", hash = "sha256:01965f3a2131086b123aabb818badc1a44ba1735ff66410b1ad411161ef52d20"},
-    {file = "ligo_followup_advocate-1.2.4-py3-none-any.whl", hash = "sha256:cba767bc33b601f2083320ee1230940b87701b535fc442fdd2a75e9f03842486"},
+    {file = "ligo-followup-advocate-1.2.5.tar.gz", hash = "sha256:14d56b82ddb31489f01d870f46d1fb605a2c5435f2fb2d7eccfe3a048c0b1ddd"},
+    {file = "ligo_followup_advocate-1.2.5-py3-none-any.whl", hash = "sha256:24c697557c1636ca014380460cbde2a9db0c7bbea492e2f669ca9f0491094f9d"},
 ]
 
 [package.dependencies]
@@ -2517,7 +2517,7 @@ astropy = "*"
 humanize = "*"
 jinja2 = "*"
 ligo-gracedb = ">=1.29.dev1"
-"ligo.skymap" = ">=0.1.10"
+"ligo.skymap" = ">=1.1.1"
 lxml = "*"
 numpy = "*"
 
@@ -2596,16 +2596,16 @@ six = "*"
 
 [[package]]
 name = "ligo-skymap"
-version = "1.0.7"
+version = "1.1.1"
 description = "Tools for reading, writing, manipulating, and making LIGO and Virgo sky maps"
 optional = false
-python-versions = "*"
+python-versions = ">=3.9"
 files = [
-    {file = "ligo.skymap-1.0.7-cp38-abi3-macosx_10_15_x86_64.whl", hash = "sha256:5b83669221893d6a3f6cf1c21c524a67979f0db115447871a574297bf6670db6"},
-    {file = "ligo.skymap-1.0.7-cp38-abi3-macosx_12_0_arm64.whl", hash = "sha256:b577bc8e5b79363202220c823614ed21922f2eff862617a1b836aef22e2bd0f3"},
-    {file = "ligo.skymap-1.0.7-cp38-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:d91c2ded773844eff9d4373c973164f9e33ee8332c704e4c97146baa7e7d2551"},
-    {file = "ligo.skymap-1.0.7-cp38-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:c2aba2c4b7735116a0f4e246ead9ef6d4bb6a6617a09e67c99466be0e7f100b3"},
-    {file = "ligo.skymap-1.0.7.tar.gz", hash = "sha256:32f4462fed94801c659cdceb738ed17f5a07be98102f37a90913aaaabe01e7dc"},
+    {file = "ligo.skymap-1.1.1-cp39-abi3-macosx_10_15_x86_64.whl", hash = "sha256:d1cd8835d8846f510a0b3075859959c73a2033743ed8b797e0fe45912770216b"},
+    {file = "ligo.skymap-1.1.1-cp39-abi3-macosx_12_0_arm64.whl", hash = "sha256:f78c71e050f7bf42a9e3a3dccd15c32076d4d565b3a87e2c0a0a20affa898ff5"},
+    {file = "ligo.skymap-1.1.1-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:adadd3f1566c3968d26237a7a3be93db09e8c0dadf42d7429df53b78c11ea5c1"},
+    {file = "ligo.skymap-1.1.1-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:d61842a4026631f651dadffa6e0e1749902347cd508612429576b9d52601ca2b"},
+    {file = "ligo.skymap-1.1.1.tar.gz", hash = "sha256:f2f84ebad1e925726a82f010e0a3243fffad46835fe278d9bf02cddca847c88c"},
 ]
 
 [package.dependencies]
@@ -5700,4 +5700,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.11"
-content-hash = "d856a6a0b427f7d2136c9885e328f33596670022ea84197076e5f901de68d0db"
+content-hash = "5ec1fe8684fc4a6561b924769faacb568098cc514581c9be3713b00f34950369"
