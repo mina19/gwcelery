@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.1.4 (unreleased)
-------------------
+2.1.4 "Mokele-Mbembe" (07-26-2023)
+----------------------------------
 
 -   Use upload instead of create_log and update t_0 in update_if_dqok.
 
