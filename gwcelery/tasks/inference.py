@@ -716,6 +716,7 @@ def _upload_tasks_bilby(rundir, superevent_id, mode):
     pesummary_kwargs["approximant"] = config_content["waveform-approximant"]
     pesummary_kwargs["f_low"] = config_content["minimum-frequency"]
     pesummary_kwargs["f_ref"] = config_content["reference-frequency"]
+    pesummary_kwargs["label"] = "online"
 
     webdir = os.path.join(config_content["webdir"], 'pesummary')
     url = urllib.parse.urljoin(

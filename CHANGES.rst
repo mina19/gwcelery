@@ -4,7 +4,7 @@ Changelog
 2.1.5 (unreleased)
 ------------------
 
--   No changes yet.
+-   Add "online" label to PESummary result page from online Bilby.
 
 2.1.4 "Mokele-Mbembe" (07-26-2023)
 ----------------------------------

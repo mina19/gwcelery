@@ -497,7 +497,7 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline, host):
                     "--config", path_to_bilby_config, "--psd", "H1:H1_psd.txt",
                     "L1:L1_psd.txt", "--calibration", "H1:H1_cal.txt",
                     "L1:L1_cal.txt", "--approximant", "IMRPhenomPv2",
-                    "--f_low", "20", "--f_ref", "100"
+                    "--f_low", "20", "--f_ref", "100", "--label", "online"
                 ]
                 if host != 'gracedb.ligo.org':
                     ans += ["--disable_interactive", "--disable_expert"]
