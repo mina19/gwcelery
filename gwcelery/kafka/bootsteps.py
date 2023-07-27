@@ -115,6 +115,7 @@ class KafkaListener(KafkaBase):
     def __init__(self, name, config):
         super().__init__(name, config, 'consumer')
         self._open_hop_stream = None
+        self.running = False
         # Don't kill worker if listener can't connect
         try:
             self._open_hop_stream = self._hop_stream.open(config['url'], 'r')
@@ -126,13 +127,34 @@ class KafkaListener(KafkaBase):
             log.exception('Connection to %s failed', self._config["url"])
 
     def listen(self):
-        for message in self._open_hop_stream:
-            # Send signal
-            kafka_record_consumed.send(
-                None,
-                name=self.name,
-                record=self.get_payload_output(message)
-            )
+        self.running = True
+        # Restart the consumer when non-fatal errors come up, similar to
+        # gwcelery.igwn_alert.IGWNAlertClient
+        while self.running:
+            try:
+                for message in self._open_hop_stream:
+                    # Send signal
+                    kafka_record_consumed.send(
+                        None,
+                        name=self.name,
+                        record=self.get_payload_output(message)
+                    )
+            except KafkaException as exception:
+                err = exception.args[0]
+                if self.running is False:
+                    # The close attempt in the KafkaListener stop method throws
+                    # a KafkaException that's caught by this try except, so we
+                    # just have to catch this case for the worker to shut down
+                    # gracefully
+                    pass
+                elif err.fatal():
+                    # stop running and close before raising error
+                    self.running = False
+                    self._open_hop_stream.close()
+                    raise
+                else:
+                    log.warning(
+                        "non-fatal error from kafka: {}".format(err.name))
 
 
 class KafkaWriter(KafkaBase):
@@ -232,6 +254,7 @@ class Consumer(KafkaBootStep):
                           self._listeners.values() if listener._open_hop_stream
                           is not None))
         for s in self._listeners.values():
+            s.running = False
             if s._open_hop_stream is not None:
                 s._open_hop_stream.close()
 
