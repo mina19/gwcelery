@@ -6,6 +6,9 @@ Changelog
 
 -   Add "online" label to PESummary result page from online Bilby.
 
+-   Increase tolerance duration for superevent existence nagios check in
+    the last hour from 1 min to 10 mins.
+
 2.1.4 "Mokele-Mbembe" (07-26-2023)
 ----------------------------------
 

@@ -183,7 +183,7 @@ def check_status(app):
                 f'{to_utc(t_lower)} UTC')
     last_superevent = recent_mdc_superevents[0]
     # check presence in last hour with a tolerance
-    none_in_last_hour = (t_now - last_superevent['t_0']) > (3600 + 60)
+    none_in_last_hour = (t_now - last_superevent['t_0']) > (3600 + 600)
     if none_in_last_hour:
         raise NagiosCriticalError(
                 'No MDC superevents found in last one hour') \
