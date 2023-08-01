@@ -1,6 +1,7 @@
 """Flask web application views."""
 import datetime
 from importlib import metadata
+import json
 import platform
 import re
 import socket
@@ -446,6 +447,8 @@ def _update_preferred_external_event(ext_event, superevent_id):
     if ext_event['search'] in {'GRB', 'SubGRB', 'SubGRBTargeted'}:
         coinc_far_dict = gracedb.download(
             'coincidence_far.json', ext_event['graceid'])
+        if not isinstance(coinc_far_dict, dict):
+            coinc_far_dict = json.loads(coinc_far_dict)
         time_coinc_far = coinc_far_dict['temporal_coinc_far']
         space_coinc_far = coinc_far_dict['spatiotemporal_coinc_far']
     else:
