@@ -1,15 +1,19 @@
 Changelog
 =========
 
-2.1.5 (unreleased)
-------------------
+2.1.5 "Ningen" (08-01-2023)
+---------------------------
 
 -   Add "online" label to PESummary result page from online Bilby.
 
 -   Increase tolerance duration for superevent existence nagios check in
     the last hour from 1 min to 10 mins.
 
--   Add error handling to hop-client consumers.
+-   Add error handling to hop-client consumers, and restart the consumer
+    on non-fatal errors.
+
+-   Ensure that the content of ``coincidence_far.json`` is in JSON format
+    in ``views.py``.
 
 2.1.4 "Mokele-Mbembe" (07-26-2023)
 ----------------------------------
