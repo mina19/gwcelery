@@ -4,7 +4,8 @@ Changelog
 2.1.6 (unreleased)
 ------------------
 
--   No changes yet.
+-   Lower omegascan minimum frequency to 10 Hz from 20 Hz to better
+    frequencies used by searches.
 
 2.1.5 "Ningen" (08-01-2023)
 ---------------------------

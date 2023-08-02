@@ -136,7 +136,7 @@ def make_omegascan(ifo, t0, durs):
                              start=long_start, end=long_end).astype('float64')
         # Do q_transforms for the different durations
         qgrams = [ts.q_transform(
-            frange=(20, 4096), gps=t0,
+            frange=(10, 4096), gps=t0,
             outseg=(t0 - before, t0 + after), logf=True)
             for before, after in durs]
     except (IndexError, FloatingPointError, ValueError) as err:
