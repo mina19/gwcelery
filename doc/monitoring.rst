@@ -32,7 +32,19 @@ an introduction to a few of them. For more Celery monitoring solutions, see the
 Flower
 ------
 
-Flower_ is a dashboard for monitoring Celery tasks. To start Flower for
+Flower_ is a dashboard for monitoring Celery tasks. 
+It provides a good first look to check if everything is running as expected.
+Any offline worker will be show in red. By clicking on a failed worker or task, 
+one can get some details about the failure reason. Flower does not store the results
+persistently (Sentry is a better tool to look at historical data).
+
+The production instance is available at 
+https://emfollow.ligo.caltech.edu/flower/.
+
+.. image:: _static/flower-screenshot.png
+   :alt: Screenshot of Flower
+
+To start Flower for
 monitoring during local development, run the following command and then
 navigate to http://localhost:5555/ in your browser::
 
@@ -45,12 +57,80 @@ All warnings, errors, exceptions, and tasks failures are both logged to disk
 and uploaded instantly to Sentry_, an error monitoring and reporting platform.
 Sentry notifies GWCelery contributors by email when a new bug occurs.
 
-For details about the Sentry logging configuration, see the
-:mod:`gwcelery.sentry` module or the `Celery integration module`_ in the Sentry
-SDK docs.
+Sentry monitoring of the production instance of GWCelery is available
+`here <https://ligo-caltech.sentry.io/issues/?environment=production&project=1425216&referrer=sidebar>`__. 
+Other environments (i.e. playground or test) can be chosen from the top bar, as well as the 
+monitoring period.
+
+By clicking on a specific issue one can get more details about the issue itself, including the 
+code snippet generating the problem. 
+On the right sidebar of the specific issue page, 
+there is the possibility to automatically open a corresponding issue in the LIGO
+GitLab instance. 
 
 .. image:: _static/sentry-screenshot.png
    :alt: Screenshot of Sentry
+
+For details about the Sentry logging configuration, see the
+:mod:`gwcelery.sentry` module or the `Celery integration module`_ in the Sentry
+SDK docs.   
+
+Nagios
+------
+
+.. note::
+   The GWCelery Nagios plugin is tailored to GWCelery and is not sufficiently
+   general to use with other Celery applications.
+
+The dashboard.ligo.org_  service uses Nagios_ to monitor
+and report on the health of all of the components of the low-latency analysis
+infrastructure. 
+
+The status of the host running the production instance of GWCelery can be 
+found under *Host Detail* in the left side menu (select the *emfollow* entry).
+From the host information page, the links to the GWCelery service status or 
+to the alert history and other useful monitoring pages can be found in the top
+left of the page.
+
+.. image:: _static/nagios-screenshot.png
+   :alt: Screenshot of Nagios
+
+Moreover, GWCelery provides the command ``gwcelery nagios`` to check the status of the
+application and provide a report in `the format that Nagios expects`_.
+
+You can run it manually from the command line::
+
+    $ gwcelery nagios
+    OK: GWCelery is running normally
+
+To configure Nagios itself, see the `Nagios configuration overview`_, or if
+GWCelery and Nagios are running on different hosts, the `Nagios Remote Plugin
+Executor (NRPE) documentation`_.
+
+Ganglia
+-------
+
+Ganglia is used to to view either live or recorded statistics covering metrics such as:
+CPU, memory, disk, network or network utilization.
+
+The machine running the production instance of GWCelery is monitored
+`here <https://ldas-gridmon.ligo.caltech.edu/ganglia/?r=hour&cs=&ce=&m=load_one&c=Servers&h=emfollow.ldas.cit&tab=m&vn=&tz=&hide-hf=false&mc=2&z=medium&metric_group=ALLGROUPS>`__.
+
+.. image:: _static/ganglia-screenshot.png
+   :alt: Screenshot of Ganglia
+
+From the top bar the monitoring period can be chosen, ranging form 1 hour to 1 year.
+
+Munin
+-----
+
+Minin provides similar information as Ganglia. The machine running the production instance of GWCelery is monitored
+`here <https://ldas-gridmon.ligo.caltech.edu/munin/ldas.cit/emfollow.ldas.cit/>`__.
+
+.. image:: _static/munin-screenshot.png
+   :alt: Screenshot of Nagios
+
+Metrics (i.e. disk or network utilization, processes etc.) are displayed by day or by week.
 
 Flask
 -----
@@ -63,28 +143,6 @@ command and then navigate to http://localhost:5000/ in your browser::
 
     $ gwcelery flask run
 
-Nagios
-------
-
-.. note::
-   The GWCelery Nagios plugin is tailored to GWCelery and is not sufficiently
-   general to use with other Celery applications.
-
-The dashboard.ligo.org_ and monitor.ligo.org_ services use Nagios_ to monitor
-and report on the health of all of the components of the low-latency analysis
-infrastructure.
-
-GWCelery provides the command ``gwcelery nagios`` to check the status of the
-application and provide a report in `the format that Nagios expects`_.
-
-You can run it manually from the command line::
-
-    $ gwcelery nagios
-    OK: GWCelery is running normally
-
-To configure Nagios itself, see the `Nagios configuration overview`_, or if
-GWCelery and Nagios are running on different hosts, the `Nagios Remote Plugin
-Executor (NRPE) documentation`_.
 
 Command-Line Tools
 ------------------
