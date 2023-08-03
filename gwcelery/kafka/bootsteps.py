@@ -137,7 +137,7 @@ class KafkaListener(KafkaBase):
                     kafka_record_consumed.send(
                         None,
                         name=self.name,
-                        record=self.get_payload_output(message)
+                        record=self.get_payload_content(message)
                     )
             except KafkaException as exception:
                 err = exception.args[0]
