@@ -183,13 +183,16 @@ def check_status(app):
                 f'{to_utc(t_lower)} UTC')
     last_superevent = recent_mdc_superevents[0]
     # check presence in last hour with a tolerance
-    none_in_last_hour = (t_now - last_superevent['t_0']) > (3600 + 600)
+    none_in_last_hour = (
+        t_now - tconvert(last_superevent['created'])
+    ) > (3600 + 600)
     if none_in_last_hour:
         raise NagiosCriticalError(
                 'No MDC superevents found in last one hour') \
             from AssertionError(
-                f"Last entry is at GPSTime {last_superevent['superevent_id']}"
-                f" = {to_utc(last_superevent['t_0'])} UTC")
+                f"Last entry is for {last_superevent['superevent_id']}"
+                f"GPSTime {tconvert(last_superevent['created'])} ="
+                f"{last_superevent['created']}")
 
     active = get_active_kafka_consumer_bootstep_names(inspector)
     expected = get_expected_kafka_consumer_bootstep_names(app)

@@ -2,6 +2,7 @@ from distutils.spawn import find_executable
 from unittest.mock import Mock
 
 import lal
+from gwpy.time import tconvert
 import pytest
 
 from .. import app, main
@@ -157,7 +158,7 @@ def test_nagios(capsys, monkeypatch, request, socket_enabled, starter,
         'gwcelery.tools.nagios.get_recent_mdc_superevents',
         Mock(return_value=(
             [{'superevent_id': 'MS123456',
-              't_0': lal.GPSTimeNow() - 7200}],
+              'created': str(tconvert(lal.GPSTimeNow() - 7200))}],
             lal.GPSTimeNow() - 6 * 3600, lal.GPSTimeNow())))
     with pytest.raises(SystemExit) as excinfo:
         main(['gwcelery', 'nagios'])
@@ -169,7 +170,7 @@ def test_nagios(capsys, monkeypatch, request, socket_enabled, starter,
         'gwcelery.tools.nagios.get_recent_mdc_superevents',
         Mock(return_value=(
             [{'superevent_id': 'MS123456',
-              't_0': lal.GPSTimeNow() - 100}],
+              'created': str(tconvert(lal.GPSTimeNow() - 100))}],
             lal.GPSTimeNow() - 6 * 3600, lal.GPSTimeNow())))
 
     # Kafka broker, topic or broker are down

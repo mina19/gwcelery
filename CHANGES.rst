@@ -9,6 +9,9 @@ Changelog
 -   Lower omegascan minimum frequency to 10 Hz from 20 Hz to better
     frequencies used by searches.
 
+-   Change the superevent nagios check behavior to check against created
+    time instead of ``t_0``.
+
 2.1.5 "Ningen" (08-01-2023)
 ---------------------------
 
