@@ -122,7 +122,7 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [tool.poetry.group.dev.dependencies]
 ipython = "*"  # Include IPython for a nicer ``gwcelery shell`` experience.
 ipykernel = "*"  # Include IPython kernel for Jupyter Lab support.
-flower = ">=1.2.0"
+flower = { git = "https://github.com/mher/flower.git", rev = "6ffefa1eac404100c456c600e2c18633bfcf10c8" }  # https://github.com/mher/flower/issues/1316
 
 [tool.poetry.scripts]
 gwcelery = "gwcelery:main"

@@ -12,6 +12,10 @@ Changelog
 -   Change the superevent nagios check behavior to check against created
     time instead of ``t_0``.
 
+-   Install bleeding edge version of flower monitor until next point
+    release fixing ``url-prefix`` option. For reference, see
+    https://github.com/mher/flower/issues/1316
+
 2.1.5 "Ningen" (08-01-2023)
 ---------------------------
 
