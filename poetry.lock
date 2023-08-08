@@ -4359,20 +4359,20 @@ six = "*"
 
 [[package]]
 name = "rapidpe-rift-pipe"
-version = "0.5.3"
+version = "0.6.3"
 description = "Pipeline for running RapidPE and RIFT parameter estimation codes"
 optional = false
 python-versions = "*"
 files = [
-    {file = "rapidpe_rift_pipe-0.5.3-py3-none-any.whl", hash = "sha256:a129b064306dac79c90da04f2da392aa2a133b2c1f6670d0bbb66671a173737e"},
-    {file = "rapidpe_rift_pipe-0.5.3.tar.gz", hash = "sha256:8155b20818507d5fc8be4d8b3c7bfe740f09acc78ffea2f7edd96f962daa517f"},
+    {file = "rapidpe_rift_pipe-0.6.3-py3-none-any.whl", hash = "sha256:b6c4c0692723506d7ec53d96ac447d4208de38cf2cd0a80003c46f31037bcd4a"},
+    {file = "rapidpe_rift_pipe-0.6.3.tar.gz", hash = "sha256:c56eb9c483e1fc8c6d8144a8714703fc7931030d9fddbba229709829c2f2fd0d"},
 ]
 
 [package.dependencies]
 astropy = "*"
 gwpy = ">=3.0.4"
 h5py = "*"
-lalsuite = "*"
+lalsuite = "!=7.15"
 matplotlib = "*"
 numpy = "*"
 rapid-pe = ">=0.1.0,<0.2.0"
@@ -5719,4 +5719,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.11"
-content-hash = "9e504243a37a60b87870c05f68bd5a9df1ceff7179e3e88179774da8f60d3712"
+content-hash = "dd347dd792724da87fb4ba66cafc2581e7a550d2c28f48dbfca7e9240f4dc79f"

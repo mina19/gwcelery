@@ -56,12 +56,12 @@ run_mode={{ run_mode }}
 frame_data_types={{ frame_data_types | tojson }}
 query_shm=True
 mdc_event_injection_file =/home/vinaya.valsan/rapidPE/RapidPE_RIFT_Developments/RapidPE-RIFT_fork/gracedb_playground_events/injection_campaign_studies/lowlatency-replay-distributions/minSNR-4/injections-minSNR-4.xml.gz
-mdc_time_offset=101760000
+mdc_time_offset=112128000
 #Anything specified in this section is passed verbatim to rapidpe_compute_intrinsic_grid in generate_initial_grid_based_of_gstlal_O2_overlaps.py
 [InitialGridOnly]
 #mc-min = 5
 #mc-max = 61
-points-per-side=10
+total-points=100
 
 [InitialGridSetup]
 #The arguments in this section are passed directly to the command line in the condor dag job which does the grid refinement. Do not include any arguments which change per iteration or per node.
@@ -109,7 +109,7 @@ save-P=1e-7
 reference-freq=0.0
 #The default fmax is the max frequency in the psd that comes with the event
 #fmax=7900.0
-fmin-template=15.0
+fmin-template=20.0
 #This defines the max number of extrinsic posterior points you want to calculate the likelihood for per intrinsic grid point. The best choice is unclear: if it's too small random sampling on the intrinsic grid won't have a chance to converge on the true maximum but the bigger you make it the longer the code runs
 n-max=5000
 #This is what's referred to as the effective number of templates (aka intrinsic grid points). As the rapidpe code iterates through the intrinsic grid, it calculates the effective number of templates/grid points for which the likelihood has been calculated so far. I assume this calculation is based on the overlap between templates, and effective number of templates is the same as saying the number of effectively independent templates, but I haven't confirmed this. If rapidpe reaches n_eff before reaching n_max, the calculations finish. In the way it has been used so far, n_eff is rarely reached before n_max. If n_eff is small when you reach n_max it's probably a bad thing, it indicates the intrinsic parameter space is not well sampled. What number would be considered small you ask? I don't know.
@@ -139,10 +139,8 @@ sampler-method=adaptive_cartesian_gpu
 manual-logarithm-offset=
 
 [Pastro]
-category_rates={"R_bns": 3.040442568596489e-07,"R_nsbh": 2.187249638130701e-07,"R_bbh": 2.1323454514234493e-06}
+category_rates={"BNS": 3.040442568596489e-07,"NSBH": 2.187249638130701e-07,"BBH": 2.1323454514234493e-06}
 
-category_rates_inj={"R_bns": 3.040442568596489e-07,"R_nsbh": 2.187249638130701e-07,"R_bbh": 2.1323454514234493e-06}
+category_rates_inj={"BNS": 3.040442568596489e-07,"NSBH": 2.187249638130701e-07,"BBH": 2.1323454514234493e-06}
 
-far_threshold=0.0002777777777777778
 prior_boundary={"m_max_bank": 200.0,"m_min_bank": 0.98,"m_max_ns": 3.0,"q_min_bank": 0.05,"q_max_bank": 1}
-rankstat_pdf_file=/home/gstlalcbc.online/observing/4/pre-engineering/runs/trigs.renee_Apr21/dist_stat_pdfs/H1L1-GSTLAL_DIST_STAT_PDFS-0-0.xml.gz
