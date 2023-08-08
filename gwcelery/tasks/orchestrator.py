@@ -1153,8 +1153,10 @@ def earlywarning_preliminary_initial_update_alert(
     else:
         # Download em_bright and p_astro files here for voevent
         download_andor_expose_group = [
-            gracedb.download.si(em_bright_filename, superevent_id),
-            gracedb.download.si(p_astro_filename, superevent_id),
+            gracedb.download.si(em_bright_filename, superevent_id) if
+            em_bright_filename is not None else identity.s(None),
+            gracedb.download.si(p_astro_filename, superevent_id) if
+            p_astro_filename is not None else identity.s(None),
         ]
         high_profile_canvas = identity.si()
 

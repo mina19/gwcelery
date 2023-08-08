@@ -16,6 +16,9 @@ Changelog
     release fixing ``url-prefix`` option. For reference, see
     https://github.com/mher/flower/issues/1316
 
+-   Don't attempt to download ``em_bright`` and ``p_astro`` files from events
+    that don't provide them.
+
 2.1.5 "Ningen" (08-01-2023)
 ---------------------------
 
