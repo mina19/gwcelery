@@ -227,7 +227,7 @@ release:
       curl -sSL https://install.python-poetry.org | python3 -
       # FIXME: It would be simpler to use `poetry install`, but it tries to
       # uninstall system site-packages even if they are not writable.
-      python -m pip install --no-deps -r <(poetry export --with dev)
+      python -m pip install --no-deps -r <(poetry export --without-hashes --with dev)  # https://git.ligo.org/emfollow/gwcelery/-/issues/682; remove --without-hashes when flower > 2.0 is available
       python -m pip install --no-deps .
 
       # FIXME: remove pip uninstall temporary directories left behind due to
