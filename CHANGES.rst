@@ -19,6 +19,8 @@ Changelog
 -   Don't attempt to download ``em_bright`` and ``p_astro`` files from events
     that don't provide them.
 
+-   Expose PE skymap images, HTML, and gzip fits when update notice is sent.
+
 2.1.5 "Ningen" (08-01-2023)
 ---------------------------
 

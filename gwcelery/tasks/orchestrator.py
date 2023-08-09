@@ -1181,14 +1181,20 @@ def earlywarning_preliminary_initial_update_alert(
             combined_skymap_filename=combined_skymap_filename
         )
 
+    to_expose = [skymap_filename, em_bright_filename, p_astro_filename]
+    # Since PE skymap images, HTML, and gzip fits are not made public when they
+    # are uploaded, we need to expose them here.
+    if (
+        skymap_filename is not None and 'bilby' in skymap_filename.lower()
+    ):
+        prefix, _, _ = skymap_filename.partition('.multiorder.fits')
+        to_expose += [f'{prefix}.html', f'{prefix}.png',
+                      f'{prefix}.volume.png', f'{prefix}.fits.gz']
     download_andor_expose_group += [
         gracedb.expose.si(superevent_id),
         *(
             gracedb.create_tag.si(filename, 'public', superevent_id)
-            for filename in [
-                skymap_filename, em_bright_filename, p_astro_filename
-            ]
-            if filename is not None
+            for filename in to_expose if filename is not None
         )
     ]
 
