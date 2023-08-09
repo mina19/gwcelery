@@ -2485,6 +2485,8 @@ description = "Clang Python Bindings, mirrored from the official LLVM repo: http
 optional = false
 python-versions = "*"
 files = [
+    {file = "libclang-16.0.6-1-py2.py3-none-manylinux2014_aarch64.whl", hash = "sha256:88bc7e7b393c32e41e03ba77ef02fdd647da1f764c2cd028e69e0837080b79f6"},
+    {file = "libclang-16.0.6-1-py2.py3-none-manylinux2014_armv7l.whl", hash = "sha256:d80ed5827736ed5ec2bcedf536720476fd9d4fa4c79ef0cb24aea4c59332f361"},
     {file = "libclang-16.0.6-py2.py3-none-macosx_10_9_x86_64.whl", hash = "sha256:da9e47ebc3f0a6d90fb169ef25f9fbcd29b4a4ef97a8b0e3e3a17800af1423f4"},
     {file = "libclang-16.0.6-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:e1a5ad1e895e5443e205568c85c04b4608e4e973dae42f4dfd9cb46c81d1486b"},
     {file = "libclang-16.0.6-py2.py3-none-manylinux2010_x86_64.whl", hash = "sha256:9dcdc730939788b8b69ffd6d5d75fe5366e3ee007f1e36a99799ec0b0c001492"},
@@ -2516,13 +2518,13 @@ scikit-learn = "1.2.1"
 
 [[package]]
 name = "ligo-followup-advocate"
-version = "1.2.5"
+version = "1.2.6"
 description = "LIGO/Virgo/KAGRA Follow-up Advocate Tools"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "ligo-followup-advocate-1.2.5.tar.gz", hash = "sha256:14d56b82ddb31489f01d870f46d1fb605a2c5435f2fb2d7eccfe3a048c0b1ddd"},
-    {file = "ligo_followup_advocate-1.2.5-py3-none-any.whl", hash = "sha256:24c697557c1636ca014380460cbde2a9db0c7bbea492e2f669ca9f0491094f9d"},
+    {file = "ligo-followup-advocate-1.2.6.tar.gz", hash = "sha256:f18bf4999a3118a86043b2d4ff216783a68757f89629b60907cc01186b0b734e"},
+    {file = "ligo_followup_advocate-1.2.6-py3-none-any.whl", hash = "sha256:482f285a581e54b0d5192aae4dda1d942b1d9ddd190ae52939fc494183836000"},
 ]
 
 [package.dependencies]
@@ -5717,4 +5719,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.11"
-content-hash = "5dc11e1a1fb9774efe73da2f23e3a789554dce656b949686a0994e84810a545a"
+content-hash = "9e504243a37a60b87870c05f68bd5a9df1ceff7179e3e88179774da8f60d3712"

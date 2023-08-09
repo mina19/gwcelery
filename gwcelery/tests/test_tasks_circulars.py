@@ -15,7 +15,8 @@ def test_create_initial_circular(monkeypatch):
 
     # call create_initial_circular
     circulars.create_initial_circular(superevent_id)
-    mock_compose.assert_called_once_with('S1234', client=gracedb.client)
+    mock_compose.assert_called_once_with('S1234', client=gracedb.client,
+                                         remove_text_wrap=True)
 
 
 def test_create_emcoinc_circular(monkeypatch):
@@ -30,7 +31,7 @@ def test_create_emcoinc_circular(monkeypatch):
     # call create_emcoinc_circular
     circulars.create_emcoinc_circular(superevent_id)
     mock_compose_emcoinc_circular.assert_called_once_with(
-        'S1234', client=gracedb.client)
+        'S1234', client=gracedb.client, remove_text_wrap=True)
 
 
 def test_create_medium_latency_circular(monkeypatch):
@@ -45,7 +46,7 @@ def test_create_medium_latency_circular(monkeypatch):
     # call create_emcoinc_circular
     circulars.create_medium_latency_circular(ext_event_id)
     mock_compose_medium_latency_circular.assert_called_once_with(
-        'E1234', client=gracedb.client)
+        'E1234', client=gracedb.client, remove_text_wrap=True)
 
 
 @pytest.mark.parametrize(
@@ -65,7 +66,8 @@ def test_create_update_circular(monkeypatch, update_types):
     # call create_emcoinc_circular
     circulars.create_update_circular(superevent_id, update_types=update_types)
     mock_compose_update_circular.assert_called_once_with(
-        'S1234', client=gracedb.client, update_types=update_types)
+        'S1234', client=gracedb.client, update_types=update_types,
+        remove_text_wrap=True)
 
 
 def test_create_retraction_circular(monkeypatch):
@@ -80,4 +82,4 @@ def test_create_retraction_circular(monkeypatch):
     # call create_retraction_circular
     circulars.create_retraction_circular(superevent_id)
     mock_compose_retraction.assert_called_once_with(
-        'S1234', client=gracedb.client)
+        'S1234', client=gracedb.client, remove_text_wrap=True)

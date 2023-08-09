@@ -13,6 +13,9 @@ Changelog
     than the given threshold (which leads to a negative joint FAR) does not
     pass publishing conditions.
 
+-   Update ligo-followup-advocate to 1.2.6; enable option to remove line
+    wrapping in order to conform to new GCN circular recommendations.
+
 2.1.6 "Champ" (08-10-2023)
 --------------------------
 
