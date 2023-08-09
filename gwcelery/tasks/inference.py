@@ -752,15 +752,7 @@ def _upload_tasks_rapidpe(rundir, superevent_id):
         None, None, superevent_id,
         f'Summary page for RapidPE-RIFT is available <a href={url}>here</a>',
         ('pe',))
-    pipeline = gracedb.get_superevent(superevent_id)[
-            'preferred_event_data']['pipeline']
-    if pipeline == 'gstlal':
-        pastro_tags = (
-            "pe", "lvem",
-            "public", "p_astro"
-        )
-    else:
-        pastro_tags = ("pe", "p_astro")
+    pastro_tags = ("pe", "p_astro")
     to_upload = [
         (
             "p_astro.json", "RapidPE_RIFT.p_astro.json",

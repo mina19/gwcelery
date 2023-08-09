@@ -21,6 +21,9 @@ Changelog
 
 -   Expose PE skymap images, HTML, and gzip fits when update notice is sent.
 
+-   Prevent public tag being applied automatically to ``RapidPE_RIFT.p_astro.json``.
+    Therefore this is not included automatically at the time of sending initial alert.
+
 2.1.5 "Ningen" (08-01-2023)
 ---------------------------
 
