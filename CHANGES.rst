@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.1.6 (unreleased)
-------------------
+2.1.6 "Champ" (08-10-2023)
+--------------------------
 
 -   Prevent Sentry from triggering on email notice validator since an
     error message is already logged to gracedb in case of failure.
