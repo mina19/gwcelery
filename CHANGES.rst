@@ -4,7 +4,8 @@ Changelog
 2.1.6 (unreleased)
 ------------------
 
--   Catch additional non-blocking errors in the email notice validator.
+-   Prevent Sentry from triggering on email notice validator since an
+    error message is already logged to gracedb in case of failure.
 
 -   Lower omegascan minimum frequency to 10 Hz from 20 Hz to better
     frequencies used by searches.
@@ -17,7 +18,8 @@ Changelog
     https://github.com/mher/flower/issues/1316
 
 -   Don't attempt to download ``em_bright`` and ``p_astro`` files from events
-    that don't provide them.
+    that don't provide them. This fixes the case where burst only alerts
+    contained garbled information in the classification and properties section.
 
 -   Expose PE skymap images, HTML, and gzip fits when update notice is sent.
 
