@@ -398,6 +398,8 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
     preferred_gwevent_id = superevent['preferred_event']
     superevent_id = superevent['superevent_id']
     ext_id = ext_event['graceid']
+    # Specify group is not given, currently missing for subthreshold searches
+    gw_group = gw_group or superevent['preferred_event_data']['group']
     gw_group = gw_group.lower()
     pipeline = ext_event['pipeline']
     trials_factor = app.conf['significant_alert_trials_factor'][gw_group]

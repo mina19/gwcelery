@@ -4,7 +4,9 @@ Changelog
 2.1.7 (unreleased)
 ------------------
 
--   No changes yet.
+-   Specify GW group when triggering RAVEN pipeline if not given. This fixes a
+    bug introduced when allowing the SubGRBTargeted search to find both CBC and
+    Burst events.
 
 2.1.6 "Champ" (08-10-2023)
 --------------------------

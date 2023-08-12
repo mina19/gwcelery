@@ -19,7 +19,8 @@ from ..tasks import raven
      ['CBC', 'E1', ['Fermi'], [], ['GRB'], -5, 1],
      ['CBC', 'M1', ['Fermi'], [], ['MDC'], -5, 1],
      ['CBC', 'E1', ['Fermi'], ['SubGRB'], [], -11, 1],
-     ['Burst', 'E1', ['Swift'], ['SubGRBTargeted'], [], -20, 10]])
+     ['Burst', 'E1', ['Swift'], ['SubGRBTargeted'], [], -20, 10],
+     [None, 'E1', ['Swift'], ['SubGRBTargeted'], [], -20, 10]])
 @patch('gwcelery.tasks.gracedb.create_label')
 @patch('gwcelery.tasks.raven.raven_pipeline.s')
 @patch('gwcelery.tasks.raven.search.si', return_value=[{'superevent_id': 'S5',
@@ -544,6 +545,12 @@ def _mock_get_event(graceid):
                 "search": 'GRB',
                 "labels": [],
                 "group": 'External'}
+    elif graceid == 'E8':
+        return {"graceid": "E8",
+                "pipeline": 'Fermi',
+                "search": 'SubGRBTargeted',
+                "labels": [],
+                "group": 'External'}
     else:
         raise AssertionError
 
@@ -595,7 +602,9 @@ def _return_coinc_far_dict(coinc_far_dict, *args):
      ['E3', 'S8642', 'Burst', False],
      ['E3', 'S9876', 'Burst', True],
      ['T4', 'TS1111', 'CBC', False],
-     ['E5', 'S5678', 'CBC', False]])
+     ['E5', 'S5678', 'CBC', False],
+     ['E8', 'S9876', None, True],
+     ['S9876', 'E8', None, True]])
 @patch('gwcelery.tasks.gracedb.get_labels', side_effect=_mock_get_labels)
 @patch('gwcelery.tasks.gracedb.upload.run')
 @patch('gwcelery.tasks.raven.update_coinc_far.run',
@@ -617,8 +626,9 @@ def test_trigger_raven_alert(mock_create_label, mock_plot_overlap_integral,
     coinc_far_json = _mock_get_coinc_far(superevent_id)
     ext_event = _mock_get_event(ext_id)
     preferred_id = superevent['preferred_event']
+    gw_group = group if group is not None else 'Burst'
     raven.trigger_raven_alert(coinc_far_json, superevent,
-                              graceid, ext_event, group)
+                              graceid, ext_event, gw_group)
 
     if expected_result:
         label_calls = [call('RAVEN_ALERT', superevent_id),
