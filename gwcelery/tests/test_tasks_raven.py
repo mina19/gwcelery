@@ -493,6 +493,11 @@ def _mock_get_event(graceid):
                 "preferred_event": "G000003",
                 "preferred_event_data": {"group": "Burst"},
                 "far": 1e-6}
+    elif graceid == "S9999":
+        return {"superevent_id": "S9876",
+                "preferred_event": "G000003",
+                "preferred_event_data": {"group": "Burst"},
+                "far": -1e-6}
     elif graceid == "TS1111":
         return {"superevent_id": "TS1111",
                 "preferred_event": "G000003",
@@ -551,6 +556,12 @@ def _mock_get_event(graceid):
                 "search": 'SubGRBTargeted',
                 "labels": [],
                 "group": 'External'}
+    elif graceid == 'E9':
+        return {"graceid": "E9",
+                "pipeline": 'Fermi',
+                "search": 'SubGRBTargeted',
+                "labels": ['NOT_GRB'],
+                "group": 'External'}
     else:
         raise AssertionError
 
@@ -578,6 +589,9 @@ def _mock_get_coinc_far(graceid):
     elif graceid == "MS1111":
         return {"temporal_coinc_far": 1e-09,
                 "spatiotemporal_coinc_far": 1e-10}
+    elif graceid == "S9999":
+        return {"temporal_coinc_far": -1e-09,
+                "spatiotemporal_coinc_far": -1e-10}
     else:
         return {}
 
@@ -604,7 +618,11 @@ def _return_coinc_far_dict(coinc_far_dict, *args):
      ['T4', 'TS1111', 'CBC', False],
      ['E5', 'S5678', 'CBC', False],
      ['E8', 'S9876', None, True],
-     ['S9876', 'E8', None, True]])
+     ['S9876', 'E8', None, True],
+     # Negative FARs
+     ['E8', 'S9999', 'Burst', False],
+     ['E9', 'S9999', 'Burst', False],
+     ['E3', 'S9999', 'Burst', False]])
 @patch('gwcelery.tasks.gracedb.get_labels', side_effect=_mock_get_labels)
 @patch('gwcelery.tasks.gracedb.upload.run')
 @patch('gwcelery.tasks.raven.update_coinc_far.run',
@@ -625,6 +643,10 @@ def test_trigger_raven_alert(mock_create_label, mock_plot_overlap_integral,
     superevent['labels'] = []
     coinc_far_json = _mock_get_coinc_far(superevent_id)
     ext_event = _mock_get_event(ext_id)
+    ext_event['far'] = 1e-7
+    # Test for additional log message
+    if ext_id == 'E9':
+        ext_event['far'] = 1e-2
     preferred_id = superevent['preferred_event']
     gw_group = group if group is not None else 'Burst'
     raven.trigger_raven_alert(coinc_far_json, superevent,

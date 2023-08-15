@@ -414,6 +414,7 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
         far_type = 'gw'
         far_threshold = app.conf['snews_gw_far_threshold']
         pass_far_threshold = gw_far * trials_factor < far_threshold
+        is_far_negative = gw_far < 0
         is_ext_subthreshold = False
         missing_skymap = False
         #  Set coinc FAR to gw FAR only for the sake of a message below
@@ -440,6 +441,7 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
         far_threshold = app.conf['significant_alert_far_threshold'][gw_group]
         coinc_far_f = coinc_far * trials_factor * (trials_factor - 1.)
         pass_far_threshold = coinc_far_f <= far_threshold
+        is_far_negative = coinc_far_f < 0
 
     #  Get most recent labels to prevent race conditions
     ext_labels = gracedb.get_labels(ext_id)
@@ -452,7 +454,8 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
     #  preferred event
     if pass_far_threshold and not is_ext_subthreshold and \
             likely_real_ext_event and not missing_skymap and \
-            not is_test_event and no_previous_alert:
+            not is_test_event and no_previous_alert and \
+            not is_far_negative:
         comments.append(('RAVEN: publishing criteria met for {0}-{1}. '
                          'Triggering RAVEN alert'.format(
                              preferred_gwevent_id, ext_id)))
@@ -484,9 +487,17 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
                          ' {1} is subthreshold'.format(preferred_gwevent_id,
                                                        ext_id)))
     if not likely_real_ext_event:
+        ext_far = ext_event['far']
+        grb_far_threshold = \
+            app.conf['raven_targeted_far_thresholds']['GRB'][pipeline]
+        extra_sentence = ''
+        if ext_far is not None and grb_far_threshold < ext_far:
+            extra_sentence = (' This due to the GRB FAR being too high '
+                              '({0:.4g} > {1:.4g})'.format(
+                                  ext_far, grb_far_threshold))
         comments.append(('RAVEN: publishing criteria not met for {0}-{1},'
-                         ' {1} is likely non-astrophysical.'.format(
-                             preferred_gwevent_id, ext_id)))
+                         ' {1} is likely non-astrophysical.{2}'.format(
+                             preferred_gwevent_id, ext_id, extra_sentence)))
     if is_test_event:
         comments.append('RAVEN: {0}-{1} is non-astrophysical, '
                         'at least one event is a Test event'.format(
@@ -496,6 +507,11 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
                         'if spatial-temporal FAR is present. '
                         'Waiting for both sky maps to be available '
                         'first.')
+    if is_far_negative:
+        comments.append(('RAVEN: publishing criteria not met for {0}-{1},'
+                         ' {2} FAR is negative ({3:.4g})'.format(
+                             preferred_gwevent_id, ext_id, far_type,
+                             coinc_far_f)))
     for comment in comments:
         messages.append(gracedb.upload.si(None, None, superevent_id, comment,
                                           tags=['ext_coinc']))

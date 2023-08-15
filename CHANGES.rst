@@ -8,6 +8,11 @@ Changelog
     bug introduced when allowing the SubGRBTargeted search to find both CBC and
     Burst events.
 
+-   Add condition that prevents a RAVEN alert if the FAR is negative. This is
+    meant to add clarification that a SubGRBTargeted GRB with a FAR higher
+    than the given threshold (which leads to a negative joint FAR) does not
+    pass publishing conditions.
+
 2.1.6 "Champ" (08-10-2023)
 --------------------------
 
