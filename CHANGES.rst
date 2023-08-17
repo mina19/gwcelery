@@ -27,6 +27,9 @@ Changelog
     match the current MDC. Setting the minimum frequency ``fmiin-template``
     to 20Hz to match the minimum frequency used by bilby.
 
+-   Fix typo to block coherence plots for combined sky maps, since these are
+    redundant to their GW counterparts.
+
 2.1.6 "Champ" (08-10-2023)
 --------------------------
 

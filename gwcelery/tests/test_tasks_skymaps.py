@@ -9,7 +9,7 @@ from astropy.table import Table
 import numpy as np
 import pytest
 
-from ..tasks import skymaps
+from ..tasks import external_skymaps, skymaps
 from . import data
 
 
@@ -143,12 +143,18 @@ def test_skymap_from_samples(toy_3d_fits_filecontents):
     assert skymaps.is_3d_fits_file(outbytes)
 
 
+@pytest.mark.parametrize(
+    'filename,result',
+    [['test.fits', True],
+     ['test.png', False],
+     # Ensure combined sky maps get blocked
+     [external_skymaps.COMBINED_SKYMAP_FILENAME_MULTIORDER, False]])
 @patch('gwcelery.tasks.gracedb.download.run', mock_download)
 @patch('gwcelery.tasks.gracedb.upload.run')
-def test_handle_plot_coherence(mock_upload):
+def test_handle_plot_coherence(mock_upload, filename, result):
     alert = {
         "data": {
-            "filename": "test.fits",
+            "filename": filename,
             "file_version": 0
         },
         "uid": "T12345",
@@ -156,4 +162,7 @@ def test_handle_plot_coherence(mock_upload):
     }
 
     skymaps.handle_plot_coherence(alert)
-    mock_upload.assert_called_once()
+    if result:
+        mock_upload.assert_called_once()
+    else:
+        mock_upload.assert_not_called()
