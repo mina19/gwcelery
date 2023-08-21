@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.1.7 (unreleased)
-------------------
+2.1.7 "Spring-heeled Jack" (08-21-2023)
+---------------------------------------
 
 -   Specify GW group when triggering RAVEN pipeline if not given. This fixes a
     bug introduced when allowing the SubGRBTargeted search to find both CBC and
@@ -10,8 +10,9 @@ Changelog
 
 -   Add condition that prevents a RAVEN alert if the FAR is negative. This is
     meant to add clarification that a SubGRBTargeted GRB with a FAR higher
-    than the given threshold (which leads to a negative joint FAR) does not
-    pass publishing conditions.
+    than the given threshold (which leads to a negative joint FAR), or any
+    other situation that leads to a negative FAR does not pass publishing
+    conditions.
 
 -   Update ligo-followup-advocate to 1.2.6; enable option to remove line
     wrapping in order to conform to new GCN circular recommendations.
