@@ -223,18 +223,14 @@ release:
       ssh -T $REMOTE_HOST bash <<EOF
       . .bashrc
       set -e
-      python -m pip install --upgrade pip
-      curl -sSL https://install.python-poetry.org | python3 -
-      # FIXME: It would be simpler to use `poetry install`, but it tries to
-      # uninstall system site-packages even if they are not writable.
-      python -m pip install --no-deps -r <(poetry export --without-hashes --with dev)  # https://git.ligo.org/emfollow/gwcelery/-/issues/682; remove --without-hashes when flower > 2.0 is available
-      python -m pip install --no-deps .
-
+      curl -sSL https://install.python-poetry.org | python3.9 -
+      poetry run python -m pip install --upgrade pip
+      poetry install
       # FIXME: remove pip uninstall temporary directories left behind due to
       # bug with pip on NFS. See https://github.com/pypa/pip/issues/6327
       chmod -R ug+rwx .local/lib/python*/site-packages/~* || true
       rm -rf .local/lib/python*/site-packages/~* || true
-      gwcelery condor resubmit
+      poetry run gwcelery condor resubmit
       EOF
 
 .deploy-stop: &deploy-stop
@@ -243,7 +239,7 @@ release:
     ssh -T $REMOTE_HOST bash <<EOF
     . .bashrc
     set -e
-    gwcelery condor rm
+    poetry run gwcelery condor rm
     EOF
 
 deploy to production at CIT:

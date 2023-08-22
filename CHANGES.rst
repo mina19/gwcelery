@@ -15,6 +15,9 @@ Changelog
 -   Update release template to refer and point to test instance rather than
     playground.
 
+-   Modify project ``.bashrc`` to avoid sourcing a conda environment. Update
+    deploy-common stage to install ``gwcelery`` using ``poetry``.
+
 2.1.7 "Spring-heeled Jack" (08-21-2023)
 ---------------------------------------
 

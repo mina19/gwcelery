@@ -6,11 +6,11 @@ if [ -f /etc/bashrc ]; then
     . /etc/bashrc
 fi
 
-source /cvmfs/oasis.opensciencegrid.org/ligo/sw/conda/etc/profile.d/conda.sh
-conda activate igwn-py39-20221118
-
 # Add user site directory to the PATH. On Linux, this is usuall ~/.local/bin.
-export PATH="$(python -m site --user-base)/bin${PATH+:${PATH}}"
+export PATH="$(python3.9 -m site --user-base)/bin${PATH+:${PATH}}"
+
+# Display poetry version and environment
+test `which poetry` && poetry --version && poetry env list
 
 # Disable OpenMP, MKL, and OpenBLAS threading by default.
 # In this environment, it will be enabled selectively by processes that use it.
