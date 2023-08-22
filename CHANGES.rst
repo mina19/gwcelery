@@ -6,6 +6,12 @@ Changelog
 
 -   Sort Python packages on Flask webapp by name for readability.
 
+-   Update Bilby to 2.1.2; fixes a post-processing bug that can impact
+    distance posteriors for low-SNR events.
+
+-   Update bilby_pipe to 1.2.0; address the same bug as for Bilby and fix a
+    typo in frame paths on playground.
+
 2.1.7 "Spring-heeled Jack" (08-21-2023)
 ---------------------------------------
 
