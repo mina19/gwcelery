@@ -4,14 +4,50 @@ Operations
 Preliminary steps
 -----------------
 
-#. In order to perform some of the operations listed below, you need to be able to login to the *emfollow.ligo.caltech.edu* machine. To be granted permission, please send a mail to the low-latency chairs.
-#. Some critical operations, like manually restarting GWCelery or removing HTCondor jobs, require you to login to that machine as the privileged user *emfollow*. These operations are reserved to experts. In case you need to be able to login as privileged user, please send a mail to the low-latency chairs.
-#. To login to the *emfollow* machine, you need to provide a public SSH key by following `these instructions <https://ldg.ligo.org/ldg/manage_ssh/>`_.
+#. In order to perform some of the operations listed below, you need to be able to login to
+   the *emfollow.ligo.caltech.edu* machine. To be granted permission, please send a mail to
+   the low-latency chairs.
+
+#. Some critical operations, like manually restarting GWCelery or removing HTCondor jobs,
+   require you to login to that machine as the privileged user *emfollow*. These operations are
+   reserved to experts. In case you need to be able to login as privileged user, please send a mail
+   to the low-latency chairs.
+
+#. To login to the *emfollow* machine, you need to provide a public SSH key by following
+   `these instructions <https://ldg.ligo.org/ldg/manage_ssh/>`_.
 
 Monitor the pipeline
 --------------------
 
-TODO
+Different tools are available to monitor the *production* instance of GWCelery. They are described
+in `this section <https://rtd.igwn.org/projects/gwcelery/en/latest/monitoring.html>`__ of the User Guide.
+
+In particular, to monitor the GWCelery application we suggest to use:
+
+#. `Flower <https://emfollow.ligo.caltech.edu/flower/>`_ to see the status of task execution in real time
+   (it has a retention period of few hours).
+
+#. `Sentry <https://ligo-caltech.sentry.io/issues/?environment=production&project=1425216>`_ to monitor the
+   occurence of warnings, errors and exeptions in task execution. It has practically unlimited retention period and sends
+   e-mail notifications in case of a new issue. You can login with Google using your *ligo.org* credentials.
+
+To monitor the *emfollow.ligo.caltech.edu* machine:
+
+#. `Nagios <https://dashboard.ligo.org/icinga/>`_ to check if the host is up and running.
+
+#. `Ganglia <https://ldas-gridmon.ligo.caltech.edu/ganglia/?c=Servers&h=emfollow.ldas.cit>`_ to monitor metrics
+   such as CPU, memory or network utilization.
+
+Additionally, disk space issues may occur if the Redis database grows too large and fills up the entire disk.
+The disk space occupancy can be checked with:
+
+
+``ssh albert.einstein@emfollow.ligo.caltech.edu``
+
+``df -h``
+
+.. image:: _static/disk-usage-screenshot.png
+      :alt: Disk usage on the emfollow machine.
 
 Monitor the HTCondor queue
 --------------------------
@@ -54,13 +90,59 @@ To better understand why a job is not in a running state, you can use the comman
 Monitor the workflow execution
 ------------------------------
 
-TODO
+In order to be able to understand if the alert generation workflow is executing correctly, we suggest to look at
+`this section <https://rtd.igwn.org/projects/gwcelery/en/latest/gwcelery.tasks.orchestrator.html>`__ of the User Guide
+describing the inner workings of the Orchestrator, as well as to have some training session side by side with a GWCelery expert.
+
+The meaning of the different *labels* applied by GWCelery to events or superevents is explained
+`here <https://git.ligo.org/emfollow/gwcelery/-/wikis/Meaning-of-the-labels>`_.
 
 Diagnose issues
 ---------------
 
-TODO
+**Sentry**
 
+When a new issue appears in Sentry, make a first analysis of the problem by looking at the issue details,
+which also include the lines of code generating the problem.
+Each issue should be linked to a GitLab ticket and assigned either to you or to some expert colleague
+to be identified during the low-latency technical call.
+
+The procedure to open a ticket starting from a Sentry issue is the following:
+
+#. From the `GWCelery GitLab`_ repository, navigate to *Monitorr > Error Tracking* from the right side menu.
+#. Select the issue you are interested in.
+#. Click on *Create issue* on the top right of the issue detail page.
+
+.. image:: _static/issue-screenshot.png
+      :alt: GitLab issue from Sentry.
+
+Long standing issues that do not yet have a fix can be marked as *Ignored*, after having been assigned a ticket,
+not to create confusion in the dashboard.
+
+Fixed issues have to be marked as *Resolved*, with a reference to the MR that is supposed to have implemented the fix.
+A resolved issue that reappears, is marked by Sentry as *Regression*.
+
+**Log files**
+
+If more information is needed to undertsand the root cause of an issue, you can inspect the GWCelery logs.
+For this, you need to login to the *emfollow.ligo.caltech.edu* machine as unprivileged user and go to the *emfollow* home directory:
+
+``ssh albert.einstein@emfollow.ligo.caltech.edu``
+
+``cd /home/emfollow``
+
+Log files exist per worker basis. The file *gwcelery-worker.log* is for the general worker and is usually the largest
+(can be several hundred MBs, even up to a GB).
+It can provide important information based on timestamps.
+
+Within the GWCelery code, tasks may have a *log.info* or *log.warning* statement, which could provide insight into the state of
+an event or superevent during the time of failure.
+Also, every task in Celery has a UUID identifier, which could be used to understand whether a specific task completed, failed or is taking too long.
+
+.. image:: _static/celery-log-screenshot.png
+      :alt: Example of Celery log.
+
+**TODO:** Redis logs
 
 Restart the pipeline
 --------------------
@@ -72,6 +154,9 @@ Restart the pipeline
 GWCelery should be started/stopped using GitLab's continuous deployment, as explained in the :doc:`deployment` section. 
 
 **TODO:** environments need to be fixed (https://git.ligo.org/emfollow/gwcelery/-/issues/610).
+
+Alternatively, the deployment pipeline can be triggered manually by navigating to *Build > Pipelines* on the right side menu of the `GWCelery GitLab`_ repository.
+For this, you need to know which instance of the pipeline needs to be retriggered, so expert supervision is needed.
 
 In case of problems with GitLab, the pipleine can be manually started/stopped in the following way:
 
@@ -103,3 +188,4 @@ In case of problems with GitLab, the pipleine can be manually started/stopped in
    ``gwcelery condor submit`` 
 
 
+.. _`GWCelery GitLab`: https://git.ligo.org/emfollow/gwcelery
