@@ -12,6 +12,9 @@ Changelog
 -   Update bilby_pipe to 1.2.0; address the same bug as for Bilby and fix a
     typo in frame paths on playground.
 
+-   Update release template to refer and point to test instance rather than
+    playground.
+
 2.1.7 "Spring-heeled Jack" (08-21-2023)
 ---------------------------------------
 
