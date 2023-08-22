@@ -4,7 +4,7 @@ Changelog
 2.1.8 (unreleased)
 ------------------
 
--   No changes yet.
+-   Sort Python packages on Flask webapp by name for readability.
 
 2.1.7 "Spring-heeled Jack" (08-21-2023)
 ---------------------------------------
@@ -23,12 +23,12 @@ Changelog
     wrapping in order to conform to new GCN circular recommendations.
 
 -   Update rapidpe-rift-pipe to 0.6.3. Rapidpe will run on triggers from all
-    pipelines. In this version ``pTerrestrial`` is taken from the preferred 
-    event instead of calculating it from rankingstatpdf. Removed  config  
-    options ``far_threshold`` and ``rankstat_pdf_file`` that were used for 
-    ``pTerrestrial`` calculation. Using config option ``total-points`` instead 
+    pipelines. In this version ``pTerrestrial`` is taken from the preferred
+    event instead of calculating it from rankingstatpdf. Removed  config
+    options ``far_threshold`` and ``rankstat_pdf_file`` that were used for
+    ``pTerrestrial`` calculation. Using config option ``total-points`` instead
     of ``points-per-side`` to set the required number of grid points in the
-    initial intrinsic grid. ``total-points`` will make sure that we get close 
+    initial intrinsic grid. ``total-points`` will make sure that we get close
     to the required number of grid points. Corrected the time-offset of MDC to
     match the current MDC. Setting the minimum frequency ``fmiin-template``
     to 20Hz to match the minimum frequency used by bilby.
