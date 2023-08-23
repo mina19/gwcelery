@@ -39,12 +39,10 @@ To monitor the *emfollow.ligo.caltech.edu* machine:
    such as CPU, memory or network utilization.
 
 Additionally, disk space issues may occur if the Redis database grows too large and fills up the entire disk.
-The disk space occupancy can be checked with:
+The disk space occupancy can be checked with::
 
-
-``ssh albert.einstein@emfollow.ligo.caltech.edu``
-
-``df -h``
+   $ ssh albert.einstein@emfollow.ligo.caltech.edu
+   $ df -h
 
 .. image:: _static/disk-usage-screenshot.png
       :alt: Disk usage on the emfollow machine.
@@ -52,13 +50,15 @@ The disk space occupancy can be checked with:
 Monitor the HTCondor queue
 --------------------------
 
-You need to login to the *emfollow.ligo.caltech.edu* machine as unprivileged user:
+You need to login to the *emfollow.ligo.caltech.edu* machine as unprivileged user::
 
-``ssh albert.einstein@emfollow.ligo.caltech.edu``
+   $ ssh albert.einstein@emfollow.ligo.caltech.edu
 
-and run the command:
+and run the command::
 
-``gwcelery condor q`` **TODO:** this command does not work if I login as unprivileged user
+   $ gwcelery condor q  
+
+**TODO:** this command does not work if I login as unprivileged user
 
 .. image:: _static/condor-queue.png
       :alt: Status of the HTCondor queue.
@@ -82,9 +82,9 @@ The 6th column of the ouput gives you the status of each job, which can have the
 #.  > = transferring output (or queued to do so).
 
 The last output column is the name of the worker, which needs to be reported to the experts in case of a job not in running state.
-To better understand why a job is not in a running state, you can use the command:
+To better understand why a job is not in a running state, you can use the command::
 
-``condor_q <job-id> -analyze``
+   $ condor_q <job-id> -analyze
  
 
 Monitor the workflow execution
@@ -125,11 +125,10 @@ A resolved issue that reappears, is marked by Sentry as *Regression*.
 **Log files**
 
 If more information is needed to undertsand the root cause of an issue, you can inspect the GWCelery logs.
-For this, you need to login to the *emfollow.ligo.caltech.edu* machine as unprivileged user and go to the *emfollow* home directory:
+For this, you need to login to the *emfollow.ligo.caltech.edu* machine as unprivileged user and go to the *emfollow* home directory::
 
-``ssh albert.einstein@emfollow.ligo.caltech.edu``
-
-``cd /home/emfollow``
+   $ ssh albert.einstein@emfollow.ligo.caltech.edu
+   $ cd /home/emfollow
 
 Log files exist per worker basis. The file *gwcelery-worker.log* is for the general worker and is usually the largest
 (can be several hundred MBs, even up to a GB).
@@ -160,32 +159,32 @@ For this, you need to know which instance of the pipeline needs to be retriggere
 
 In case of problems with GitLab, the pipleine can be manually started/stopped in the following way:
 
-#. login to the *emfollow* machine:
+#. login to the *emfollow* machine::
 
-   ``ssh emfollow@emfollow.ligo.caltech.edu``
+   $ ssh emfollow@emfollow.ligo.caltech.edu
 
    (There is a confirmation page, respond *Yes*.)
 
    .. image:: _static/emfollow-login.png
       :alt: Confirmation page for the emfollow.ligo.caltech.edu machine.
 
-#. remove the HTCondor jobs:
+#. remove the HTCondor jobs::
 
-   ``gwcelery condor rm``
+   $ gwcelery condor rm
 
-   Some jobs might refuse to be removed gracefully. Check this with:
+   Some jobs might refuse to be removed gracefully. Check this with::
 
-   ``gwcelery condor q`` 
+      $ gwcelery condor q
 
-   If there are workers stuck with an *X* status. Remove them with:
+   If there are workers stuck with an *X* status. Remove them with::
 
-   ``condor_rm -forcex <job-id>``
+      $ condor_rm -forcex <job-id>
 
-#. Resubmit the deployment that was running with:
+#. Resubmit the deployment that was running with::
 
-   ``cd gwcelery``  **TODO:** is this needed?
+      $ cd gwcelery  
+      $ gwcelery condor submit
 
-   ``gwcelery condor submit`` 
-
+**TODO:** is directory change needed?
 
 .. _`GWCelery GitLab`: https://git.ligo.org/emfollow/gwcelery
