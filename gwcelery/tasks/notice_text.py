@@ -29,8 +29,10 @@ def _trigger_datetime(gcn_notice_mail):
     trigger_date = gcn_notice_mail[
         "TRIGGER_DATE"].split()[4].replace("/", "-")
 
-    trigger_time = gcn_notice_mail[
-        "TRIGGER_TIME"].split()[2].replace("{", "").replace("}", "")
+    # FIXME: replace with a regular expression.
+    trigger_time = gcn_notice_mail["TRIGGER_TIME"].split()[2]
+    trigger_time = trigger_time.replace("{", "").replace("}", "")
+    trigger_time = trigger_time.split('.')[0]
 
     trigger_datetime = (f'{trigger_date}T{trigger_time}Z')
 
@@ -167,6 +169,11 @@ def validate_text_notice(message):
         notice_type = notice_type.split(" ")[-2]
     else:
         notice_type = notice_type.split(" ")[-1]
+
+    # GCN e-mail notice type for EarlyWarning is Early_Warning
+    # while we have the ivo://gwnet/LVC#S231030av-1-EarlyWarning
+    # No underscore in ivo Fix IT
+    notice_type = notice_type.replace('_', '')
 
     # Get gracedb id and sequence number
     trigger_num = notice['TRIGGER_NUM']
