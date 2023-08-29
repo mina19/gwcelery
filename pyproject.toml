@@ -75,7 +75,7 @@ imapclient = "*"
 importlib-metadata = { version = "*"}
 jinja2 = ">=2.11.2"  # https://github.com/pallets/jinja/issues/1168
 lalsuite = ">=7.16"  # https://git.ligo.org/lscsoft/lalsuite/-/merge_requests/2120
-ligo-followup-advocate = ">=1.2.6"
+ligo-followup-advocate = ">=1.2.7"  # https://git.ligo.org/computing/sccb/-/issues/1312
 ligo-gracedb = ">=2.7.5"  # https://git.ligo.org/lscsoft/gracedb-client/-/issues/28
 ligo-raven = ">=3.2"
 ligo-segments = "*"
@@ -122,7 +122,7 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [tool.poetry.group.dev.dependencies]
 ipython = "*"  # Include IPython for a nicer ``gwcelery shell`` experience.
 ipykernel = "*"  # Include IPython kernel for Jupyter Lab support.
-flower = { git = "https://github.com/mher/flower.git", rev = "6ffefa1eac404100c456c600e2c18633bfcf10c8" }  # https://github.com/mher/flower/issues/1316
+flower = ">=2.0.1"  # https://git.ligo.org/emfollow/gwcelery/-/issues/688
 
 [tool.poetry.scripts]
 gwcelery = "gwcelery:main"
