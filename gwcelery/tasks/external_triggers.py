@@ -1,3 +1,4 @@
+from astropy.time import Time
 from lxml import etree
 from urllib.parse import urlparse
 from celery import group
@@ -640,11 +641,17 @@ def _create_replace_external_event_and_skymap(
 def _kafka_to_voevent(alert):
     # Define basic values
     pipeline = alert['mission']
-    trigger_time = alert['trigger_time']
+    start_time = alert['trigger_time']
     alert_time = alert['alert_datetime']
     far = alert['far']
-    integration_time = alert['rate_duration']
+    duration = alert['rate_duration']
     id = '_'.join(str(x) for x in alert['id'])
+    # Use central time since starting time is not well measured
+    central_time = \
+        Time(start_time, format='isot', scale='utc').to_value('gps') + \
+        .5 * duration
+    trigger_time = \
+        str(Time(central_time, format='gps', scale='utc').isot) + 'Z'
 
     # sky localization may not be available
     ra = alert.get('ra')
@@ -686,7 +693,7 @@ def _kafka_to_voevent(alert):
         str(far).encode()
 
     root.find("./What/Param[@name='Integ_Time']").attrib['value'] = \
-        str(integration_time).encode()
+        str(duration).encode()
 
     # Sky position
     root.find(("./WhereWhen/ObsDataLocation/"

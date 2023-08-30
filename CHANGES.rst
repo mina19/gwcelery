@@ -18,6 +18,10 @@ Changelog
 -   Modify project ``.bashrc`` to avoid sourcing a conda environment. Update
     deploy-common stage to install ``gwcelery`` using ``poetry``.
 
+-   Use the central time for querying events in the targeted subthreshold
+    search. This is an improvement since the starting time of low SNR GRB
+    candidates tends to be unreliable.
+
 2.1.7 "Spring-heeled Jack" (08-21-2023)
 ---------------------------------------
 
