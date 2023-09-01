@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.1.8 (unreleased)
-------------------
+2.1.8 "Ahool" (09-01-2023)
+--------------------------
 
 -   Sort Python packages on Flask webapp by name for readability.
 
@@ -21,6 +21,8 @@ Changelog
 -   Use the central time for querying events in the targeted subthreshold
     search. This is an improvement since the starting time of low SNR GRB
     candidates tends to be unreliable.
+
+-   Use ``ligo-skymap`` API to create bayestar coherence plots.
 
 2.1.7 "Spring-heeled Jack" (08-21-2023)
 ---------------------------------------
