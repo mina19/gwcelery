@@ -301,7 +301,7 @@ def test_create_fermi_skymap():
            pytest.approx(1.0, 1.e-9))
 
 
-@pytest.mark.parametrize('notice_type', ['111', None])
+@pytest.mark.parametrize('notice_type', ['61', None])
 @patch('gwcelery.tasks.gracedb.upload.run')
 @patch('gwcelery.tasks.skymaps.plot_allsky.run')
 def test_create_upload_swift_skymap(mock_plot_allsky,

@@ -37,6 +37,20 @@ COMBINED_SKYMAP_FILENAME_FLAT = 'combined-ext.fits.gz'
 COMBINED_SKYMAP_FILENAME_PNG = 'combined-ext.png'
 """Filename of combined sky map plot"""
 
+NOTICE_TYPE_DICT = {
+        '53': 'INTEGRAL_WAKEUP',
+        '54': 'INTEGRAL_REFINED',
+        '55': 'INTEGRAL_OFFLINE',
+        '60': 'SWIFT_BAT_GRB_ALERT',
+        '61': 'SWIFT_BAT_GRB_POSITION',
+        '105': 'AGILE_MCAL_ALERT',
+        '110': 'FERMI_GBM_ALERT',
+        '111': 'FERMI_GBM_FLT_POS',
+        '112': 'FERMI_GBM_GND_POS',
+        '115': 'FERMI_GBM_FINAL_POS',
+        '131': 'FERMI_GBM_SUBTHRESHOLD'
+}
+
 
 @app.task(shared=False)
 def create_combined_skymap(se_id, ext_id, preferred_event=None):
@@ -305,12 +319,13 @@ def read_upload_skymap_from_base64(event, skymap_str):
 
     (
         group(
-            gracedb.upload.si(skymap_data,
-                              skymap_filename,
-                              graceid,
-                              'Sky map uploaded from {}'.format(
-                                  event['pipeline']),
-                              ['sky_loc']),
+            gracedb.upload.si(
+                skymap_data,
+                skymap_filename,
+                graceid,
+                'Sky map uploaded from {} via a kafka notice'.format(
+                    event['pipeline']),
+                ['sky_loc']),
 
             skymaps.plot_allsky.si(skymap_data, ra=ra, dec=dec)
             |
@@ -485,23 +500,11 @@ def write_to_fits(skymap, event, notice_type, notice_date):
         bytes array of sky map
 
     """
-    notice_type_dict = {
-        '53': 'INTEGRAL_WAKEUP',
-        '54': 'INTEGRAL_REFINED',
-        '55': 'INTEGRAL_OFFLINE',
-        '60': 'SWIFT_BAT_GRB_ALERT',
-        '61': 'SWIFT_BAT_GRB_POSITION',
-        '105': 'AGILE_MCAL_ALERT',
-        '110': 'FERMI_GBM_ALERT',
-        '111': 'FERMI_GBM_FLT_POS',
-        '112': 'FERMI_GBM_GND_POS',
-        '115': 'FERMI_GBM_FINAL_POS',
-        '131': 'FERMI_GBM_SUBTHRESHOLD'}
 
     if notice_type is None:
         msgtype = event['pipeline'] + '_LVK_TARGETED_SEARCH'
     else:
-        msgtype = notice_type_dict[str(notice_type)]
+        msgtype = NOTICE_TYPE_DICT[str(notice_type)]
 
     gcn_id = event['extra_attributes']['GRB']['trigger_id']
     with NamedTemporaryFile(suffix='.fits.gz') as f:
@@ -546,17 +549,27 @@ def create_upload_external_skymap(event, notice_type, notice_date):
 
     skymap_data = write_to_fits(skymap, event, notice_type, notice_date)
 
+    if notice_type is None:
+        extra_sentence = ' from {} via our joint targeted search'.format(
+            pipeline)
+    else:
+        msgtype = NOTICE_TYPE_DICT[str(notice_type)]
+        extra_sentence = ' from a {} type GCN notice'.format(msgtype)
+
     message = (
         'Mollweide projection of <a href="/api/events/{graceid}/files/'
-        '{filename}">{filename}</a>').format(
-            graceid=graceid, filename=skymap_filename)
+        '{filename}">{filename}</a>{extra_sentence}').format(
+            graceid=graceid, filename=skymap_filename,
+            extra_sentence=extra_sentence)
 
     (
-        gracedb.upload.si(skymap_data,
-                          skymap_filename,
-                          graceid,
-                          'Sky map created from GCN RA, dec, and error.',
-                          ['sky_loc'])
+        gracedb.upload.si(
+            skymap_data,
+            skymap_filename,
+            graceid,
+            'Sky map created from GCN RA, dec, and error{}.'.format(
+                extra_sentence),
+            ['sky_loc'])
         |
         skymaps.plot_allsky.si(skymap_data, ra=ra, dec=dec)
         |

@@ -8,6 +8,8 @@ Changelog
 
 -   Increase converage for RAVEN tasks to nearly 100%.
 
+-   Improve GraceDB logs for external sky maps by adding notice type they
+    were created or uploaded from.
 
 2.1.8 "Ahool" (09-01-2023)
 --------------------------
