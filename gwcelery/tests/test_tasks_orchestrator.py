@@ -784,6 +784,8 @@ def test_only_mdc_alerts_switch(mock_alert, mock_upload, mock_download,
          'bilby'],
      [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'MDC'},
          'bilby'],
+     [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'AllSky',
+              'pipeline': 'gstlal', 'offline': True}, 'bilby'],
      [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
               'search': 'AllSky', 'pipeline': 'gstlal'}, 'bilby'],
      [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
@@ -794,6 +796,8 @@ def test_only_mdc_alerts_switch(mock_alert, mock_upload, mock_download,
          'rapidpe'],
      [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'MDC'},
          'rapidpe'],
+     [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'AllSky',
+              'pipeline': 'gstlal', 'offline': True}, 'rapidpe'],
      [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
               'search': 'AllSky', 'pipeline': 'gstlal'}, 'rapidpe'],
      [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
@@ -814,7 +818,8 @@ def test_parameter_estimation(monkeypatch, far, event, pe_pipeline):
                  app.conf['significant_alert_trials_factor']['cbc'])
     if (
         far <= threshold and event['group'] == 'CBC' and
-        event['search'] != 'MDC'
+        event['search'] != 'MDC' and
+        not event.get('offline', False)
     ):
         mock_start_pe.assert_any_call(
             event, superevent_id, pe_pipeline)

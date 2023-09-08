@@ -936,6 +936,14 @@ def parameter_estimation(far_event, superevent_id, pe_pipeline):
                     'estimation is disabled for mock uploads.',
             tags='pe'
         )
+    elif event.get('offline', False):
+        gracedb.upload.delay(
+            filecontents=None, filename=None,
+            graceid=superevent_id,
+            message='Parameter estimation will not start since parameter '
+                    'estimation is disabled for OFFLINE events.',
+            tags='pe'
+        )
     elif (
         app.conf['gracedb_host'] == 'gracedb-playground.ligo.org'
         and event['pipeline'] == 'MBTA'
