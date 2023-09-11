@@ -4,7 +4,7 @@ Changelog
 2.1.9 (unreleased)
 ------------------
 
--   No changes yet.
+-   Increase converage for RAVEN tasks to nearly 100%.
 
 2.1.8 "Ahool" (09-01-2023)
 --------------------------

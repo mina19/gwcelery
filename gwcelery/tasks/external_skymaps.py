@@ -235,17 +235,6 @@ def combine_skymaps(skymapsbytes, gw_moc=True):
 
 
 @app.task(shared=False)
-def external_trigger(graceid):
-    """Returns the associated external trigger GraceDB ID."""
-    em_events = gracedb.get_superevent(graceid)['em_events']
-    if len(em_events):
-        for exttrig in em_events:
-            if gracedb.get_event(exttrig)['search'] == 'GRB':
-                return exttrig
-    raise ValueError('No associated GRB EM event(s) for {0}.'.format(graceid))
-
-
-@app.task(shared=False)
 def external_trigger_heasarc(external_id):
     """Returns the HEASARC fits file link."""
     gracedb_log = gracedb.get_log(external_id)

@@ -94,6 +94,58 @@ def test_handle_create_grb_event(monkeypatch,
         mock_create_upload_external_skymap.assert_not_called()
 
 
+def test_handle_create_grb_event_error():
+    with pytest.raises(ValueError):
+        first2years_external.create_upload_external_event(
+            100., 'INTEGRAL', 'SubGRBTargeted')
+
+
+@patch('gwcelery.tasks.first2years_external.create_upload_external_event')
+def test_upload_external_event_ignore(mock_create_upload_external_event):
+    # Test IGWN alert payload.
+    alert = read_json(data, 'igwn_alert_fits.json')
+    first2years_external.upload_external_event(alert)
+    mock_create_upload_external_event.assert_not_called()
+
+
+@patch('gwcelery.tasks.first2years_external.create_upload_external_event')
+def test_upload_external_event_choose_mdc(mock_create_upload_external_event):
+    # Test IGWN alert payload.
+    alert = read_json(data, 'igwn_alert_superevent_creation.json')
+    alert['object']['preferred_event_data']['search'] = 'MDC'
+    first2years_external.upload_external_event(alert)
+    mock_create_upload_external_event.assert_called()
+
+
+def test_upload_external_event_choose_o3_replay(monkeypatch):
+    # Test IGWN alert payload.
+    alert = read_json(data, 'igwn_alert_superevent_creation.json')
+    alert['uid'] = 'MS180616j'
+    alert['object']['superevent_id'] = alert['uid']
+    alert['object']['preferred_event_data']['group'] = 'CBC'
+    alert['object']['preferred_event_data']['search'] = 'AllSky'
+
+    mock_create_upload_external_event = Mock()
+    monkeypatch.setattr(
+        'gwcelery.tasks.first2years_external.create_upload_external_event',
+        mock_create_upload_external_event)
+    monkeypatch.setattr(app.conf, 'gracedb_host',
+                        'gracedb-playground.ligo.org')
+
+    first2years_external.upload_external_event(alert)
+    mock_create_upload_external_event.assert_called()
+
+
+@patch('gwcelery.tasks.first2years_external.create_upload_external_event')
+def test_upload_external_event_wrong_search(mock_create_upload_external_event):
+    # Test IGWN alert payload.
+    alert = read_json(data, 'igwn_alert_superevent_creation.json')
+    alert['object']['preferred_event_data']['search'] = 'MDC'
+    with pytest.raises(ValueError):
+        first2years_external.upload_external_event(alert, ext_search='AllSky')
+    mock_create_upload_external_event.assert_not_called()
+
+
 @patch('gwcelery.tasks.detchar.check_vectors.run')
 @patch('gwcelery.tasks.gracedb.create_event.run', return_value={
     'graceid': 'M1', 'gpstime': 1, 'instruments': '', 'pipeline': 'SNEWS',

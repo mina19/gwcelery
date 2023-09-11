@@ -46,6 +46,13 @@ def test_coincidence_search(mock_calculate_coincidence_far,
 
 
 @pytest.mark.parametrize(
+    'group,search', [['CBC', 'SubGRBTargeted'], ['Test', 'GRB']])
+def test_raven_window_errors(group, search):
+    with pytest.raises(ValueError):
+        raven._time_window('S1', group, ['INTEGRAL'], [search])
+
+
+@pytest.mark.parametrize(
     'event_type,event_id', [['SE', 'S1234'], ['ExtTrig', 'E1234']])
 @patch('ligo.raven.search.search')
 def test_raven_search(mock_raven_search, event_type, event_id):
@@ -195,6 +202,21 @@ def test_calculate_spacetime_coincidence_far_preferred(
         gracedb=gracedb.client, far_grb=None,
         far_gw_thresh=None, far_grb_thresh=None,
         use_preferred_event_skymap=True)
+
+
+@patch('ligo.raven.search.calc_signif_gracedb')
+def test_calculate_coincidence_far_snews(
+        mock_calc_signif):
+    se = {'superevent_id': 'S1234'}
+    ext = {'graceid': 'E4321',
+           'pipeline': 'SNEWS',
+           'search': 'Supernova',
+           'labels': [],
+           'far': None}
+    tl, th = -600, 60
+    raven.calculate_coincidence_far(se, ext, tl, th)
+    # We should not calculate the joint FAR for SNEWS candidates
+    mock_calc_signif.assert_not_called()
 
 
 def mock_get_labels(superevent_id):

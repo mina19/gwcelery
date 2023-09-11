@@ -28,12 +28,15 @@ def mock_get_superevent(graceid):
 
 
 def mock_get_log(graceid):
-    if graceid == 'S12345':
-        return read_json(data, 'gracedb_setrigger_log.json')
+    if 'S' in graceid:
+        logs = read_json(data, 'gracedb_setrigger_log.json')
+        if graceid == 'S23456':
+            logs[0]['filename'] = 'bayestar.fits.gz'
+        return logs
     elif graceid == 'E12345':
         return read_json(data, 'gracedb_externaltrigger_log.json')
     else:
-        raise ValueError
+        return {}
 
 
 @pytest.fixture  # noqa: F811
@@ -164,24 +167,25 @@ def test_create_combined_skymap_moc_flat(missing_header_values, instrument):
 
 
 @pytest.mark.parametrize('graceid',
-                         ['S12345', 'E12345'])
+                         ['S12345', 'S23456', 'E12345'])
 @patch('gwcelery.tasks.gracedb.get_log', side_effect=mock_get_log)
 def test_get_skymap_filename(mock_get_logs, graceid):
     """Test getting the LVC skymap fits filename"""
     filename = external_skymaps.get_skymap_filename(graceid,
                                                     is_gw='S' in graceid)
-    if 'S' in graceid:
+    if graceid == 'S12345':
         assert filename == 'bayestar.multiorder.fits,0'
+    if graceid == 'S23456':
+        assert filename == 'bayestar.fits.gz,0'
     elif 'E' in graceid:
         assert filename == 'fermi_skymap.fits.gz,0'
 
 
-@patch('gwcelery.tasks.gracedb.get_event', mock_get_event)
-@patch('gwcelery.tasks.gracedb.get_superevent',
-       return_value={'em_events': ['E12345']})
-def test_external_trigger(mock_get_superevent, mock_download):
-    """Test getting related em event for superevent"""
-    assert external_skymaps.external_trigger('S12345') == 'E12345'
+@patch('gwcelery.tasks.gracedb.get_log', side_effect=mock_get_log)
+def test_get_skymap_filename_404(mock_get_logs):
+    with pytest.raises(ValueError):
+        external_skymaps.get_skymap_filename(
+            'E23456', is_gw=False)
 
 
 @patch('gwcelery.tasks.gracedb.get_log', mock_get_log)
@@ -189,6 +193,13 @@ def test_external_trigger_heasarc(mock_download):
     """Test retrieving HEASARC fits file link from GCN"""
     heasarc_link = external_skymaps.external_trigger_heasarc('E12345')
     assert heasarc_link == true_heasarc_link
+
+
+@patch('gwcelery.tasks.gracedb.get_log', mock_get_log)
+def test_external_trigger_heasarc_404(mock_download):
+    """Test retrieving HEASARC fits file link from GCN"""
+    with pytest.raises(ValueError):
+        external_skymaps.external_trigger_heasarc('E23456')
 
 
 @pytest.mark.parametrize('search', ['GRB', 'SubGRB', 'FromURL'])
@@ -204,12 +215,29 @@ class File(object):
         pass
 
 
+class HTTPError_403(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def read(self):
+        raise HTTPError('', 403, '', '', File)
+
+
 class HTTPError_404(object):
     def __init__(self, *args, **kwargs):
         pass
 
     def read(self):
         raise HTTPError('', 404, '', '', File)
+
+
+@pytest.mark.parametrize('search', ['GRB', 'SubGRB', 'FromURL'])
+@patch('urllib.request.urlopen', HTTPError_403)
+def test_get_external_skymap_403(search):
+    """Assert that when urllib.request raises 403 error, we raise
+    that type of error."""
+    with pytest.raises(HTTPError):
+        external_skymaps.get_external_skymap(true_heasarc_link, search)
 
 
 @pytest.mark.parametrize('search', ['GRB', 'SubGRB', 'FromURL'])
@@ -273,10 +301,11 @@ def test_create_fermi_skymap():
            pytest.approx(1.0, 1.e-9))
 
 
+@pytest.mark.parametrize('notice_type', ['111', None])
 @patch('gwcelery.tasks.gracedb.upload.run')
 @patch('gwcelery.tasks.skymaps.plot_allsky.run')
 def test_create_upload_swift_skymap(mock_plot_allsky,
-                                    mock_upload):
+                                    mock_upload, notice_type):
     """Test the creation and upload of sky maps for Swift localization."""
     event = {'graceid': 'E1234',
              'pipeline': 'Swift',
@@ -289,7 +318,7 @@ def test_create_upload_swift_skymap(mock_plot_allsky,
                      'error_radius': 0}},
              'links': {
                  'self': 'https://gracedb.ligo.org/api/events/E356793'}}
-    external_skymaps.create_upload_external_skymap(event, '111',
+    external_skymaps.create_upload_external_skymap(event, notice_type,
                                                    '2020-01-09T01:47:09')
     mock_upload.assert_called()
     mock_plot_allsky.assert_called_once()
