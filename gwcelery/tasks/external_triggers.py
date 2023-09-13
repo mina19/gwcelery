@@ -23,7 +23,7 @@ REQUIRED_LABELS_BY_TASK = {
     'SoG': {'SKYMAP_READY', 'RAVEN_ALERT', 'ADVOK'}
 }
 """These labels should be present on an external event to consider it to
-be ready for sky map comparison or for post-alert analsis, such as a
+be ready for sky map comparison or for post-alert analysis, such as a
 measurment of the speed of gravity (SoG).
 """
 
@@ -41,9 +41,16 @@ notice."""
              queue='exttrig',
              shared=False)
 def handle_snews_gcn(payload):
-    """Handles the payload from SNEWS alerts.
+    """Handles the GCN notice payload from SNEWS alerts.
 
-    Prepares the alert to be sent to graceDB as 'E' events.
+    Prepares the alert to be sent to graceDB as external events, updating the
+    info if it already exists.
+
+    Parameters
+    ----------
+    payload : str
+        XML GCN notice alert packet in string format
+
     """
     root = etree.fromstring(payload)
 
@@ -94,6 +101,12 @@ def handle_grb_gcn(payload):
     Swift: https://gcn.gsfc.nasa.gov/swift.html
     INTEGRAL: https://gcn.gsfc.nasa.gov/integral.html
     AGILE-MCAL: https://gcn.gsfc.nasa.gov/agile_mcal.html
+
+    Parameters
+    ----------
+    payload : str
+        XML GCN notice alert packet in string format
+
     """
     root = etree.fromstring(payload)
     u = urlparse(root.attrib['ivorn'])
@@ -211,16 +224,25 @@ def handle_grb_igwn_alert(alert):
     Notes
     -----
     This IGWN alert message handler is triggered by creating a new superevent
-    or GRB external trigger event, or a label associated with completeness of
-    skymaps:
+    or GRB external trigger event, a label associated with completeness of
+    skymaps or change in state, or if a sky map file is uploaded:
 
-    * Any new event triggers a coincidence search with
-      :meth:`gwcelery.tasks.raven.coincidence_search`.
-    * When both a GW and GRB sky map are available during a coincidence,
-      indicated by the labels ``EM_READY`` and ``EXT_SKYMAP_READY``
-      respectively on the external event, this triggers the spacetime coinc
-      FAR to be calculated and a combined GW-GRB sky map is created using
-      :meth:`gwcelery.tasks.external_skymaps.create_combined_skymap`.
+    *   New event/superevent triggers a coincidence search with
+        :meth:`gwcelery.tasks.raven.coincidence_search`.
+    *   When both a GW and GRB sky map are available during a coincidence,
+        indicated by the labels ``EM_READY`` and ``EXT_SKYMAP_READY``
+        respectively on the external event, this triggers the spacetime coinc
+        FAR to be calculated and a combined GW-GRB sky map is created using
+        :meth:`gwcelery.tasks.external_skymaps.create_combined_skymap`.
+    *   Re-run sky map comparison if complete, and either the GW or GRB sky
+        map has been updated or if the preferred event changed.
+    *   Re-check RAVEN publishing conditions if the GRB was previously
+        considered non-astrophycial but now should be considered.
+
+    Parameters
+    ----------
+    alert : dict
+        IGWN alert packet
 
     """
     # Determine GraceDB ID
@@ -399,16 +421,21 @@ def handle_grb_igwn_alert(alert):
                     'external_snews',
                     shared=False)
 def handle_snews_igwn_alert(alert):
-    """Parse an IGWN alert message related to superevents/SN external triggers
-    and dispatch it to other tasks.
+    """Parse an IGWN alert message related to superevents/Supernovae external
+    triggers and dispatch it to other tasks.
 
     Notes
     -----
-    This igwn_alert message handler is triggered by creating a new superevent
-    or SN external trigger event:
+    This igwn_alert message handler is triggered whenever a new superevent
+    or Supernovae external event is created:
 
-    * Any new event triggers a coincidence search with
-      :meth:`gwcelery.tasks.raven.coincidence_search`.
+    *   New event triggers a coincidence search with
+        :meth:`gwcelery.tasks.raven.coincidence_search`.
+
+    Parameters
+    ----------
+    alert : dict
+        IGWN alert packet
 
     """
     # Determine GraceDB ID
@@ -478,12 +505,44 @@ def handle_targeted_kafka_alert(alert):
 
 
 def _skymaps_are_ready(event, label, task):
+    """Determine whether labels are complete to launch a certain task.
+
+    Parameters
+    ----------
+    event : dict
+        Either Superevent or external event dictionary
+    graceid : str
+        GraceDB ID
+    task : str
+        Determines which label schmema to check for completeness
+
+    Returns
+    -------
+    labels_pass : bool
+        True if all the require labels are present and the given label is part
+        of that set
+    """
     label_set = set(event['labels'])
     required_labels = REQUIRED_LABELS_BY_TASK[task]
     return required_labels.issubset(label_set) and label in required_labels
 
 
 def _get_superevent_ext_ids(graceid, event):
+    """Grab superevent and external event IDs from a given event.
+
+    Parameters
+    ----------
+    graceid : str
+        GraceDB ID
+    event : dict
+        Either Superevent or external event dictionary
+
+    Returns
+    -------
+    se_id, ext_id : tuple
+        Tuple of superevent and external event GraceDB IDs
+
+    """
     if 'S' in graceid:
         se_id = event['superevent_id']
         ext_id = event['em_type']
@@ -495,6 +554,19 @@ def _get_superevent_ext_ids(graceid, event):
 
 @app.task(shared=False)
 def _launch_external_detchar(event):
+    """Launch detchar tasks for an external event.
+
+    Parameters
+    ----------
+    event : dict
+        External event dictionary
+
+    Returns
+    -------
+    event : dict
+        External event dictionary
+
+    """
     start = event['gpstime']
     if event['pipeline'] == 'SNEWS':
         start, end = event['gpstime'], event['gpstime']
@@ -510,17 +582,18 @@ def _launch_external_detchar(event):
 def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid,
                                           use_superevent_skymap=None):
     """Relaunch the RAVEN sky map comparison workflow, include recalculating
-    the joint FAR with updated sky map info and create a new combined sky map.
+    the joint FAR with updated sky map info and creating a new combined sky
+    map.
 
     Parameters
     ----------
-    superevent: dict
-        superevent dictionary
-    exttrig: dict
-        external event dictionary
-    graceid: str
+    superevent : dict
+        Superevent dictionary
+    exttrig : dict
+        External event dictionary
+    graceid : str
         GraceDB ID of event
-    use_superevent_skymap: bool
+    use_superevent_skymap : bool
         If True/False, use/don't use skymap info from superevent.
         Else if None, check SKYMAP_READY label in external event.
 
@@ -577,15 +650,15 @@ def _create_replace_external_event_and_skymap(
     ext_group : str
         Group of external event, 'External' or 'Test'
     notice_date : str
-        Time and date of external event
-    notice_type : str
-        GCN Notice type of external event
+        External event trigger time in ISO format
+    notice_type : int
+        GCN notice type integer
     skymap : str
         Base64 encoded sky map
     skymap_link : str
         Link to external sky map to be downloaded
     use_radec : bool
-        If true, try to create sky map using given coordinates
+        If True, try to create sky map using given coordinates
 
     """
     skymap_detchar_canvas = ()
@@ -645,6 +718,21 @@ def _create_replace_external_event_and_skymap(
 
 
 def _kafka_to_voevent(alert):
+    """Parse an alert sent via Kafka from a MOU partner in our joint
+    subthreshold targeted search and convert to an equivalent XML string
+    GCN VOEvent.
+
+    Parameters
+    ----------
+    alert : dict
+        Kafka alert packet
+
+    Returns
+    -------
+    payload : str
+        XML GCN notice alert packet in string format
+
+    """
     # Define basic values
     pipeline = alert['mission']
     start_time = alert['trigger_time']

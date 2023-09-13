@@ -8,6 +8,8 @@ Changelog
 
 -   Increase converage for RAVEN tasks to nearly 100%.
 
+-   Update documentation for RAVEN and external trigger tasks.
+
 -   Improve GraceDB logs for external sky maps by adding notice type they
     were created or uploaded from.
 

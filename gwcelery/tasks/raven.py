@@ -14,23 +14,29 @@ log = get_task_logger(__name__)
 @app.task(shared=False)
 def calculate_coincidence_far(superevent, exttrig, tl, th,
                               use_superevent_skymap=None):
-    """Compute coincidence FAR for external trigger and superevent
-    coincidence by calling ligo.raven.search.calc_signif_gracedb,
-    using sky map info if available.
+    """Compute coincidence FAR for external trigger and superevent coincidence
+    by calling ligo.raven.search.calc_signif_gracedb, using sky map info if
+    available.
 
     Parameters
     ----------
-    superevent: dict
-        superevent dictionary
-    exttrig: dict
-        external event dictionary
-    tl: float
-        start of coincident time window
-    th: float
-        end of coincident time window
-    use_superevent_skymap: bool
+    superevent : dict
+        Superevent dictionary
+    exttrig : dict
+        External event dictionary
+    tl : int
+        Lower bound of search window in seconds
+    th : int
+        Upper bound of search window in seconds
+    use_superevent_skymap : bool
         If True/False, use/don't use skymap info from superevent.
         Else if None, check SKYMAP_READY label in external event.
+
+    Returns
+    -------
+    joint_far : dict
+        Dictionary containing joint false alarm rate, including sky map info
+        if available
 
     """
     superevent_id = superevent['superevent_id']
@@ -90,22 +96,22 @@ def calculate_coincidence_far(superevent, exttrig, tl, th,
 def coincidence_search(gracedb_id, alert_object, group=None, pipelines=[],
                        searches=[], se_searches=[]):
     """Perform ligo-raven search for coincidences. Determines time window to
-    use. If events found, launches raven pipeline.
+    use. If events found, launches RAVEN pipeline.
 
     Parameters
     ----------
-    gracedb_id: str
-        ID of the trigger used by GraceDB
-    alert_object: dict
+    gracedb_id : str
+        GraceDB ID of the trigger that launched RAVEN
+    alert_object : dict
         Alert dictionary
-    group: str
+    group : str
         Burst or CBC
-    pipelines: list
-        list of external trigger pipeline names
-    searches: list
-        list of external trigger searches
-    se_searches: list
-        list of superevent searches
+    pipelines : list
+        List of external trigger pipeline names
+    searches : list
+        List of external trigger searches
+    se_searches : list
+        List of superevent searches
 
     """
     tl, th = _time_window(gracedb_id, group, pipelines, searches)
@@ -123,16 +129,21 @@ def _time_window(gracedb_id, group, pipelines, searches):
 
     Parameters
     ----------
-    gracedb_id: str
-        ID of the trigger used by GraceDB
-    group: str
+    gracedb_id : str
+        GraceDB ID of the trigger that launched RAVEN
+    group : str
         Burst or CBC
-    pipelines: list
-        list of external trigger pipeline names
-    searches: list
-        list of external trigger searches
-    se_searches: list
-        list of superevent searches
+    pipelines : list
+        List of external trigger pipeline names
+    searches : list
+        List of external trigger searches
+    se_searches : list
+        List of superevent searches
+
+    Returns
+    -------
+    tl, th : tuple
+        Tuple of lower bound and upper bound of search window
 
     """
     tl_cbc, th_cbc = app.conf['raven_coincidence_windows']['GRB_CBC']
@@ -171,31 +182,33 @@ def _time_window(gracedb_id, group, pipelines, searches):
 @app.task(shared=False)
 def search(gracedb_id, alert_object, tl=-5, th=5, group=None,
            pipelines=[], searches=[], se_searches=[]):
-    """Perform ligo-raven search for coincidences.
+    """Perform ligo-raven search to look for coincidences. This function
+    does a query of GraceDB and uploads a log message of the result(s).
 
     Parameters
     ----------
-    gracedb_id: str
-        ID of the trigger used by GraceDB
-    alert_object: dict
+    gracedb_id : str
+        GraceDB ID of the trigger that launched RAVEN
+    alert_object : dict
         Alert dictionary
-    tl: int
-        number of seconds to search before
-    th: int
-        number of seconds to search after
-    group: str
+    tl : int
+        Lower bound of search window in seconds
+    th : int
+        Upper bound of search window in seconds
+    group : str
         Burst or CBC
-    pipelines: list
-        list of external trigger pipelines for performing coincidence search
+    pipelines : list
+        List of external trigger pipelines for performing coincidence search
         against
-    searches: list
-        list of external trigger searches
-    se_searches: list
-        list of superevent searches
+    searches : list
+        List of external trigger searches
+    se_searches : list
+        List of superevent searches
 
     Returns
     -------
-        list with the dictionaries of related gracedb events
+    results : list
+        List with the dictionaries of related GraceDB events
 
     """
     return ligo.raven.search.search(gracedb_id, tl, th,
@@ -209,25 +222,29 @@ def search(gracedb_id, alert_object, tl=-5, th=5, group=None,
 @app.task(shared=False)
 def raven_pipeline(raven_search_results, gracedb_id, alert_object, tl, th,
                    gw_group, use_superevent_skymap=None):
-    """Executes much of the full raven pipeline, including adding
+    """Executes the full RAVEN pipeline, including adding
     the external trigger to the superevent, calculating the
-    coincidence false alarm rate, and applying 'EM_COINC' to the
-    appropriate events. Also a preimlinary alert will be triggered
-    if the coincidence passes threshold.
+    coincidence false alarm rate, applying 'EM_COINC' to the
+    appropriate events, and checking whether the candidate(s) pass all
+    publishing conditions.
 
     Parameters
     ----------
-    raven_search_results: list
-        list of dictionaries of each related gracedb trigger
-    gracedb_id: str
-        ID of either a superevent or external trigger
-    alert_object: dict
+    raven_search_results : list
+        List of dictionaries of each related gracedb trigger
+    gracedb_id : str
+        GraceDB ID of the trigger that launched RAVEN
+    alert_object : dict
         Alert dictionary, either a superevent or an external event
-    gw_group: str
+    tl : int
+        Lower bound of search window in seconds
+    th : int
+        Upper bound of search window in seconds
+    gw_group : str
         Burst or CBC
-    use_superevent_skymap: bool
+    use_superevent_skymap : bool
         If True/False, use/don't use skymap info from superevent.
-        Else if None, check SKYMAP_READY label in external event.
+        Else if None, checks SKYMAP_READY label in external event.
 
     """
     if not raven_search_results:
@@ -268,14 +285,19 @@ def raven_pipeline(raven_search_results, gracedb_id, alert_object, tl, th,
 
 @app.task(shared=False)
 def preferred_superevent(raven_search_results):
-    """Chooses the superevent with the lowest far for an external
+    """Chooses the superevent with the lowest FAR for an external
     event to be added to. This is to prevent errors from trying to
     add one external event to multiple superevents.
 
     Parameters
     ----------
-    raven_search_results: list
-        list of dictionaries of each related gracedb trigger
+    raven_search_results : list
+        List of dictionaries of each related gracedb trigger
+
+    Returns
+    -------
+    superevent : list
+        List containing single chosen superevent
 
     """
     minfar, idx = min((result['far'], idx) for (idx, result) in
@@ -286,18 +308,32 @@ def preferred_superevent(raven_search_results):
 @app.task(shared=False)
 def update_coinc_far(coinc_far_dict, superevent, ext_event):
     """Update joint info in superevent based on the current preferred
-    coincidence. This prefers a spacetime joint FAR over a time-only joint
-    FAR. A SNEWS coincidence is preferred over either.
+    coincidence. In order of priority, the determing conditions are the
+    following:
 
-      Parameters
+    * A SNEWS coincidence is preferred over GRB.
+    * Likely astrophysical external candidates are preferred over likely
+      non-astrophysical candidates.
+    * Candidates that pass publishing thresholds are preferred over those
+      that do not.
+    * A spacetime joint FAR over a time-only joint FAR.
+    * Lower joint FARs are preferred over higher joint FARs.
+
+    Parameters
     ----------
     coinc_far_dict : dict
         Dictionary containing coincidence false alarm rate results from
         RAVEN
     superevent : dict
-        superevent dictionary
+        Superevent dictionary
     ext_event: dict
-        external event dictionary
+        External event dictionary
+
+    Returns
+    -------
+    joint_far : dict
+        Dictionary containing joint false alarm rate passed to the function
+        as an initial argument
 
     """
     #  Get graceids
@@ -368,7 +404,8 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
     If yes, then triggers an alert by applying `RAVEN_ALERT` to the preferred
     event.
 
-    All of the following conditions must be true for a preliminary alert:
+    All of the following conditions must be true to either trigger an alert or
+    include coincidence info into the next alert include:
 
     *   The external event must be a threshold GRB or SNEWS event.
     *   If triggered on a SNEWS event, the GW false alarm rate must pass
@@ -377,8 +414,9 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
         group-specific trials factor as specified by the
         :obj:`~gwcelery.conf.preliminary_alert_trials_factor` configuration
         setting, is less than or equal to
-        :obj:`~gwcelery.conf.preliminary_alert_far_threshold`.
-    *   If the external event is from Swift, both sky maps must be present.
+        :obj:`~gwcelery.conf.preliminary_alert_far_threshold`. This FAR also
+        must not be negative.
+    *   If the coincidence involves a GRB, then both sky maps must be present.
 
     Parameters
     ----------
@@ -386,12 +424,12 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
         Dictionary containing coincidence false alarm rate results from
         RAVEN
     superevent : dict
-        superevent dictionary
-    gracedb_id: str
-        ID of the trigger that launched RAVEN
-    ext_event: dict
-        external event dictionary
-    gw_group: str
+        Superevent dictionary
+    gracedb_id : str
+        GraceDB ID of the trigger that launched RAVEN
+    ext_event : dict
+        External event dictionary
+    gw_group : str
         Burst or CBC
 
     """
@@ -532,22 +570,22 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
 @app.task(shared=False)
 def sog_paper_pipeline(ext_event, superevent):
     """Determine whether an a speed of gravity measurment manuscript should be
-    triggered for a given coincidence.
-    This is denoted by applying the SOG_READY label to a superevent.
+    created for a given coincidence. This is denoted by applying the
+    ``SOG_READY`` label to a superevent.
 
     All of the following conditions must be true for a SoG paper:
 
     *   The coincidence is significant and FARs more significant than in
         :obj:`~sog_paper_far_threshold`.
-    *   The external event is a high-significance GRB and from a MOU partner.
+    *   The external event is a high-significance GRB and from an MOU partner.
     *   The GW event is a CBC candidate.
 
     Parameters
     ----------
     superevent : dict
-        superevent dictionary
-    ext_event: dict
-        external event dictionary
+        Superevent dictionary
+    ext_event : dict
+        External event dictionary
 
     """
     gw_far = superevent['far']

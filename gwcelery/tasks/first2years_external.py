@@ -17,16 +17,23 @@ from ..util import read_json
 
 
 def create_upload_external_event(gpstime, pipeline, ext_search):
-    """ Create a random external event VOEvent.
+    """Create a random external event VOEvent or Kafka alert packet.
 
     Parameters
     ----------
     gpstime : float
-        Event's gps time
+        Event's GPS time
     pipeline : str
         External trigger pipeline name
     ext_search : str
         Search field for external event
+
+    Returns
+    -------
+    event : str or dict
+        Alert packet in format as if it was sent from GCN or Kafka, in a
+        XML GCN notice alert packet in string format for the GRB or SubGRB
+        search or a dictionary Kafka packet if for SubGRBTargeted search.
     """
     new_date = str(Time(gpstime, format='gps', scale='utc').isot) + 'Z'
     new_TrigID = str(int(gpstime))
@@ -133,23 +140,34 @@ def create_upload_external_event(gpstime, pipeline, ext_search):
 
 
 def _offset_time(gpstime, group, pipeline, ext_search):
-    """ This function checks coincident time windows for superevents if they
-    are of Burst or CBC group.
+    """Offsets the given GPS time by applying a random number within a time
+    window, determine by the search being done.
 
-       Parameters
-       ----------
-       gpstime : float
-           Event's gps time
-       group : str
-           Burst or CBC
+    Parameters
+    ----------
+    gpstime : float
+        Event's GPS time
+    group : str
+        Burst or CBC
+    pipeline : str
+        Pipeline field for external event
+    ext_search : str
+        Search field for external event
+
+    Returns
+    -------
+    gsptime_adjusted : float
+        Event's original gps time plus a random number within the determined
+        search window
+
     """
     tl, th = raven._time_window('S1', group, [pipeline], [ext_search])
     return gpstime + random.uniform(tl, th)
 
 
 def _is_joint_mdc(graceid, se_search):
-    """Upload external events to the user-defined frequency of MDC or AllSky
-    superevents.
+    """Determine whether to upload an external events using user-defined
+    frequency of MDC or AllSky superevents.
 
     Looks at the ending letters of a superevent (e.g. 'ac' from 'MS190124ac'),
     converts to a number, and checks if divisible by a number given in the
@@ -158,6 +176,19 @@ def _is_joint_mdc(graceid, se_search):
     For example, if the configuration number
     :obj:`~gwcelery.conf.joint_mdc_freq` is 10,
     this means joint events with superevents ending with 'j', 't', 'ad', etc.
+
+    Parameters
+    ----------
+    graceid : str
+        GraceDB ID of superevent
+    se_search : str
+        Search field for preferred event in superevent
+
+    Returns
+    -------
+    is_joint_mdc : bool
+        Returns True if the GraceDB ID matches pre-determined frequency rates
+
     """
     end_string = re.split(r'\d+', graceid)[-1].lower()
     val = 0
@@ -171,7 +202,7 @@ def _is_joint_mdc(graceid, se_search):
                     'superevent',
                     shared=False)
 def upload_external_event(alert, ext_search=None):
-    """Upload a random GRB event for a certain percentage of MDC
+    """Upload a random GRB event(s) for a certain fraction of MDC
     or O3-replay superevents.
 
     Notes
@@ -182,7 +213,21 @@ def upload_external_event(alert, ext_search=None):
     :obj:`~gwcelery.conf.joint_mdc_freq` or
     :obj:`~gwcelery.conf.joint_O3_replay_freq`.
 
-    For O3 replay testing with RAVEN pipeline, only run on gracedb-playground.
+    For O3 replay testing with RAVEN pipeline, only runs on gracedb-playground.
+
+    Parameters
+    ----------
+    alert : dict
+        IGWN alert packet
+    ext_search : str
+        Search field for external event
+
+    Returns
+    -------
+    events, pipelines : tuple
+        Returns tuple of the list of external events created and the list of
+        pipelines chosen for each event
+
     """
     if alert['alert_type'] != 'new':
         return
@@ -244,7 +289,13 @@ def upload_external_event(alert, ext_search=None):
 @app.task(ignore_result=True,
           shared=False)
 def upload_snews_event():
-    """Create and upload a SNEWS-like MDC external event."""
+    """Create and upload a SNEWS-like MDC external event.
+
+    Returns
+    -------
+    ext_event : str
+        XML GCN notice alert packet in string format
+    """
     current_time = Time(Time.now(), format='gps').value
     ext_event = create_upload_external_event(current_time, 'SNEWS', 'MDC')
     return ext_event

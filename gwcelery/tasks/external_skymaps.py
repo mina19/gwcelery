@@ -54,7 +54,7 @@ NOTICE_TYPE_DICT = {
 
 @app.task(shared=False)
 def create_combined_skymap(se_id, ext_id, preferred_event=None):
-    """Creates and uploads the combined LVK-external skymap, uploading to the
+    """Creates and uploads a combined LVK-external skymap, uploading to the
     external trigger GraceDB page. The filename used for the combined sky map
     will be 'combined-ext.multiorder.fits' if the GW sky map is multi-ordered
     or 'combined-ext.fits.gz' if the GW sky map is not. Will use the GW sky map
@@ -64,9 +64,9 @@ def create_combined_skymap(se_id, ext_id, preferred_event=None):
     ----------
     se_id : str
         Superevent GraceDB ID
-    ext_id: str
+    ext_id : str
         External event GraceDB ID
-    preferred_event: str
+    preferred_event : str
         Preferred event GraceDB ID. If given, use sky map from preferred event
 
     """
@@ -118,15 +118,20 @@ def get_skymap_filename(graceid, is_gw):
     """Get the skymap fits filename.
 
     If not available, will try again 10 seconds later, then 20, then 40, etc.
-    until up to 10 minutes after initial attempt.
+    up to a max 10 minutes retry delay.
 
     Parameters
     ----------
     graceid : str
         GraceDB ID
-    is_gw: bool
+    is_gw : bool
         If True, uses method for superevent or preferred event. Otherwise uses
         method for external event.
+
+    Returns
+    -------
+    filename : str
+        Filename of latest sky map
 
     """
     gracedb_log = gracedb.get_log(graceid)
@@ -161,7 +166,25 @@ def get_skymap_filename(graceid, is_gw):
 
 @app.task(shared=False)
 def _download_skymaps(gw_filename, ext_filename, gw_id, ext_id):
-    """Download both superevent and external sky map to be combined."""
+    """Download both superevent and external sky map to be combined.
+
+    Parameters
+    ----------
+    gw_filename : str
+        GW sky map filename
+    ext_filename : str
+        External sky map filename
+    gw_id : str
+        GraceDB ID of GW candidate, either superevent or preferred event
+    ext_id : str
+        GraceDB ID of external candidate
+
+    Returns
+    -------
+    gw_skymap, ext_skymap : tuple
+        Tuple of gw_skymap and ext_skymap bytes
+
+    """
     gw_skymap = gracedb.download(gw_filename, gw_id)
     ext_skymap = gracedb.download(ext_filename, ext_id)
     return gw_skymap, ext_skymap
@@ -174,6 +197,21 @@ def combine_skymaps_moc_flat(gw_sky, ext_sky, ext_header):
 
     Header info is generally inherited from the GW sky map or recalculated
     using the combined sky map values.
+
+    Parameters
+    ----------
+    gw_sky : Table
+        GW sky map astropy Table
+    ext_sky : array
+        External sky map array
+    ext_header : dict
+        Header of external sky map
+
+    Returns
+    -------
+    comb_sky : Table
+        Table of combined sky map
+
     """
     #  Find ra/dec of each GW pixel
     level, ipix = ah.uniq_to_level_ipix(gw_sky["UNIQ"])
@@ -218,6 +256,18 @@ def combine_skymaps(skymapsbytes, gw_moc=True):
     There are separate methods in case the GW sky map is multiordered (we just
     reweight using the external sky map) or flattened (use standard
     ligo.skymap.combine method).
+
+    Parameters
+    ----------
+    skymapbytes : tuple
+        Tuple of gw_skymap and ext_skymap bytes
+    gw_moc : bool
+        If True, assumes the GW sky map is a multi-ordered format
+
+    Returns
+    -------
+    combinedskymap : bytes
+        Bytes of combined sky map
     """
     gw_skymap_bytes, ext_skymap_bytes = skymapsbytes
     suffix = ".fits" if gw_moc else ".fits.gz"
@@ -250,7 +300,19 @@ def combine_skymaps(skymapsbytes, gw_moc=True):
 
 @app.task(shared=False)
 def external_trigger_heasarc(external_id):
-    """Returns the HEASARC fits file link."""
+    """Returns the HEASARC fits file link.
+
+    Parameters
+    ----------
+    external_id : str
+        GraceDB ID of external event
+
+    Returns
+    -------
+    heasarc_link : str
+        Guessed HEASARC URL link
+
+    """
     gracedb_log = gracedb.get_log(external_id)
     for message in gracedb_log:
         if 'Original Data' in message['comment']:
@@ -274,6 +336,19 @@ def get_external_skymap(link, search):
 
     If not available, will try again 10 seconds later, then 20, then 40, etc.
     until up to 15 minutes after initial attempt.
+
+    Parameters
+    ----------
+    link : str
+        HEASARC URL link
+    search : str
+        Search field of external event
+
+    Returns
+    -------
+    external_skymap : bytes
+        Bytes of external sky map
+
     """
     if search == 'GRB':
         # if Fermi GRB, determine final HEASARC link
@@ -302,7 +377,16 @@ def get_external_skymap(link, search):
 
 @app.task(shared=False)
 def read_upload_skymap_from_base64(event, skymap_str):
-    """Decode and upload 64base encoded sky maps from Kafka alerts"""
+    """Decode and upload 64base encoded sky maps from Kafka alerts.
+
+    Parameters
+    ----------
+    event : dict
+        External event dictionary
+    skymap_str : str
+        Base 64 encoded sky map string
+
+    """
 
     graceid = event['graceid']
     ra = event['extra_attributes']['GRB']['ra']
@@ -348,6 +432,14 @@ def get_upload_external_skymap(event, skymap_link=None):
     construct a HEASARC url, while if SubGRB, will use the link directly.
     If SubGRB or FromURL, downloads a skymap using the provided URL rather
     than construct one.
+
+    Parameters
+    ----------
+    event : dict
+        External event dictionary
+    skymap_link : str
+        HEASARC URL link
+
     """
     graceid = event['graceid']
     search = event['search']
@@ -410,16 +502,20 @@ def create_external_skymap(ra, dec, error, pipeline, notice_type=111):
     Parameters
     ----------
     ra : float
-        right ascension in deg
-    dec: float
-        declination in deg
-    error: float
-        error radius in deg
+        Right ascension in deg
+    dec : float
+        Declination in deg
+    error : float
+        Error radius in deg
+    pipeline : str
+        External trigger pipeline name
+    notice_type : int
+        GCN notice type integer
 
     Returns
     -------
-    skymap : numpy array
-        sky map array
+    skymap : array
+        Sky map array
 
     """
     max_nside = 2048
@@ -489,15 +585,19 @@ def write_to_fits(skymap, event, notice_type, notice_date):
 
     Parameters
     ----------
-    skymap : numpy array
-        sky map array
+    skymap : array
+        Sky map array
     event : dict
-        Dictionary of Swift external event
+        Dictionary of external event
+    notice_type : int
+        GCN notice type integer
+    notice_date : str
+        External event trigger time in ISO format
 
     Returns
     -------
-    skymap fits : bytes array
-        bytes array of sky map
+    skymap_fits : str
+        Bytes string of sky map
 
     """
 
@@ -531,7 +631,11 @@ def create_upload_external_skymap(event, notice_type, notice_date):
     Parameters
     ----------
     event : dict
-        Dictionary of Swift external event
+        Dictionary of external event
+    notice_type : int
+        GCN notice type integer
+    notice_date : str
+        External event trigger time in ISO format
 
     """
     graceid = event['graceid']
@@ -594,9 +698,9 @@ def plot_overlap_integral(coinc_far_dict, superevent, ext_event,
         Dictionary containing coincidence false alarm rate results from
         RAVEN
     superevent : dict
-        superevent dictionary
+        Superevent dictionary
     ext_event : dict
-        external event dictionary
+        External event dictionary
     var_label : str
         The variable symbol used in plotting
 
