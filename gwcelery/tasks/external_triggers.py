@@ -105,8 +105,15 @@ def handle_grb_gcn(payload):
                         '/AGILE': 'AGILE'}
     event_observatory = stream_obsv_dict[stream_path]
 
+    ext_group = 'Test' if root.attrib['role'] == 'test' else 'External'
+
+    #  Block Test INTEGRAL events on the production server to prevent
+    #  unneeded queries of old GW data during detchar check
+    if event_observatory == 'INTEGRAL' and ext_group == 'Test' and \
+            app.conf['gracedb_host'] == 'gracedb.ligo.org':
+        return
     #  Get TrigID
-    if event_observatory == 'INTEGRAL' and \
+    elif event_observatory == 'INTEGRAL' and \
             not any([x in u.fragment for x in ['O3-replay', 'MDC-test']]):
         #  FIXME: revert all this if INTEGRAL fixes their GCN notices
         #  If INTEGRAL, get trigger ID from ivorn rather than the TrigID field
@@ -124,7 +131,6 @@ def handle_grb_gcn(payload):
         except AttributeError:
             trig_id = \
                 root.find("./What/Param[@name='Trans_Num']").attrib['value']
-    ext_group = 'Test' if root.attrib['role'] == 'test' else 'External'
 
     notice_type = \
         int(root.find("./What/Param[@name='Packet_Type']").attrib['value'])

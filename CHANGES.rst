@@ -11,6 +11,9 @@ Changelog
 -   Improve GraceDB logs for external sky maps by adding notice type they
     were created or uploaded from.
 
+-   Prevent uploads of INTEGRAL Test events to the production server to avoid
+    unnecessary polls of old GW data and use of resources.
+
 2.1.8 "Ahool" (09-01-2023)
 --------------------------
 

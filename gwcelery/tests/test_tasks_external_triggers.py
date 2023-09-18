@@ -1,10 +1,11 @@
 from importlib import resources
 from lxml import etree
-from unittest.mock import patch, call
+from unittest.mock import patch, call, Mock
 
 import pytest
 
 from . import data
+from .. import app
 from ..tasks import external_triggers
 from ..tasks import detchar
 from ..util import read_json
@@ -221,8 +222,8 @@ def test_handle_initial_fermi_event(mock_check_vectors,
     'extra_attributes': {'GRB': {'trigger_duration': 1, 'trigger_id': 123,
                                  'ra': 0., 'dec': 0., 'error_radius': 15.}},
     'links': {'self': 'https://gracedb.ligo.org/events/E356793/'}}])
-def test_handle_replace_grb_event(mock_get_event,
-                                  mock_get_events,
+def test_handle_replace_grb_event(mock_get_events,
+                                  mock_get_event,
                                   mock_replace_event, mock_remove_label,
                                   mock_create_label,
                                   mock_get_upload_external_skymap,
@@ -240,6 +241,54 @@ def test_handle_replace_grb_event(mock_get_event,
     elif 'noise' in filename:
         mock_replace_event.assert_called_once_with('E1', text)
         mock_create_label.assert_called_once_with('NOT_GRB', 'E1')
+
+
+@pytest.mark.parametrize('host',
+                         ['gracedb.ligo.org',
+                          'gracedb-playground.ligo.org',
+                          'gracedb-test.ligo.org'])
+def test_handle_integral_test(monkeypatch, host):
+    mock_create_upload_external_skymap = Mock()
+    mock_get_upload_external_skymap = Mock()
+    mock_create_label = Mock()
+    mock_create_event = Mock(return_value={
+        'graceid': 'E1', 'gpstime': 1, 'instruments': '',
+        'pipeline': 'INTEGRAL', 'search': 'GRB',
+        'extra_attributes': {'GRB': {'trigger_duration': 1, 'trigger_id': 123,
+                                     'ra': 0., 'dec': 0., 'error_radius': 5.}},
+        'links': {'self': 'https://gracedb.ligo.org/events/E356793/'}})
+    mock_remove_label = Mock()
+    mock_get_events = Mock(return_value=[])
+
+    monkeypatch.setattr(app.conf, 'gracedb_host', host)
+    monkeypatch.setattr(
+        'gwcelery.tasks.external_skymaps.create_upload_external_skymap.run',
+        mock_create_upload_external_skymap)
+    monkeypatch.setattr(
+        'gwcelery.tasks.external_skymaps.get_upload_external_skymap.run',
+        mock_get_upload_external_skymap)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.create_event.run',
+        mock_create_event)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.create_label.run',
+        mock_create_label)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.remove_label.run',
+        mock_remove_label)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.get_events.run',
+        mock_get_events)
+
+    text = resources.read_binary(data, 'integral_test_gcn.xml')
+    external_triggers.handle_grb_gcn(payload=text)
+    # Block Test INTEGRAL on production server but not for test servers
+    if 'gracedb.ligo.org' == host:
+        mock_create_event.assert_not_called()
+    else:
+        mock_create_event.assert_called_once_with(
+            filecontents=text, search='GRB', group='Test', pipeline='INTEGRAL',
+            labels=None)
 
 
 @patch('gwcelery.tasks.gracedb.get_group', return_value='CBC')
