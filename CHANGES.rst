@@ -14,6 +14,12 @@ Changelog
 -   Prevent uploads of INTEGRAL Test events to the production server to avoid
     unnecessary polls of old GW data and use of resources.
 
+-   Update Bilby to 2.2.0; allows result files to be written without access to
+    a conda environment.
+
+-   Update bilby_pipe to 1.2.1; ensure that environment variables are passed
+    correctly when using ``HTCondor>=10.7``.
+
 2.1.8 "Ahool" (09-01-2023)
 --------------------------
 
