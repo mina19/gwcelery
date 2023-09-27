@@ -592,7 +592,7 @@ def test_start_pe(monkeypatch, tmp_path, pipeline):
             monkeypatch.setattr('gwcelery.tasks.inference.dag_prepare_task',
                                 dag_prepare_task)
             monkeypatch.setattr(
-                    'gwcelery.tasks.condor.submit.run', condor_submit)
+                    'gwcelery.tasks.condor.submit_rapidpe.run', condor_submit)
             monkeypatch.setattr(
                     'gwcelery.tasks.inference.dag_finished.run',
                     dag_finished)

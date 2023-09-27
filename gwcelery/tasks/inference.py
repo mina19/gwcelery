@@ -924,14 +924,17 @@ def start_pe(event, superevent_id, pe_pipeline):
         rundirs = [os.path.join(event_dir, m) for m in modes]
         kwargs_list = [{'bilby_mode': m} for m in modes]
         analyses = [f'{m}-mode bilby' for m in modes]
+        condor_submit_task = condor.submit
     elif pe_pipeline == 'rapidpe':
         rundirs = [event_dir]
         kwargs_list = [{'event_pipeline': event["pipeline"]}]
         analyses = [pe_pipeline]
+        condor_submit_task = condor.submit_rapidpe
     else:
         rundirs = [event_dir]
         kwargs_list = [{}]
         analyses = [pe_pipeline]
+        condor_submit_task = condor.submit
 
     os.mkdir(event_dir)
     for rundir, kwargs, analysis in zip(rundirs, kwargs_list, analyses):
@@ -949,7 +952,7 @@ def start_pe(event, superevent_id, pe_pipeline):
                 rundir, event, superevent_id, pe_pipeline, **kwargs
             )
             |
-            condor.submit.s().on_error(
+            condor_submit_task.s().on_error(
                 job_error_notification.s(superevent_id, rundir, analysis)
             )
             |

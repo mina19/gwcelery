@@ -426,5 +426,13 @@ condor_retry_kwargs = dict(
 """Retry settings of condor.submit task. With these settings, a condor job is
 no longer tracked ~12 hours after it starts."""
 
+rapidpe_condor_retry_kwargs = dict(
+    max_retries=125, retry_backoff=True, retry_jitter=False,
+    retry_backoff_max=30
+)
+"""Retry settings of condor.submit_rapidpe task. With these settings, a
+condor job is no longer tracked ~1 hours after it starts. This is used
+for RapidPE."""
+
 # Delete imported modules so that they do not pollute the config object
 del os, getpass
