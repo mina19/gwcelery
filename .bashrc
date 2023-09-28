@@ -9,9 +9,6 @@ fi
 # Add user site directory to the PATH. On Linux, this is usuall ~/.local/bin.
 export PATH="$(python3.9 -m site --user-base)/bin${PATH+:${PATH}}"
 
-# Display poetry version and environment
-test `which poetry` && poetry --version && poetry env list
-
 # Disable OpenMP, MKL, and OpenBLAS threading by default.
 # In this environment, it will be enabled selectively by processes that use it.
 export OMP_NUM_THREADS=1
