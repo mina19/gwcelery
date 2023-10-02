@@ -105,7 +105,7 @@ def handle(payload):
     process.si(payload).apply_async(priority=priority)
 
 
-@gracedb.task(queue='superevent', shared=False)
+@gracedb.task(queue='superevent', shared=False, time_limit=600)
 @gracedb.catch_retryable_http_errors
 def process(payload):
     """

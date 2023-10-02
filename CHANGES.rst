@@ -20,6 +20,8 @@ Changelog
 -   Update bilby_pipe to 1.2.1; ensure that environment variables are passed
     correctly when using ``HTCondor>=10.7``.
 
+-   Set a 600 second hard time_limit for ``superevents.process`` tasks.
+
 2.1.8 "Ahool" (09-01-2023)
 --------------------------
 
