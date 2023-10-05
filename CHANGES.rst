@@ -10,6 +10,8 @@ Changelog
 
 -   Update documentation for RAVEN and external trigger tasks.
 
+-   Add missing documetation for various tasks.
+
 -   Improve GraceDB logs for external sky maps by adding notice type they
     were created or uploaded from.
 
