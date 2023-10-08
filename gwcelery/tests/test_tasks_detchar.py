@@ -97,6 +97,13 @@ def test_create_cache_old_data(mock_find, llhoft_glob_fail):
     mock_find.assert_called()
 
 
+@patch('gwcelery.tasks.detchar.find_urls', return_value=[])
+def test_create_cache_stale_devshm(mock_find, llhoft_glob_fail):
+    start, end = 1398800018, 1398800028
+    detchar.create_cache('L1', start, end)
+    mock_find.assert_called()
+
+
 expected_path = Path(__file__).parent / 'data/llhoft/omegascan/scanme.gwf'
 
 
@@ -142,7 +149,9 @@ def test_ifo_from_channel():
     assert ifos == ['H1', 'L1', 'V1', 'K1']
 
 
-def test_omegascan_skips_ew(caplog):
+@patch('gwcelery.tasks.gracedb.upload.run')
+@patch('gwcelery.tasks.detchar.make_omegascan.run')
+def test_omegascan_skips_ew(mock_scan, mock_upload, caplog):
     """Test that omegascans are delayed for events in the future."""
     caplog.set_level(logging.INFO)
     detchar.omegascan(Time.now().gps + 99, 'S1234')

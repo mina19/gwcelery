@@ -42,6 +42,8 @@ Changelog
 
 -   Update ligo-followup-advocate to 1.2.8.
 
+-   Improve robustness of detchar cache creation by checking for stale caches.
+
 2.1.8 "Ahool" (09-01-2023)
 --------------------------
 

@@ -75,16 +75,19 @@ def create_cache(ifo, start, end):
     cache = Cache.from_urls(filenames)
 
     try:
-        cache_starttime = int(
-            list(cache.to_segmentlistdict().values())[0][0][0])
+        cache_segment = list(cache.to_segmentlistdict().values())[0][0]
+        cache_starttime = cache_segment[0]
+        cache_endtime = cache_segment[1]
+
     except IndexError:
         log.exception('Files do not exist in llhoft_glob')
         return cache  # returns empty cache
 
-    if start >= cache_starttime:  # required data is in llhoft
+    if (cache_starttime <= start) and (end <= cache_endtime):
+        # required data is in llhoft
         return cache
 
-    # otherwise, required data has left llhoft
+    # otherwise, required data is not in the low latency cache
     high_latency = app.conf['high_latency_frame_types'][ifo]
     urls = find_urls(ifo[0], high_latency, start, end)
     if urls:
