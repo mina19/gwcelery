@@ -13,6 +13,11 @@ Changelog
 
 -   Update gwpy>=3.0.8 to fix issue with lal caches being discontiguous. 
 
+-   Change the concurrency of worker 32 and add a threshold memory
+    limit on worker processes before being replaced with a new process.
+    This is the celery setting ``max-memory-per-child``.
+
+
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
 
