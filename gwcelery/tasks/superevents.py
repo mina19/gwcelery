@@ -535,13 +535,14 @@ def keyfunc(event):
 
     """
     group = event['group'].lower()
+    search = event['search'].lower()
     try:
-        group_rank = ['burst', 'cbc'].index(group)
-    except ValueError:
+        group_rank = app.conf['superevent_candidate_preference'][group].get(
+            search, -1
+        )
+    except KeyError:
         group_rank = -1
-
     if group == 'cbc':
-        group_rank = 1
         n_ifos = len(get_instruments(event))
         snr_or_far_ranking = get_snr(event)
     else:

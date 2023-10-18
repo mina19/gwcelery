@@ -7,6 +7,7 @@ from requests.models import Response
 
 from ..tasks import gracedb, superevents
 from ..util import read_json
+from .. import app
 from . import data
 
 
@@ -996,3 +997,42 @@ def test_inj_means_should_not_publish():
                             'SingleInspiral': [
                                 {"ifo": ifo} for ifo in ["H1", "L1"]]}}
     assert superevents.should_publish(event_dictionary) is False
+
+
+@pytest.fixture
+def burst_bbh_ranked_higher_than_burst_allsky(monkeypatch):
+    monkeypatch.setitem(
+        app.conf, 'superevent_candidate_preference',
+        {'burst': {'bbh': 1, 'allsky': 0}})
+
+
+def test_burst_bbh_vs_allsky(burst_bbh_ranked_higher_than_burst_allsky):
+    """Test event ranking when different searches under the same group
+    is ranked differently. In this case the burst BBH search is ranked higher
+    than burst AllSky."""
+    event_dictionary = {
+        'graceid': 'G1',
+        'gpstime': 1.0,
+        'pipeline': 'CWB',
+        'offline': False,
+        'far': 1e-6,
+        'instruments': 'H1,L1',
+        'labels': ['SKYMAP_READY'],
+        'superevent': None,
+        'superevent_neighbours': SUPEREVENTS_NEIGHBOURS,
+        'extra_attributes': {
+            'MultiBurst': {
+                'duration': 0.02,
+                'start_time': 0.9,
+                'snr': 19.0
+            }
+        }
+    }
+
+    event_1 = dict(**event_dictionary, group='Burst', search='AllSky')
+    event_2 = dict(**event_dictionary, group='Burst', search='BBH')
+    assert superevents.keyfunc(event_1) < superevents.keyfunc(event_2)
+    # catch the unknown group case
+    event_3 = dict(**event_dictionary, group='unknown', search='BBH')
+    with pytest.raises(KeyError):
+        superevents.keyfunc(event_3)
