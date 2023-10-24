@@ -7,6 +7,8 @@ Changelog
 -   Roll back all v2.1.8 "Ahool" changes for an emergency release of v2.1.7
     "Spring-heeled Jack" with a bug fix for Out-of-Memory issues.
 
+-   Add a separate ``em-bright`` worker for re-routing em-bright tasks.
+
 2.1.8 "Ahool" (09-01-2023)
 --------------------------
 

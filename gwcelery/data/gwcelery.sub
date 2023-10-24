@@ -51,6 +51,10 @@ arguments = "gwcelery worker -l info -n gwcelery-kafka-consumer-worker@%h -f %n.
 description = gwcelery-kafka-consumer-worker
 queue
 
+arguments = "gwcelery worker -l info -n gwcelery-em-bright-worker@%h -f %n.log -Q em-bright -c 2 --prefetch-multiplier 1"
+description = gwcelery-em-bright-worker
+queue
+
 # Jobs defined below this point will run on specially configured cluster nodes.
 +Online_EMFollow = True
 Requirements = (TARGET.Online_EMFollow =?= True)

@@ -294,7 +294,12 @@ of several processes:
     with the ``--pool=solo`` option so that tasks are executed in the same
     Python process that is running the VOEvent broker.
 
-9.  **General-Purpose Worker**
+9.  **EM-Bright Worker**
+
+    A Celery worker that is dedicated to computing source properties of
+    compact binary coalescences.
+
+10. **General-Purpose Worker**
 
     A Celery worker that accepts all other tasks. This worker also runs an
     :doc:`embedded IGWN Alert listener service <gwcelery.igwn_alert>` that is started

@@ -138,6 +138,7 @@ following commands::
     $ OMP_NUM_THREADS=1 gwcelery worker -l info -n gwcelery-multiprocessing-worker -Q multiprocessing -c 1
     $ gwcelery worker -l info -n gwcelery-superevent-worker -Q superevent -c 1
     $ gwcelery worker -l info -n gwcelery-voevent-worker -Q voevent -P solo
+    $ gwcelery worker -l info -n gwcelery-em-bright-worker-Q em-bright -c 2 --prefetch-multiplier 1
     $ gwcelery flask run
 
 .. hint::
