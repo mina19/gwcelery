@@ -59,7 +59,7 @@ celery = {version = ">=5.1", extras = ["redis"]}
 ciecplib = {version = "*", extras = ["kerberos"]}  # for renew-cert.sh
 click = ">=7"
 comet = "*"
-confluent-kafka = "^1.9.2"
+confluent-kafka = ">=1.9.2"
 dnspython = "*"  # silence "DNS: dnspython not found. Can not use SRV lookup." warning from SleekXMPP
 flask = ">=2.2,<3.0"  # https://github.com/pytest-dev/pytest-flask/issues/167
 flask-caching = "*"
