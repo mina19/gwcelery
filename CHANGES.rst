@@ -26,6 +26,8 @@ Changelog
 
 -   Set a 600 second hard time_limit for ``superevents.process`` tasks.
 
+-   Add a separate ``em-bright`` worker for re-routing em-bright tasks.
+
 2.1.8 "Ahool" (09-01-2023)
 --------------------------
 

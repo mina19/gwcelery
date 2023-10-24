@@ -83,7 +83,7 @@ def plot(contents):
     return outfile.getvalue()
 
 
-@app.task(shared=False)
+@app.task(shared=False, queue='em-bright')
 def em_bright_posterior_samples(posterior_file_content):
     """Returns the probability of having a NS component and remnant
     using Bilby posterior samples.
@@ -119,7 +119,7 @@ def em_bright_posterior_samples(posterior_file_content):
     return data
 
 
-@app.task(shared=False)
+@app.task(shared=False, queue='em-bright')
 def source_properties(mass1, mass2, spin1z, spin2z, snr):
     """Returns the probability of having a NS component, the probability of
     having non-zero disk mass, and the probability of any component being the
