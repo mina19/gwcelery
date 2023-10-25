@@ -15,44 +15,44 @@ from . import data
 @pytest.mark.parametrize(  # noqa: F811
     'alert_type,alert_label,group,pipeline,offline,far,instruments,'
     'superevent_id,superevent_labels',
-    [['label_added', 'LOW_SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-9,
-        ['H1'], 'S1234', ['LOW_SIGNIF_LOCKED']],
+    [['label_added', superevents.FROZEN_LABEL, 'CBC', 'gstlal', False, 1.e-9,
+        ['H1'], 'S1234', [superevents.FROZEN_LABEL]],
      ['label_added', 'ADVREQ', 'CBC', 'gstlal', False, 1.e-9,
         ['H1'], 'S1234', ['ADVREQ']],
-     ['label_added', 'SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1'], 'S1234', ['LOW_SIGNIF_LOCKED']],
-     ['label_added', 'SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', ['LOW_SIGNIF_LOCKED']],
-     ['label_added', 'SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S2468',
-         ['LOW_SIGNIF_LOCKED', 'COMBINEDSKYMAP_READY',
-          'RAVEN_ALERT', 'EM_COINC']],
-     ['label_added', 'SIGNIF_LOCKED', 'Burst', 'CWB', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', ['LOW_SIGNIF_LOCKED']],
-     ['label_added', 'SIGNIF_LOCKED', 'Burst', 'oLIB', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', ['LOW_SIGNIF_LOCKED']],
+     ['label_added', superevents.SIGNIFICANT_LABEL, 'CBC', 'gstlal', False,
+         1.e-9, ['H1', 'L1'], 'S1234', [superevents.FROZEN_LABEL]],
+     ['label_added', superevents.SIGNIFICANT_LABEL, 'CBC', 'gstlal', False,
+         1.e-9, ['H1', 'L1', 'V1'], 'S1234', [superevents.FROZEN_LABEL]],
+     ['label_added', superevents.SIGNIFICANT_LABEL, 'CBC', 'gstlal', False,
+         1.e-9, ['H1', 'L1', 'V1'], 'S2468',
+         [superevents.FROZEN_LABEL, 'COMBINEDSKYMAP_READY', 'RAVEN_ALERT',
+          'EM_COINC']],
+     ['label_added', superevents.SIGNIFICANT_LABEL, 'Burst', 'CWB', False,
+         1.e-9, ['H1', 'L1', 'V1'], 'S1234', [superevents.FROZEN_LABEL]],
+     ['label_added', superevents.SIGNIFICANT_LABEL, 'Burst', 'oLIB', False,
+         1.e-9, ['H1', 'L1', 'V1'], 'S1234', [superevents.FROZEN_LABEL]],
      ['label_added', 'GCN_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', ['SIGNIF_LOCKED']],
-     ['label_added', 'LOW_SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', ['SIGNIF_LOCKED']],
-     ['label_added', 'LOW_SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-9,
+         ['H1', 'L1', 'V1'], 'S1234', [superevents.SIGNIFICANT_LABEL]],
+     ['label_added', superevents.FROZEN_LABEL, 'CBC', 'gstlal', False, 1.e-9,
+         ['H1', 'L1', 'V1'], 'S1234', [superevents.SIGNIFICANT_LABEL]],
+     ['label_added', superevents.FROZEN_LABEL, 'CBC', 'gstlal', False, 1.e-9,
          ['H1', 'L1', 'V1'], 'S1234', []],
-     ['label_added', 'LOW_SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-5,
+     ['label_added', superevents.FROZEN_LABEL, 'CBC', 'gstlal', False, 1.e-5,
          ['H1', 'L1', 'V1'], 'S1234', []],
-     ['label_added', 'LOW_SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-10,
-         ['H1', 'L1', 'V1'], 'S1234', ['EARLY_WARNING']],
+     ['label_added', superevents.FROZEN_LABEL, 'CBC', 'gstlal', False, 1.e-10,
+         ['H1', 'L1', 'V1'], 'S1234', [superevents.EARLY_WARNING_LABEL]],
      ['label_added', 'LOW_SIGNIF_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', ['EM_SelectedConfident']],
+         ['H1', 'L1', 'V1'], 'S1234', [superevents.SIGNIFICANT_LABEL]],
      ['label_added', 'LOW_SIGNIF_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-7,
-         ['H1', 'L1', 'V1'], 'S1234', ['EM_Selected']],
+         ['H1', 'L1', 'V1'], 'S1234', [superevents.FROZEN_LABEL]],
      ['new', '', 'CBC', 'gstlal', False, 1.e-9, ['H1', 'L1'], 'S1234',
-         ['LOW_SIGNIF_LOCKED']],
-     ['label_added', 'EARLY_WARNING', 'CBC', 'gstlal', False, 1.e-10,
-         ['H1', 'L1', 'V1'], 'S1234', []],
-     ['label_added', 'EARLY_WARNING', 'CBC', 'gstlal', False, 1.e-10,
-         ['H1', 'L1', 'V1'], 'S1234', ['SIGNIF_LOCKED']],
-     ['label_added', 'SIGNIF_LOCKED', 'CBC', 'gstlal', False, 1.e-10,
-         ['H1', 'L1', 'V1'], 'S1234', []]])
+         [superevents.FROZEN_LABEL]],
+     ['label_added', superevents.EARLY_WARNING_LABEL, 'CBC', 'gstlal', False,
+         1.e-10, ['H1', 'L1', 'V1'], 'S1234', []],
+     ['label_added', superevents.EARLY_WARNING_LABEL, 'CBC', 'gstlal', False,
+         1.e-10, ['H1', 'L1', 'V1'], 'S1234', [superevents.SIGNIFICANT_LABEL]],
+     ['label_added', superevents.SIGNIFICANT_LABEL, 'CBC', 'gstlal', False,
+         1.e-10, ['H1', 'L1', 'V1'], 'S1234', []]])
 def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
                            alert_type, alert_label, group, pipeline,
                            offline, far, instruments, superevent_id,
@@ -77,8 +77,8 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             'group': group,
             'pipeline': pipeline,
             'search': (
-                'EarlyWarning' if alert_label == 'EARLY_WARNING'
-                else 'AllSky'
+                superevents.EARLY_WARNING_SEARCH_NAME if alert_label ==
+                superevents.EARLY_WARNING_LABEL else 'AllSky'
             ),
             'graceid': 'G1234',
             'offline': offline,
@@ -155,7 +155,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
     # when live worker testing is enabled
     proceed_if_not_blocked_by = Mock(return_value=None) if \
         alert_label == 'LOW_SIGNIF_PRELIM_SENT' and \
-        'EM_SelectedConfident' in superevent_labels else \
+        superevents.SIGNIFICANT_LABEL in superevent_labels else \
         Mock(return_value=(('skymap', 'skymap-filename'),
                            ('em-bright', 'em-bright-filename'),
                            ('p-astro', 'p-astro-filename')))
@@ -256,7 +256,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             select_pipeline_preferred_event_task.return_value
         )
 
-    elif alert_label == 'SIGNIF_LOCKED':
+    elif alert_label == superevents.SIGNIFICANT_LABEL:
         if superevents.FROZEN_LABEL not in superevent_labels:
             create_label.assert_has_calls(
                 [call(superevents.FROZEN_LABEL, superevent_id)])
@@ -290,8 +290,8 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         else:
             create_initial_circular.assert_called_once()
 
-    elif alert_label == 'EARLY_WARNING':
-        if 'SIGNIF_LOCKED' in superevent_labels:
+    elif alert_label == superevents.EARLY_WARNING_LABEL:
+        if superevents.SIGNIFICANT_LABEL in superevent_labels:
             expose.assert_not_called()
             alerts_send.assert_not_called()
             gcn_send.assert_not_called()
@@ -314,9 +314,9 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             assert call('GCN_PRELIM_SENT', superevent_id) \
                 not in create_label.call_args_list
 
-    elif alert_label == 'LOW_SIGNIF_LOCKED':
-        if ('SIGNIF_LOCKED' in superevent_labels) or \
-                ('EARLY_WARNING' in superevent_labels):
+    elif alert_label == superevents.FROZEN_LABEL:
+        if (superevents.SIGNIFICANT_LABEL in superevent_labels) or \
+                (superevents.EARLY_WARNING_LABEL in superevent_labels):
             expose.assert_not_called()
             alerts_send.assert_not_called()
             gcn_send.assert_not_called()
@@ -339,7 +339,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             superevent_id,
             app.conf['gracedb_host'])
     elif alert_label == 'LOW_SIGNIF_PRELIM_SENT':
-        if 'EM_SelectedConfident' in superevent_labels:
+        if superevents.SIGNIFICANT_LABEL in superevent_labels:
             expose.assert_not_called()
             alerts_send.assert_not_called()
             gcn_send.assert_not_called()
@@ -867,9 +867,9 @@ def test_mbta_disabled_on_playground(
 @pytest.mark.parametrize(
     "superevent_labels,block_by_labels",
     [
-        [["LOW_SIGNIF_LOCKED"], set()],
-        [["LOW_SIGNIF_LOCKED"], {"ADVOK", "ADVNO"}],
-        [["SIGNIF_LOCKED", "ADVOK"], {"ADVOK", "ADVNO"}]
+        [[superevents.FROZEN_LABEL], set()],
+        [[superevents.FROZEN_LABEL], {"ADVOK", "ADVNO"}],
+        [[superevents.SIGNIFICANT_LABEL, "ADVOK"], {"ADVOK", "ADVNO"}]
     ]
 )
 def test_blocking_labels(superevent_labels, block_by_labels):
