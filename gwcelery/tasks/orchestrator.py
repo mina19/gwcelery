@@ -673,6 +673,18 @@ def _revise_and_send_second_less_significant_alert(alert, query,
             alert, alert_type='less-significant')
     ).delay()
 
+    # set pipeline preferred events
+    # FIXME: Ideally this should combined with the previous canvas.
+    # However, incorporating that group prevents canvas from executing
+    # maybe related to https://github.com/celery/celery/issues/7851
+    (
+        gracedb.get_events.si(query)
+        |
+        superevents.select_pipeline_preferred_event.s()
+        |
+        _set_pipeline_preferred_events.s(superevent_id)
+    ).delay()
+
 
 @app.task(shared=False)
 def _annotate_fits_and_return_input(input_list, superevent_id):

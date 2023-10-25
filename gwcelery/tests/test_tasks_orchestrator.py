@@ -350,6 +350,10 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             # check alert type is less-significant
             _files, _superevent, _alert_type = alerts_send.call_args.args
             assert _alert_type == 'less-significant'
+            select_pipeline_preferred_event_task.assert_called_once()
+            assert add_pipeline_preferred_event_task.call_count == len(
+                select_pipeline_preferred_event_task.return_value
+            )
 
     if alert_type == 'new' and group == 'CBC':
         threshold = (

@@ -28,6 +28,9 @@ Changelog
 
 -   Add a separate ``em-bright`` worker for re-routing em-bright tasks.
 
+-   Set pipeline preferred events for low significance alerts. Previously,
+    pipeline preferred events were only set for high significance alerts.
+
 2.1.8 "Ahool" (09-01-2023)
 --------------------------
 
