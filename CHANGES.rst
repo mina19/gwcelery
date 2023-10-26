@@ -37,6 +37,9 @@ Changelog
 -   Fix bug in condor.submit and condor.submit_rapidpe that they do not pass
     log properly to base submit function. 
 
+-   Update deployment to install ``gwcelery`` using ``pip`` instead of
+    ``poetry`` because the latter installs the project in editable mode.
+
 2.1.8 "Ahool" (09-01-2023)
 --------------------------
 
