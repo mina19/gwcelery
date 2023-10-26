@@ -190,7 +190,7 @@ def submit(self, submit_file, log=None):
     ...          accounting_group='ligo.dev.o3.cbc.explore.test')
 
     """
-    return base_submit(self, submit_file, log=None)
+    return base_submit(self, submit_file, log=log)
 
 
 @app.task(
@@ -224,7 +224,7 @@ def submit_rapidpe(self, submit_file, log=None):
 
     """
 
-    return base_submit(self, submit_file, log=None)
+    return base_submit(self, submit_file, log=log)
 
 
 @app.task(bind=True, autoretry_for=(JobRunning,), default_retry_delay=1,

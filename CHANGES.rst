@@ -31,6 +31,12 @@ Changelog
 -   Set pipeline preferred events for low significance alerts. Previously,
     pipeline preferred events were only set for high significance alerts.
 
+-   Add condor.submit_rapidpe, a submit task dedicated for RapidPE with lower
+    retry_backoff_max than other PE pipelines. 
+
+-   Fix bug in condor.submit and condor.submit_rapidpe that they do not pass
+    log properly to base submit function. 
+
 2.1.8 "Ahool" (09-01-2023)
 --------------------------
 
