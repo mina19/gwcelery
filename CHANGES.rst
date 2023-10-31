@@ -40,6 +40,8 @@ Changelog
 -   Update deployment to install ``gwcelery`` using ``pip`` instead of
     ``poetry`` because the latter installs the project in editable mode.
 
+-   Update ligo-followup-advocate to 1.2.8.
+
 2.1.8 "Ahool" (09-01-2023)
 --------------------------
 
