@@ -10,9 +10,9 @@ Changelog
 
 -   Update documentation for RAVEN and external trigger tasks.
 
--   Add missing documetation for various tasks.
+-   Add missing documentation for various tasks.
 
--   Improve GraceDB logs for external sky maps by adding notice type they
+-   Improve GraceDB logs for external sky maps by adding the notice type they
     were created or uploaded from.
 
 -   Prevent uploads of INTEGRAL Test events to the production server to avoid
