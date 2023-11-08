@@ -4,6 +4,7 @@ from unittest.mock import Mock
 import lal
 from gwpy.time import tconvert
 import pytest
+from pathlib import Path
 
 from .. import app, main
 from ..tools import nagios
@@ -43,6 +44,9 @@ def test_nagios(capsys, monkeypatch, request, socket_enabled, starter,
     mock_list_topics = Mock()
     unix_socket = str(tmp_path / 'redis.sock')
     broker_url = f'redis+socket://{unix_socket}'
+    orig_llhoft_path = app.conf['llhoft_glob']
+    llhoft_path = str(
+        Path(__file__).parent / 'data/llhoft/fail/{detector}/*.gwf')
 
     monkeypatch.setattr('hop.io.Stream.open', mock_hop_stream)
     monkeypatch.setattr('igwn_alert.client', mock_igwn_alert_client)
@@ -58,6 +62,15 @@ def test_nagios(capsys, monkeypatch, request, socket_enabled, starter,
             'suffix': 'json'
         }
     })
+    monkeypatch.setitem(app.conf, 'llhoft_glob', llhoft_path)
+
+    # no llhoft distributed in last 10 mins
+    with pytest.raises(SystemExit) as excinfo:
+        main(['gwcelery', 'nagios'])
+    assert excinfo.value.code == nagios.NagiosPluginStatus.CRITICAL
+    out, err = capsys.readouterr()
+    assert 'CRITICAL: Low-latency hoft is not being streamed' in out
+    monkeypatch.setitem(app.conf, 'llhoft_glob', orig_llhoft_path)
 
     # no broker
 

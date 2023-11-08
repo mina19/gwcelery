@@ -32,10 +32,10 @@ Changelog
     pipeline preferred events were only set for high significance alerts.
 
 -   Add condor.submit_rapidpe, a submit task dedicated for RapidPE with lower
-    retry_backoff_max than other PE pipelines. 
+    retry_backoff_max than other PE pipelines.
 
 -   Fix bug in condor.submit and condor.submit_rapidpe that they do not pass
-    log properly to base submit function. 
+    log properly to base submit function.
 
 -   Update deployment to install ``gwcelery`` using ``pip`` instead of
     ``poetry`` because the latter installs the project in editable mode.
@@ -45,6 +45,8 @@ Changelog
 -   Improve robustness of detchar cache creation by checking for stale caches.
 
 -   Update bilby to 2.2.1 and bilby_pipe to 1.3.0.
+
+-   Add Nagios check for existence of llhoft data.
 
 2.1.8 "Ahool" (09-01-2023)
 --------------------------

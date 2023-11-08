@@ -3,12 +3,15 @@
 See https://nagios-plugins.org/doc/guidelines.html.
 """
 from enum import IntEnum
+import glob
+from pathlib import Path
 from sys import exit
 from traceback import format_exc, format_exception
 
 import click
 from gwpy.time import tconvert
 import kombu.exceptions
+import numpy as np
 import lal
 
 # Make sure that all tasks are registered
@@ -111,7 +114,36 @@ def get_recent_mdc_superevents():
     return recent_superevents, t_lower, t_upper
 
 
+def get_distr_delay_latest_llhoft(app):
+    """Get the GPS time of the latest llhoft data distributed to the node"""
+    detectors = ['H1', 'L1']
+    max_delays = {}
+
+    now = int(lal.GPSTimeNow())
+    for ifo in detectors:
+        pattern = app.conf['llhoft_glob'].format(detector=ifo)
+        filenames = sorted(glob.glob(pattern))
+        try:
+            latest_gps = int(filenames[-1].split('-')[-2])
+            max_delays[ifo] = now - latest_gps
+        except IndexError:
+            max_delays[ifo] = 999999999
+
+    return max_delays
+
+
 def check_status(app):
+    # Check if '/dev/shm/kafka/' exists, otherwise skip
+    if Path(app.conf['llhoft_glob']).parents[1].exists():
+        max_llhoft_delays = get_distr_delay_latest_llhoft(app)
+        max_delay = 10 * 60  # 10 minutes of no llhoft is worrying
+        if any(np.array(list(max_llhoft_delays.values())) > max_delay):
+            raise NagiosCriticalError(
+                'Low-latency hoft is not being streamed') \
+                from AssertionError(
+                    f"Newest llhoft is this many seconds old: "
+                    f"{str(max_llhoft_delays)}")
+
     connection = app.connection()
     try:
         connection.ensure_connection(max_retries=1)
