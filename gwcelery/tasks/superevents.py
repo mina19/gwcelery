@@ -62,6 +62,14 @@ def handle(payload):
     """
     alert_type = payload['alert_type']
     gid = payload['object']['graceid']
+    alert_group = payload['object']['group'].lower()
+
+    ifos = get_instruments(payload['object']) if alert_group == 'cbc' \
+        else payload['object']['instruments'].split(',')
+    # Ignore inclusion of events involving KAGRA; revert when policy is changed
+    if "K1" in ifos:
+        log.info('Skipping %s because it involves KAGRA data', gid)
+        return
 
     try:
         far = payload['object']['far']

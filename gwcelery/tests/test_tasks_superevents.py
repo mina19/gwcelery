@@ -301,36 +301,52 @@ def test_is_complete(labels):
 
 
 @pytest.mark.parametrize(
-    'labels,label,search,alert_type',
+    'labels,label,search,alert_type,group,ifos',
     [[['EMBRIGHT_READY', 'PASTRO_READY'], 'EMBRIGHT_READY', 'AllSky',
-      'label_added'],
+      'label_added', 'CBC', 'H1,L1'],
      [['SKYMAP_READY', 'EMBRIGHT_READY', 'PASTRO_READY'], 'SKYMAP_READY',
-      'AllSky', 'label_added'],
+      'AllSky', 'label_added', 'CBC', 'H1,L1'],
      [['EMBRIGHT_READY'], 'EMBRIGHT_READY', 'EarlyWarning',
-      'label_added'],  # Less-significant EW events are not processed
-     [['EMBRIGHT_READY'], 'EMBRIGHT_READY', 'EarlyWarning', 'new'],
-     [[''], '', 'SSM', 'new'],
-     [['PASTRO_READY'], '', 'SSM', 'label_added']]
+      'label_added', 'CBC', 'H1,L1'],  # Less-significant EW
+     [['EMBRIGHT_READY'], 'EMBRIGHT_READY', 'EarlyWarning', 'new',
+      'CBC', 'H1,L1,V1'],
+     [[''], '', 'SSM', 'new', 'CBC', 'H1,L1'],
+     [['PASTRO_READY'], '', 'SSM', 'label_added', 'CBC', 'H1,L1'],
+     [[''], '', 'AllSky', 'new', 'CBC', 'H1,L1,K1'],
+     [[''], '', 'AllSky', 'new', 'CBC', 'H1,L1,V1,K1'],
+     [[''], '', 'AllSky', 'new', 'Burst', 'H1,L1,K1']]
 )
-def test_process_called(labels, label, search, alert_type):
+def test_process_called(labels, label, search, alert_type, group, ifos):
     """Test whether the :meth:`superevents.process` is called
     new type IGWN alerts, and label additions that complete the event.
     """
     payload = {
         "alert_type": alert_type,
         "data": {"name": label},
+        "group": group,
+        "instruments": ifos,
         "object": {
             "graceid": "ABCD",
             "far": 1e-6,
-            "group": "CBC",
+            "group": group,
             "pipeline": "pipeline",
             "search": search,
-            "labels": labels
+            "labels": labels,
+            "instruments": ifos
         }
     }
+    payload['object']["extra_attributes"] = {
+        "CoincInspiral": {'snr': 4.0},
+        "SingleInspiral": [
+            {"ifo": ifo} for ifo in
+            ifos.split(',')]
+    } if group.lower() == 'cbc' else {"burst_attributes": "burst_values"}
+
     with patch('gwcelery.tasks.superevents.process.run') as process:
         superevents.handle(payload)
-        if search == superevents.EARLY_WARNING_SEARCH_NAME or \
+        if "K1" in ifos:
+            process.assert_not_called()
+        elif search == superevents.EARLY_WARNING_SEARCH_NAME or \
                 search == superevents.SUBSOLAR_SEARCH_NAME:
             process.assert_not_called()
         elif superevents.is_complete(payload['object']):
@@ -478,7 +494,10 @@ def test_raising_http_error(failing_create_superevent):
             "far": 1.e-31,
             "instruments": "H1,L1",
             "extra_attributes": {
-                "CoincInspiral": {"snr": 20}
+                "CoincInspiral": {"snr": 20},
+                "SingleInspiral": [
+                    {'ifo': ifo} for ifo in ['H1', 'L1']
+                ]
             },
             "offline": False,
             "labels": [],

@@ -7,6 +7,8 @@ Changelog
 -   Add acceptance check to whether dependencies have been approved by SCCB and
     check that Bilby PE summary is available.
 
+-   Do not add events involving KAGRA to superevents.
+
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
 
