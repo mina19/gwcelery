@@ -59,7 +59,7 @@ celery = {version = ">=5.1", extras = ["redis"]}
 ciecplib = {version = "*", extras = ["kerberos"]}  # for renew-cert.sh
 click = ">=7"
 comet = "*"
-confluent-kafka = "^1.9.2"
+confluent-kafka = ">=1.9.2"
 dnspython = "*"  # silence "DNS: dnspython not found. Can not use SRV lookup." warning from SleekXMPP
 flask = ">=2.2"
 flask-caching = "*"
@@ -69,7 +69,7 @@ gwpy = ">=2.0.1"  # https://github.com/gwpy/gwpy/issues/1277
 GWSkyNet = ">=2.3.0" # https://git.ligo.org/computing/sccb/-/issues/1153
 healpy = "*"
 hop-client = ">=0.7.0"  # https://github.com/scimma/hop-client/pull/176
-igwn-alert = ">=0.2.2"
+igwn-alert = ">=0.3.0"
 igwn-gwalert-schema = "^1.0.0"
 imapclient = "*"
 importlib-metadata = { version = "*"}
