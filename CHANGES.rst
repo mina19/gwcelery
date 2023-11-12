@@ -1,6 +1,35 @@
 Changelog
 =========
 
+2.1.9 (unreleased)
+------------------
+
+-   Roll back all v2.1.8 "Ahool" changes for an emergency release of v2.1.7
+    "Spring-heeled Jack" with a bug fix for Out-of-Memory issues.
+
+2.1.8 "Ahool" (09-01-2023)
+--------------------------
+
+-   Sort Python packages on Flask webapp by name for readability.
+
+-   Update Bilby to 2.1.2; fixes a post-processing bug that can impact
+    distance posteriors for low-SNR events.
+
+-   Update bilby_pipe to 1.2.0; address the same bug as for Bilby and fix a
+    typo in frame paths on playground.
+
+-   Update release template to refer and point to test instance rather than
+    playground.
+
+-   Modify project ``.bashrc`` to avoid sourcing a conda environment. Update
+    deploy-common stage to install ``gwcelery`` using ``poetry``.
+
+-   Use the central time for querying events in the targeted subthreshold
+    search. This is an improvement since the starting time of low SNR GRB
+    candidates tends to be unreliable.
+
+-   Use ``ligo-skymap`` API to create bayestar coherence plots.
+
 2.1.7 "Spring-heeled Jack" (08-21-2023)
 ---------------------------------------
 
@@ -18,12 +47,12 @@ Changelog
     wrapping in order to conform to new GCN circular recommendations.
 
 -   Update rapidpe-rift-pipe to 0.6.3. Rapidpe will run on triggers from all
-    pipelines. In this version ``pTerrestrial`` is taken from the preferred 
-    event instead of calculating it from rankingstatpdf. Removed  config  
-    options ``far_threshold`` and ``rankstat_pdf_file`` that were used for 
-    ``pTerrestrial`` calculation. Using config option ``total-points`` instead 
+    pipelines. In this version ``pTerrestrial`` is taken from the preferred
+    event instead of calculating it from rankingstatpdf. Removed  config
+    options ``far_threshold`` and ``rankstat_pdf_file`` that were used for
+    ``pTerrestrial`` calculation. Using config option ``total-points`` instead
     of ``points-per-side`` to set the required number of grid points in the
-    initial intrinsic grid. ``total-points`` will make sure that we get close 
+    initial intrinsic grid. ``total-points`` will make sure that we get close
     to the required number of grid points. Corrected the time-offset of MDC to
     match the current MDC. Setting the minimum frequency ``fmiin-template``
     to 20Hz to match the minimum frequency used by bilby.
@@ -33,6 +62,7 @@ Changelog
 
 -   Add subthreshold targeted events from Fermi and Swift, as well as
     subthreshold untargeted events from Fermi to the O3 MDC replay.
+
 
 2.1.6 "Champ" (08-10-2023)
 --------------------------
