@@ -5,7 +5,7 @@ import pytest
 from lxml import etree
 
 from .. import app
-from ..tasks import detchar, external_triggers
+from ..tasks import detchar, external_skymaps, external_triggers
 from ..util import read_binary, read_json
 from . import data
 
@@ -205,18 +205,21 @@ def test_handle_initial_fermi_event(mock_check_vectors,
                           'fermi_subthresh_grb_gcn.xml'])
 @patch('gwcelery.tasks.external_skymaps.create_upload_external_skymap.run')
 @patch('gwcelery.tasks.external_skymaps.get_upload_external_skymap.run')
+@patch('gwcelery.tasks.external_skymaps.get_skymap_filename',
+       return_value=(external_skymaps.FERMI_OFFICIAL_SKYMAP_FILENAME +
+                     'fits.gz'))
 @patch('gwcelery.tasks.gracedb.create_label.run')
 @patch('gwcelery.tasks.gracedb.remove_label.run')
 @patch('gwcelery.tasks.gracedb.replace_event.run')
 @patch('gwcelery.tasks.gracedb.get_event.run', return_value=[{
     'graceid': 'E1', 'gpstime': 1, 'instruments': '', 'pipeline': 'Fermi',
-    'search': 'GRB',
+    'search': 'GRB', 'labels': ['EXT_SKYMAP_READY'],
     'extra_attributes': {'GRB': {'trigger_duration': 1, 'trigger_id': 123,
                                  'ra': 0., 'dec': 0., 'error_radius': 10.}},
     'links': {'self': 'https://gracedb.ligo.org/events/E356793/'}}])
 @patch('gwcelery.tasks.gracedb.get_events.run', return_value=[{
     'graceid': 'E1', 'gpstime': 1, 'instruments': '', 'pipeline': 'Fermi',
-    'search': 'GRB',
+    'search': 'GRB', 'labels': ['EXT_SKYMAP_READY'],
     'extra_attributes': {'GRB': {'trigger_duration': 1, 'trigger_id': 123,
                                  'ra': 0., 'dec': 0., 'error_radius': 15.}},
     'links': {'self': 'https://gracedb.ligo.org/events/E356793/'}}])
@@ -224,6 +227,7 @@ def test_handle_replace_grb_event(mock_get_events,
                                   mock_get_event,
                                   mock_replace_event, mock_remove_label,
                                   mock_create_label,
+                                  mock_get_skymap_filename,
                                   mock_get_upload_external_skymap,
                                   mock_create_upload_external_skymap,
                                   filename):
@@ -644,7 +648,7 @@ def test_handle_create_snews_event(mock_create_event,
 @patch('gwcelery.tasks.gracedb.remove_label.run')
 @patch('gwcelery.tasks.gracedb.get_events.run',
        return_value=[{'graceid': 'E1', 'search': 'Supernova', 'gpstime': 100,
-                      'pipeline': 'SNEWS'}])
+                      'pipeline': 'SNEWS', 'labels': []}])
 def test_handle_replace_snews_event(mock_get_events, mock_remove_label,
                                     mock_replace_event):
     text = read_binary(data, 'snews_gcn.xml')
@@ -791,7 +795,8 @@ def test_handle_superevent_burst_creation(mock_raven_coincidence_search,
 
 def _mock_get_events(query):
     if "12345" in query:
-        return [{"graceid": "E12345", "search": "SubGRBTargeted"}]
+        return [{"graceid": "E12345", "search": "SubGRBTargeted",
+                 "labels": []}]
     else:
         return {}
 
@@ -805,7 +810,7 @@ def _mock_get_events(query):
                           'kafka_alert_swift_noloc.json',
                           'kafka_alert_swift_wskymap.json'])
 @patch('gwcelery.tasks.gracedb.create_event.run', return_value={
-    'graceid': 'E12345', 'gpstime': 100, 'pipeline': 'Fermi',
+    'graceid': 'E12345', 'gpstime': 100, 'pipeline': 'Fermi', 'labels': [],
     'extra_attributes': {'GRB': {'trigger_duration': 1, 'trigger_id': 123,
                                  'ra': 10., 'dec': 20., 'error_radius': 10.}}})
 @patch('gwcelery.tasks.external_skymaps.create_upload_external_skymap.run')

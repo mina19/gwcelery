@@ -655,11 +655,20 @@ def _create_replace_external_event_and_skymap(
 
     """
     skymap_detchar_canvas = ()
+    upload_new_skymap = True
     # If previous event, try to append
     if events and ext_group == 'External':
         assert len(events) == 1, 'Found more than one matching GraceDB entry'
         event, = events
         graceid = event['graceid']
+        # If previous Fermi sky map, check if from official analysis
+        if 'EXT_SKYMAP_READY' in event['labels'] and \
+                event['pipeline'] == 'Fermi':
+            # If True, block further sky maps from being uploaded automatically
+            # Note that sky maps can also be uploaded via the dashboard
+            upload_new_skymap = \
+                (external_skymaps.FERMI_OFFICIAL_SKYMAP_FILENAME not in
+                 external_skymaps.get_skymap_filename(graceid, is_gw=False))
         if label:
             create_replace_canvas = gracedb.create_label.si(label, graceid)
         else:
@@ -688,7 +697,8 @@ def _create_replace_external_event_and_skymap(
     if skymap:
         skymap_detchar_canvas += \
             external_skymaps.read_upload_skymap_from_base64.s(skymap),
-    else:
+    # Otherwise if no official Fermi sky map, upload one based on given info
+    elif upload_new_skymap:
         # Otherwise grab sky map from provided link
         if skymap_link:
             skymap_detchar_canvas += \

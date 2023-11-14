@@ -26,6 +26,9 @@ Changelog
 -   Allow SSM events to be added to/create superevents. Disable em-bright
     on SSM events until implementation exists.
 
+-   If an official Fermi sky map is already uploaded to external event, block
+    future uploads.
+
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
 

@@ -32,6 +32,9 @@ COMBINED_SKYMAP_FILENAME_MULTIORDER = 'combined-ext.multiorder.fits'
 COMBINED_SKYMAP_FILENAME_PNG = 'combined-ext.png'
 """Filename of combined sky map plot"""
 
+FERMI_OFFICIAL_SKYMAP_FILENAME = 'glg_healpix_all_bn_v00'
+"""Filename of sky map from official Fermi GBM analysis"""
+
 NOTICE_TYPE_DICT = {
         '53': 'INTEGRAL_WAKEUP',
         '54': 'INTEGRAL_REFINED',
@@ -503,7 +506,7 @@ def get_upload_external_skymap(event, skymap_link=None):
 
     skymap_filename = \
         ('external_from_url' if search == 'FromURL'
-         else 'glg_healpix_all_bn_v00')
+         else FERMI_OFFICIAL_SKYMAP_FILENAME)
 
     fits_message = \
         ('Downloaded from {}.'.format(skymap_link) if search == 'FromURL'
@@ -511,14 +514,14 @@ def get_upload_external_skymap(event, skymap_link=None):
     png_message = (
         'Mollweide projection of <a href="/api/events/{graceid}/files/'
         '{filename}">{filename}</a>').format(
-            graceid=graceid, filename=skymap_filename + '.fits')
+            graceid=graceid, filename=skymap_filename + '.fits.gz')
 
     (
         external_skymap_canvas
         |
         group(
             gracedb.upload.s(
-                skymap_filename + '.fits',
+                skymap_filename + '.fits.gz',
                 graceid,
                 fits_message,
                 ['sky_loc']),
