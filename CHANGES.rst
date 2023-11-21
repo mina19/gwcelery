@@ -44,6 +44,8 @@ Changelog
 
 -   Improve robustness of detchar cache creation by checking for stale caches.
 
+-   Update bilby to 2.2.1 and bilby_pipe to 1.3.0.
+
 2.1.8 "Ahool" (09-01-2023)
 --------------------------
 
