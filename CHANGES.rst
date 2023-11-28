@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.1.9 "Ghost Deer" (11-XX-2023)
+2.1.9 "Ghost Deer" (11-27-2023)
 -------------------------------
 
 -   Roll back all v2.1.8 "Ahool" changes for an emergency release of v2.1.7
