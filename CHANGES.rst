@@ -1,8 +1,11 @@
 Changelog
 =========
 
-2.1.9 (unreleased)
-------------------
+2.1.10 (unreleased)
+-------------------
+
+-   Re-apply all v2.1.8 "Ahool" changes after emergency release of v2.1.9
+    "Ghost Deer".
 
 -   Disable parameter estimation for offline G-events.
 
@@ -26,8 +29,6 @@ Changelog
 
 -   Set a 600 second hard time_limit for ``superevents.process`` tasks.
 
--   Add a separate ``em-bright`` worker for re-routing em-bright tasks.
-
 -   Set pipeline preferred events for low significance alerts. Previously,
     pipeline preferred events were only set for high significance alerts.
 
@@ -47,6 +48,16 @@ Changelog
 -   Update bilby to 2.2.1 and bilby_pipe to 1.3.0.
 
 -   Add Nagios check for existence of llhoft data.
+
+2.1.9 "Ghost Deer" (11-27-2023)
+-------------------------------
+
+-   Roll back all v2.1.8 "Ahool" changes for an emergency release of v2.1.7
+    "Spring-heeled Jack" with a bug fix for Out-of-Memory issues.
+
+-   Require IGWN-Alert >= 0.3.0.
+
+-   Add a separate ``em-bright`` worker for re-routing em-bright tasks.
 
 2.1.8 "Ahool" (09-01-2023)
 --------------------------
