@@ -100,7 +100,7 @@ safe-netrc = "*"
 sentry-sdk = {version = "*", extras = ["flask", "tornado"]}
 service-identity = "*"  # We don't actually use this package, but it silences some annoying warnings from twistd.
 voeventlib = ">=1.2"
-werkzeug = ">=0.15.0"  # for werkzeug.middleware.proxy_fix.ProxyFix
+werkzeug = ">=3.0.1"  # for werkzeug.middleware.proxy_fix.ProxyFix # https://git.ligo.org/emfollow/gwcelery/-/issues/736
 zstandard = "*"  # for task compression
 
 # For docs
