@@ -21,6 +21,20 @@ from . import gracedb
 
 _RAPIDPE_NO_GSTLAL_TRIGGER_EXIT_CODE = 100
 
+RAPIDPE_GETENV = [
+    "DEFAULT_SEGMENT_SERVER", "GWDATAFIND_SERVER",
+    "LAL_DATA_PATH", "LD_LIBRARY_PATH", "LIBRARY_PATH",
+    "NDSSERVER", "PATH", "PYTHONPATH",
+]
+"""Names of environment variables to include in RapidPE HTCondor submit
+files."""
+
+RAPIDPE_ENVIRONMENT = {
+    "RIFT_LOWLATENCY": "True",
+}
+"""Names and values of environment variables to include in RapidPE HTCondor
+submit files."""
+
 
 def _find_appropriate_cal_env(trigtime, dir_name):
     """Return the path to the calibration uncertainties estimated at the time
@@ -370,7 +384,9 @@ def _setup_dag_for_rapidpe(rundir, superevent_id, event):
          'accounting_group': settings['accounting_group'],
          'use_cprofile': settings['use_cprofile'],
          'gracedb_host': gracedb_host,
-         'high_snr_trigger': high_snr_trigger})
+         'high_snr_trigger': high_snr_trigger,
+         'getenv': RAPIDPE_GETENV,
+         'environment': RAPIDPE_ENVIRONMENT})
     path_to_ini = os.path.join(rundir, 'rapidpe.ini')
     with open(path_to_ini, 'w') as f:
         f.write(ini_contents)
@@ -415,10 +431,15 @@ def _setup_dag_for_rapidpe(rundir, superevent_id, event):
 
 
 @app.task(shared=False)
-def _condor_no_submit(path_to_dag):
+def _condor_no_submit(path_to_dag, include_env=None):
     """Run 'condor_submit_dag -no_submit' and return the path to .sub file."""
-    subprocess.run(['condor_submit_dag', '-no_submit', path_to_dag],
-                   capture_output=True, check=True)
+    args = ['condor_submit_dag']
+
+    if include_env is not None:
+        args += ['-include_env', ','.join(include_env)]
+
+    args += ['-no_submit', path_to_dag]
+    subprocess.run(args, capture_output=True, check=True)
     return '{}.condor.sub'.format(path_to_dag)
 
 
@@ -445,6 +466,9 @@ def dag_prepare_task(rundir, event, superevent_id, pe_pipeline, **kwargs):
         The canvas of tasks to prepare DAG
 
     """
+    # List of environment variables `condor_submit_dag` should be aware of.
+    include_env = None
+
     if pe_pipeline == 'lalinference':
         canvas = gracedb.download.si('coinc.xml', event['graceid']) | \
             _setup_dag_for_lalinference.s(rundir, event, superevent_id)
@@ -454,9 +478,12 @@ def dag_prepare_task(rundir, event, superevent_id, pe_pipeline, **kwargs):
                 rundir, event, superevent_id, kwargs['bilby_mode'])
     elif pe_pipeline == 'rapidpe':
         canvas = _setup_dag_for_rapidpe.s(rundir, superevent_id, event)
+        include_env = RAPIDPE_GETENV
     else:
         raise NotImplementedError(f'Unknown PE pipeline {pe_pipeline}.')
-    canvas |= _condor_no_submit.s()
+
+    canvas |= _condor_no_submit.s(include_env=include_env)
+
     return canvas
 
 

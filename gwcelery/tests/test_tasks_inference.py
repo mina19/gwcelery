@@ -372,7 +372,15 @@ def test_dag_prepare_task(monkeypatch, pipeline):
         return path_to_dag
 
     def _subprocess_run(cmd, **kwargs):
-        assert cmd == ['condor_submit_dag', '-no_submit', path_to_dag]
+        expected_cmd = ['condor_submit_dag']
+
+        if pipeline == 'rapidpe':
+            expected_cmd += ['-include_env',
+                             ','.join(inference.RAPIDPE_GETENV)]
+
+        expected_cmd += ['-no_submit', path_to_dag]
+
+        assert cmd == expected_cmd
 
     mock_setup_dag_for_lalinference = \
         Mock(side_effect=_setup_dag_for_lalinference)
@@ -743,3 +751,37 @@ def test_accounting_group_rapidpe(monkeypatch, tmp_path, conf):
 
     accounting_group = conf.rapidpe_settings['accounting_group']
     assert config.get('General', 'accounting_group') == accounting_group
+
+
+def test_environment_rapidpe(monkeypatch, tmp_path):
+    rundir = tmp_path
+    gracedb_host = 'gracedb-dev.ligo.org'
+    superevent_id = 'S1234'
+    pe_pipeline = 'rapidpe'
+    config_path = os.path.join(rundir, 'rapidpe.ini')
+    event = {
+        'superevent_id': superevent_id,
+        'extra_attributes': {'CoincInspiral': {'snr': 10}},
+    }
+
+    # Confirm the config file doesn't exist yet
+    assert not os.path.isfile(config_path)
+
+    # Set the GraceDB host appropriately
+    monkeypatch.setitem(app.conf, 'gracedb_host', gracedb_host)
+
+    # Generates the config file
+    inference.dag_prepare_task(rundir, event, superevent_id, pe_pipeline).run()
+
+    # Confirm the config file now exists
+    assert os.path.isfile(config_path)
+
+    # Parse the config file to confirm the correct accounting group is set
+    config = configparser.ConfigParser()
+    config.read(config_path)
+
+    # Confirm 'getenv' and 'environment' values were set as expected
+    assert (json.loads(config.get('General', 'getenv'))
+            == inference.RAPIDPE_GETENV)
+    assert (json.loads(config.get('General', 'environment'))
+            == inference.RAPIDPE_ENVIRONMENT)

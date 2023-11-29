@@ -41,6 +41,12 @@ Changelog
 -   Update deployment to install ``gwcelery`` using ``pip`` instead of
     ``poetry`` because the latter installs the project in editable mode.
 
+-   Upgrade RapidPE/RIFT to v0.6.4, RapidPE to v0.1.1.  No longer hard-coding
+    ``getenv = True`` in HTCondor, but instead setting ``getenv`` and
+    ``environment`` options explicitly.  Modified ``condor._submit``,
+    ``condor.base_submit``, and ``condor.submit_rapidpe`` to accept an optional
+    list for ``getenv``, to pass to the ``condor_submit`` executable.
+
 -   Update ligo-followup-advocate to 1.2.8.
 
 -   Improve robustness of detchar cache creation by checking for stale caches.
