@@ -334,7 +334,7 @@ def _setup_dag_for_bilby(
 
 
 @app.task(shared=False)
-def _setup_dag_for_rapidpe(rundir, superevent_id):
+def _setup_dag_for_rapidpe(rundir, superevent_id, event):
     """Create DAG for a rapidpe run and return the path to DAG.
 
     Parameters
@@ -350,14 +350,11 @@ def _setup_dag_for_rapidpe(rundir, superevent_id):
         The path to the .dag file
 
     """
-    if app.conf['gracedb_host'] not in {
-        'gracedb.ligo.org', 'gracedb-test.ligo.org'
-    }:
-        run_mode = 'o3replay'
-        accounting_group = "ligo.dev.o4.cbc.pe.lalinferencerapid"
-    else:
-        run_mode = 'online'
-        accounting_group = "ligo.prod.o4.cbc.pe.lalinferencerapid"
+    gracedb_host = app.conf['gracedb_host']
+
+    settings = app.conf['rapidpe_settings']
+    trigger_snr = event['extra_attributes']['CoincInspiral']['snr']
+    high_snr_trigger = trigger_snr >= 37.5
 
     # dump ini file
     ini_template = env.get_template('rapidpe.jinja2')
@@ -366,11 +363,14 @@ def _setup_dag_for_rapidpe(rundir, superevent_id):
          'webdir': os.path.join(
              app.conf['pe_results_path'], superevent_id, 'rapidpe'
          ),
-         'gracedb_url': f'https://{app.conf["gracedb_host"]}/api',
+         'gracedb_url': f'https://{gracedb_host}/api',
          'superevent_id': superevent_id,
-         'run_mode': run_mode,
+         'run_mode': settings['run_mode'],
          'frame_data_types': app.conf['low_latency_frame_types'],
-         'accounting_group': accounting_group})
+         'accounting_group': settings['accounting_group'],
+         'use_cprofile': settings['use_cprofile'],
+         'gracedb_host': gracedb_host,
+         'high_snr_trigger': high_snr_trigger})
     path_to_ini = os.path.join(rundir, 'rapidpe.ini')
     with open(path_to_ini, 'w') as f:
         f.write(ini_contents)
@@ -453,7 +453,7 @@ def dag_prepare_task(rundir, event, superevent_id, pe_pipeline, **kwargs):
             _setup_dag_for_bilby.s(
                 rundir, event, superevent_id, kwargs['bilby_mode'])
     elif pe_pipeline == 'rapidpe':
-        canvas = _setup_dag_for_rapidpe.s(rundir, superevent_id)
+        canvas = _setup_dag_for_rapidpe.s(rundir, superevent_id, event)
     else:
         raise NotImplementedError(f'Unknown PE pipeline {pe_pipeline}.')
     canvas |= _condor_no_submit.s()

@@ -44,3 +44,10 @@ idq_ok_channels = ['H1:IDQ-OK_OVL_16_4096',
 idq_channels = ['H1:IDQ-FAP_OVL_16_4096',
                 'L1:IDQ-FAP_OVL_16_4096']
 """Low-latency iDQ false alarm probability channel names for O3 replay."""
+
+rapidpe_settings = {
+    'run_mode': 'o3replay',
+    'accounting_group': 'ligo.dev.o4.cbc.pe.lalinferencerapid',
+    'use_cprofile': False,
+}
+"""Config settings used for rapidpe"""

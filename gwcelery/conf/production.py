@@ -95,3 +95,10 @@ condor_retry_kwargs = dict(
     retry_backoff_max=600
 )
 """Retry settings of condor.submit task."""
+
+rapidpe_settings = {
+    'run_mode': 'online',
+    'accounting_group': 'ligo.prod.o4.cbc.pe.lalinferencerapid',
+    'use_cprofile': False
+}
+"""Config settings used for rapidpe"""

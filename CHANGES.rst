@@ -49,6 +49,9 @@ Changelog
 
 -   Add Nagios check for existence of llhoft data.
 
+-   Modified rapidpe config template to use specific options for high snr
+    triggers. Turned off cProfile for production and playground
+
 2.1.9 "Ghost Deer" (11-27-2023)
 -------------------------------
 

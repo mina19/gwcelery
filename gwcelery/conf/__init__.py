@@ -434,5 +434,12 @@ rapidpe_condor_retry_kwargs = dict(
 condor job is no longer tracked ~1 hours after it starts. This is used
 for RapidPE."""
 
+rapidpe_settings = {
+    'run_mode': 'online',
+    'accounting_group': 'ligo.dev.o4.cbc.pe.lalinferencerapid',
+    'use_cprofile': True,
+}
+"""Config settings used for rapidpe"""
+
 # Delete imported modules so that they do not pollute the config object
 del os, getpass

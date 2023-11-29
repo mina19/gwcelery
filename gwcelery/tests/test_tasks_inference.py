@@ -13,6 +13,9 @@ from unittest.mock import Mock
 from .. import app
 from ..tasks import condor
 from ..tasks import inference
+from ..conf import production as conf_production
+from ..conf import playground as conf_playground
+from ..conf import test as conf_test
 
 
 def test_find_appropriate_cal_env(tmp_path):
@@ -252,10 +255,21 @@ def test_setup_dag_for_bilby_unknown_mode(tmp_path):
          pytest.raises(Ignore)),
     ],
 )
-def test_setup_dag_for_rapidpe(returncode, expectation, monkeypatch, tmp_path):
+@pytest.mark.parametrize(
+    'host',
+    [
+         'gracedb.ligo.org',
+         'gracedb-playground.ligo.org',
+         'gracedb-test.ligo.org',
+    ]
+)
+def test_setup_dag_for_rapidpe(
+        returncode, expectation, host, monkeypatch, tmp_path):
     rundir = str(tmp_path)
     dag_filename = 'event_all_iterations.dag'
     dag_content = 'rapidpe dag'
+    event = {'superevent_id': 'S1234',
+             'extra_attributes': {'CoincInspiral': {'snr': 10}}}
 
     def _subprocess_run(args, *, capture_output=False, check=False):
         # Simulate failed subprocess
@@ -273,9 +287,9 @@ def test_setup_dag_for_rapidpe(returncode, expectation, monkeypatch, tmp_path):
     upload = Mock()
     monkeypatch.setattr('subprocess.run', _subprocess_run)
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', upload)
-
+    monkeypatch.setitem(app.conf, 'gracedb_host', host)
     with expectation:
-        path_to_dag = inference._setup_dag_for_rapidpe(rundir, 'S1234')
+        path_to_dag = inference._setup_dag_for_rapidpe(rundir, 'S1234', event)
 
         if returncode == 0:
             # The DAG should be generated
@@ -305,7 +319,7 @@ def test_setup_dag_for_failure(monkeypatch, tmp_path, pipeline):
         'graceid': 'G1234',
         'extra_attributes': {'SingleInspiral':
                              [{'mass1': 1.4, 'mass2': 1.4, 'mchirp': 1.2}],
-                             'CoincInspiral': {'mchirp': 1}}
+                             'CoincInspiral': {'mchirp': 1, 'snr': 10}}
     }
     with pytest.raises(subprocess.CalledProcessError):
         if pipeline == 'lalinference':
@@ -315,7 +329,7 @@ def test_setup_dag_for_failure(monkeypatch, tmp_path, pipeline):
             inference._setup_dag_for_bilby(
                 (b'psd'), rundir, event, 'S1234', 'production')
         elif pipeline == 'rapidpe':
-            inference._setup_dag_for_rapidpe(rundir, 'S1234')
+            inference._setup_dag_for_rapidpe(rundir, 'S1234', event)
     if pipeline == 'bilby':
         assert upload.call_count == 1
     else:
@@ -329,7 +343,13 @@ def test_setup_dag_for_failure(monkeypatch, tmp_path, pipeline):
 def test_dag_prepare_task(monkeypatch, pipeline):
     sid = 'S1234'
     coinc = b'coinc'
-    event = {'gpstime': 1187008882, 'graceid': 'G1234'}
+    event = {
+            'gpstime': 1187008882,
+            'graceid': 'G1234',
+            'extra_attributes': {
+                'CoincInspiral': {'snr': 10}
+            }
+    }
     rundir = 'rundir'
     path_to_dag = os.path.join(rundir, 'parameter_estimation.dag')
     kwargs = {'bilby_mode': 'production'}
@@ -347,8 +367,8 @@ def test_dag_prepare_task(monkeypatch, pipeline):
             m == kwargs['bilby_mode']
         return path_to_dag
 
-    def _setup_dag_for_rapidpe(r, s):
-        assert r == rundir and s == sid
+    def _setup_dag_for_rapidpe(r, s, e):
+        assert r == rundir and s == sid and e == event
         return path_to_dag
 
     def _subprocess_run(cmd, **kwargs):
@@ -599,7 +619,8 @@ def test_start_pe(monkeypatch, tmp_path, pipeline):
 
             inference.start_pe({
                 'graceid': event_pipeline_info[event_pipeline]['graceid'],
-                'pipeline': event_pipeline},
+                'pipeline': event_pipeline,
+                'extra_attributes': {'CoincInspiral': {'snr': 10}}},
                 event_pipeline_info[event_pipeline]['sid'], pipeline)
             dag_prepare_task.assert_called_once()
             condor_submit.assert_called_once()
@@ -684,23 +705,28 @@ _rapidpe_accounting_dev = 'ligo.dev.o4.cbc.pe.lalinferencerapid'
 
 
 @pytest.mark.parametrize(
-    'gracedb_host,accounting_group',
+    'conf',
     [
-        ('gracedb.ligo.org', _rapidpe_accounting_prod),
-        ('gracedb-test.ligo.org', _rapidpe_accounting_prod),
-        ('gracedb-playground.ligo.org', _rapidpe_accounting_dev),
-    ],
+        conf_production, conf_playground,
+        conf_test,
+    ]
 )
-def test_accounting_group_rapidpe(monkeypatch, tmp_path,
-                                  gracedb_host, accounting_group):
+def test_accounting_group_rapidpe(monkeypatch, tmp_path, conf):
     rundir = tmp_path
-    event = {}
+    event = {'extra_attributes': {'CoincInspiral': {'snr': 10}}}
     superevent_id = 'S1234'
     pe_pipeline = 'rapidpe'
     config_path = os.path.join(rundir, 'rapidpe.ini')
 
+    # You might want to use pytest.fixture to pass different conf
+    # based on the host. For now, the gracedb_host and rapidpe_settings
+    # are mapped to corresponing item in app.conf
+
     # Set the GraceDB host appropriately
-    monkeypatch.setitem(app.conf, 'gracedb_host', gracedb_host)
+    monkeypatch.setitem(app.conf, 'gracedb_host', conf.gracedb_host)
+    # Set app.conf based on gracedb_host
+    monkeypatch.setattr(
+            app.conf, 'rapidpe_settings', conf.rapidpe_settings)
 
     # Confirm the config file doesn't exist yet
     assert not os.path.isfile(config_path)
@@ -715,4 +741,5 @@ def test_accounting_group_rapidpe(monkeypatch, tmp_path,
     config = configparser.ConfigParser()
     config.read(config_path)
 
+    accounting_group = conf.rapidpe_settings['accounting_group']
     assert config.get('General', 'accounting_group') == accounting_group

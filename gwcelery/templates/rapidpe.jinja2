@@ -4,7 +4,7 @@ output_parent_directory={{ rundir }}
 #Note: if use_skymap is set, set the skymap directory/file pattern to match in the [Event] section
 use_skymap=0
 use_event_spin=True
-cProfile=True
+cProfile={{ use_cprofile }}
 
 gracedb_url={{ gracedb_url }}
 
@@ -55,8 +55,12 @@ superevent_id={{ superevent_id }}
 run_mode={{ run_mode }}
 frame_data_types={{ frame_data_types | tojson }}
 query_shm=True
+
+{% if gracedb_host=='gracedb-playground.ligo.org' %}
 mdc_event_injection_file =/home/vinaya.valsan/rapidPE/RapidPE_RIFT_Developments/RapidPE-RIFT_fork/gracedb_playground_events/injection_campaign_studies/lowlatency-replay-distributions/minSNR-4/injections-minSNR-4.xml.gz
-mdc_time_offset=112128000
+mdc_time_offset=119040000
+{% endif %}
+
 #Anything specified in this section is passed verbatim to rapidpe_compute_intrinsic_grid in generate_initial_grid_based_of_gstlal_O2_overlaps.py
 [InitialGridOnly]
 #mc-min = 5
@@ -84,7 +88,6 @@ intrinsic-param=[mass1,mass2]
 [LikelihoodIntegration]
 #enable time marginalised integration. The time marg integration runs faster than the unmarginalised integration, and is often used.
 time-marginalization=
-no-adapt=
 #default is 0
 #amp-order=0
 # Weights will be raised to this power to prevent overconvergence
@@ -136,7 +139,13 @@ vectorized=
 gpu=
 force-xpy=
 sampler-method=adaptive_cartesian_gpu
+
+{% if not high_snr_trigger %}
 manual-logarithm-offset=
+no-adapt=
+{% else %}
+internal-use-lnL=
+{% endif %}
 
 [Pastro]
 category_rates={"BNS": 3.040442568596489e-07,"NSBH": 2.187249638130701e-07,"BBH": 2.1323454514234493e-06}

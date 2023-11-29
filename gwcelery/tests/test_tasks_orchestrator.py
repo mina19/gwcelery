@@ -794,18 +794,27 @@ def test_only_mdc_alerts_switch(mock_alert, mock_upload, mock_download,
               'search': 'AllSky', 'pipeline': 'gstlal'}, 'bilby'],
      [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
               'search': 'AllSky', 'pipeline': 'pycbc'}, 'bilby'],
-     [1, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'AllSky'},
-         'rapidpe'],
-     [1e-30, {'gpstime': 1187008882, 'group': 'Burst', 'search': 'AllSky'},
-         'rapidpe'],
-     [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'MDC'},
-         'rapidpe'],
+     [1, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'AllSky',
+          'extra_attributes': {'CoincInspiral': {'snr': 10}}},
+        'rapidpe'],
+     [1e-30, {'gpstime': 1187008882, 'group': 'Burst', 'search': 'AllSky',
+              'extra_attributes': {'CoincInspiral': {'snr': 10}}},
+        'rapidpe'],
+     [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'MDC',
+              'extra_attributes': {'CoincInspiral': {'snr': 10}}},
+        'rapidpe'],
      [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'AllSky',
-              'pipeline': 'gstlal', 'offline': True}, 'rapidpe'],
+              'pipeline': 'gstlal', 'offline': True,
+              'extra_attributes': {'CoincInspiral': {'snr': 10}}
+              }, 'rapidpe'],
      [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
-              'search': 'AllSky', 'pipeline': 'gstlal'}, 'rapidpe'],
+              'search': 'AllSky', 'pipeline': 'gstlal',
+              'extra_attributes': {'CoincInspiral': {'snr': 10}}
+              }, 'rapidpe'],
      [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
-              'search': 'AllSky', 'pipeline': 'pycbc'}, 'rapidpe']]
+              'search': 'AllSky', 'pipeline': 'pycbc',
+              'extra_attributes': {'CoincInspiral': {'snr': 10}}
+              }, 'rapidpe']]
 )
 def test_parameter_estimation(monkeypatch, far, event, pe_pipeline):
     superevent_id = 'S1234'
