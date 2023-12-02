@@ -46,6 +46,8 @@ build:
     - curl -sSL https://install.python-poetry.org | python3 -
     - export PATH="/root/.local/bin:$PATH"
     - poetry config virtualenvs.create false
+    # Check that poetry.lock is consistent with pyproject.toml
+    - poetry check --lock
     - poetry install -E test
   needs: []
 test/poetry/python3.9:
