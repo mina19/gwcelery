@@ -7,58 +7,44 @@ Changelog
 -   Re-apply all v2.1.8 "Ahool" changes after emergency release of v2.1.9
     "Ghost Deer".
 
--   Disable parameter estimation for offline G-events.
-
--   Increase converage for RAVEN tasks to nearly 100%.
-
--   Update documentation for RAVEN and external trigger tasks.
-
--   Add missing documentation for various tasks.
-
--   Improve GraceDB logs for external sky maps by adding the notice type they
-    were created or uploaded from.
-
 -   Prevent uploads of INTEGRAL Test events to the production server to avoid
     unnecessary polls of old GW data and use of resources.
 
--   Update Bilby to 2.2.0; allows result files to be written without access to
-    a conda environment.
+-   Increase coverage for RAVEN test to nearly 100%; add notice type in
+    gracedb log for external sky maps regarding their source.
 
--   Update bilby_pipe to 1.2.1; ensure that environment variables are passed
-    correctly when using ``HTCondor>=10.7``.
+-   Update documentation for RAVEN; add missing documentation for various
+    other tasks.
 
--   Set a 600 second hard time_limit for ``superevents.process`` tasks.
+-   Set a 600 second hard time limit for ``superevents.process`` tasks.
 
 -   Set pipeline preferred events for low significance alerts. Previously,
     pipeline preferred events were only set for high significance alerts.
 
--   Add condor.submit_rapidpe, a submit task dedicated for RapidPE with lower
-    retry_backoff_max than other PE pipelines.
+-   Check for stale caches by checking both the start-time and end-time
+    of the segment. Previously only the start-time would be checked. Add
+    Nagios check for existence of llhoft data.
 
--   Fix bug in condor.submit and condor.submit_rapidpe that they do not pass
-    log properly to base submit function.
+-   Disable parameter estimation for offline G-events.
+
+-   Add ``condor.submit_rapidpe``, a submit task dedicated for RapidPE with
+    lower ``retry_backoff_max`` than other PE pipelines.
+
+-   Get the ``getenv`` value from the ``gwcelery.tasks.inference`` module
+    variable instead of hardcoding in condor sub file.
+
+-   Modify rapidpe config template to use specific options for high snr
+    triggers. Turn-off cProfile for production and playground.
+
+-   Update bilby to 2.2.2 and bilby_pipe to 1.3.0; ensure that environment
+    variables are passed correctly when using ``HTCondor>=10.7``.
+
+-   Upgrade RapidPE/RIFT to v0.6.4, RapidPE to v0.1.1.
 
 -   Update deployment to install ``gwcelery`` using ``pip`` instead of
     ``poetry`` because the latter installs the project in editable mode.
 
--   Upgrade RapidPE/RIFT to v0.6.4, RapidPE to v0.1.1.  No longer hard-coding
-    ``getenv = True`` in HTCondor, but instead setting ``getenv`` and
-    ``environment`` options explicitly.  Modified ``condor._submit``,
-    ``condor.base_submit``, and ``condor.submit_rapidpe`` to accept an optional
-    list for ``getenv``, to pass to the ``condor_submit`` executable.
-
 -   Update ligo-followup-advocate to 1.2.8.
-
--   Improve robustness of detchar cache creation by checking for stale caches.
-
--   Update bilby to 2.2.1 and bilby_pipe to 1.3.0.
-
--   Add Nagios check for existence of llhoft data.
-
--   Modified rapidpe config template to use specific options for high snr
-    triggers. Turned off cProfile for production and playground
-
--   Update bilby to 2.2.2 to fix a bug with condor eviction.
 
 2.1.9 "Ghost Deer" (11-27-2023)
 -------------------------------
