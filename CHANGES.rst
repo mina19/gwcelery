@@ -58,6 +58,8 @@ Changelog
 -   Modified rapidpe config template to use specific options for high snr
     triggers. Turned off cProfile for production and playground
 
+-   Update bilby to 2.2.2 to fix a bug with condor eviction.
+
 2.1.9 "Ghost Deer" (11-27-2023)
 -------------------------------
 
