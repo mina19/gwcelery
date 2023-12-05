@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.1.10 (unreleased)
--------------------
+2.1.10 "Bunyip" (12-05-2023)
+----------------------------
 
 -   Re-apply all v2.1.8 "Ahool" changes after emergency release of v2.1.9
     "Ghost Deer".
