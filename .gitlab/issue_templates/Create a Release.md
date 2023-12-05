@@ -18,8 +18,8 @@
 5.  [ ] The test deployment has run for at least 10 minutes.
 6.  [ ] The [Flower monitor](https://emfollow-test.ligo.caltech.edu/flower) is reachable and shows no unexpected task failures.
 7.  [ ] The [Flask dashboard](https://emfollow-test.ligo.caltech.edu/gwcelery) is reachable.
-8.  [ ] The test deployment is connected to IGWN Alert (in Flower, find the main gwcelery-worker, click Other, and look at the list of subscribed IGWN Alert topics).
-9.  [ ] The test deployment is connected to GCN.
+8.  [ ] The test deployment is [connected to IGWN Alert](https://emfollow-test.ligo.caltech.edu/flower/worker/gwcelery-worker%40emfollow-test.ligo.caltech.edu#tab-other) (in Flower, find the main gwcelery-worker, click Other, and look at the list of subscribed IGWN Alert topics).
+9.  [ ] The test deployment is [connected to GCN](https://emfollow-test.ligo.caltech.edu/flower/worker/gwcelery-voevent-worker%40emfollow-test.ligo.caltech.edu#tab-other) (in Flower, find the voevent gwcelery-worker, click Other, and look at the list of receiver peers).
 
 ## Mock events
 
@@ -79,5 +79,6 @@
     - [ ] `Bilby.png`
     - [ ] `Bilby.volume.png`
     - [ ] `PE_READY`
+    - [ ] Link to PEsummary page (log message in parameter estimation section)
 
 /label ~Release
