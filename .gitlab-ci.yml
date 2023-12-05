@@ -117,6 +117,9 @@ doc:
 # SCCB request
 sccb:
   stage: deploy
+  when: manual
+  only:
+    - tags@emfollow/gwcelery
   before_script:
     # poetry-dynamic-versioning needs to be installed to properly
     # update the version information in pyproject.toml
