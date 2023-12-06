@@ -68,14 +68,14 @@ def calculate_coincidence_far(superevent, exttrig, tl, th,
              else superevent_id), is_gw=True)
         ext_skymap = external_skymaps.get_skymap_filename(
             exttrig_id, is_gw=False)
+        ext_moc = '.multiorder.fits' in ext_skymap
 
         return ligo.raven.search.calc_signif_gracedb(
                    superevent_id, exttrig_id, tl, th,
                    se_dict=superevent, ext_dict=exttrig,
                    grb_search=exttrig['search'],
                    se_fitsfile=se_skymap, ext_fitsfile=ext_skymap,
-                   se_moc=True, ext_moc=False,
-                   use_radec=True if exttrig['pipeline'] == 'Swift' else False,
+                   se_moc=True, ext_moc=ext_moc,
                    incl_sky=True, gracedb=gracedb.client,
                    far_grb=far_grb,
                    far_gw_thresh=far_gw_thresh,

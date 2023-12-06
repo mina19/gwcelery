@@ -1,8 +1,9 @@
 """Create and upload external sky maps."""
 from astropy import units as u
-from astropy.coordinates import ICRS, SkyCoord
+from astropy.coordinates import SkyCoord
 import astropy_healpix as ah
-from astropy_healpix import HEALPix, pixel_resolution_to_nside
+from hpmoc.utils import uniq_intersection, reraster
+from hpmoc import PartialUniqSkymap
 from base64 import b64decode
 from celery import group
 #  import astropy.utils.data
@@ -10,9 +11,8 @@ import numpy as np
 from ligo.skymap.io import fits
 from ligo.skymap.distance import parameters_to_marginal_moments
 from ligo.skymap.plot.bayes_factor import plot_bayes_factor
-from ligo.skymap.tool import ligo_skymap_combine
+from ligo.skymap.moc import bayestar_adaptive_grid
 import gcn
-import healpy as hp
 import io
 import lxml.etree
 import re
@@ -30,9 +30,6 @@ from ..import _version
 
 COMBINED_SKYMAP_FILENAME_MULTIORDER = 'combined-ext.multiorder.fits'
 """Filename of combined sky map in a multiordered format"""
-
-COMBINED_SKYMAP_FILENAME_FLAT = 'combined-ext.fits.gz'
-"""Filename of combined sky map in a flattened format"""
 
 COMBINED_SKYMAP_FILENAME_PNG = 'combined-ext.png'
 """Filename of combined sky map plot"""
@@ -56,9 +53,9 @@ NOTICE_TYPE_DICT = {
 def create_combined_skymap(se_id, ext_id, preferred_event=None):
     """Creates and uploads a combined LVK-external skymap, uploading to the
     external trigger GraceDB page. The filename used for the combined sky map
-    will be 'combined-ext.multiorder.fits' if the GW sky map is multi-ordered
-    or 'combined-ext.fits.gz' if the GW sky map is not. Will use the GW sky map
-    in from the preferred event if given.
+    will be 'combined-ext.multiorder.fits' if the external sky map is
+    multi-ordered or 'combined-ext.fits.gz' if the external sky map is not.
+    Will use the GW sky map in from the preferred event if given.
 
     Parameters
     ----------
@@ -74,12 +71,8 @@ def create_combined_skymap(se_id, ext_id, preferred_event=None):
     gw_id = preferred_event if preferred_event else se_id
     gw_skymap_filename = get_skymap_filename(gw_id, is_gw=True)
     ext_skymap_filename = get_skymap_filename(ext_id, is_gw=False)
-    # Determine whether GW sky map is multiordered or flat
-    gw_moc = '.multiorder.fits' in gw_skymap_filename
-
-    new_filename = \
-        (COMBINED_SKYMAP_FILENAME_MULTIORDER if gw_moc else
-         COMBINED_SKYMAP_FILENAME_FLAT)
+    # Determine whether external sky map is multiordered or flat
+    ext_moc = '.multiorder.fits' in ext_skymap_filename
 
     message = \
         ('Combined LVK-external sky map using {0} and {1}, with {2} and '
@@ -88,18 +81,19 @@ def create_combined_skymap(se_id, ext_id, preferred_event=None):
         'Mollweide projection of <a href="/api/events/{graceid}/files/'
         '{filename}">{filename}</a>').format(
             graceid=ext_id,
-            filename=new_filename)
+            filename=COMBINED_SKYMAP_FILENAME_MULTIORDER)
 
     (
         _download_skymaps.si(
             gw_skymap_filename, ext_skymap_filename, gw_id, ext_id
         )
         |
-        combine_skymaps.s(gw_moc=gw_moc)
+        combine_skymaps.s(ext_moc=ext_moc)
         |
         group(
             gracedb.upload.s(
-                new_filename, ext_id, message, ['sky_loc', 'ext_coinc']
+                COMBINED_SKYMAP_FILENAME_MULTIORDER,
+                ext_id, message, ['sky_loc', 'ext_coinc']
             )
             |
             gracedb.create_label.si('COMBINEDSKYMAP_READY', ext_id),
@@ -190,9 +184,68 @@ def _download_skymaps(gw_filename, ext_filename, gw_id, ext_id):
     return gw_skymap, ext_skymap
 
 
+def combine_skymaps_moc_moc(gw_sky, ext_sky):
+    """This function combines a multi-ordered (MOC) GW sky map with a MOC
+    external skymap.
+    """
+    gw_sky_hpmoc = PartialUniqSkymap(gw_sky["PROBDENSITY"], gw_sky["UNIQ"],
+                                     name="PROBDENSITY", meta=gw_sky.meta)
+    # Determine the column name in ext_sky and rename it as PROBDENSITY.
+    ext_sky_hpmoc = PartialUniqSkymap(ext_sky["PROBDENSITY"], ext_sky["UNIQ"],
+                                      name="PROBDENSITY", meta=ext_sky.meta)
+
+    comb_sky_hpmoc = gw_sky_hpmoc * ext_sky_hpmoc
+    comb_sky_hpmoc /= np.sum(comb_sky_hpmoc.s * comb_sky_hpmoc.area())
+    comb_sky = comb_sky_hpmoc.to_table(name='PROBDENSITY')
+
+    #  Modify GW sky map with new data, ensuring they exist first
+    if 'DISTMU' in gw_sky.keys() and 'DISTSIGMA' in gw_sky.keys():
+        UNIQ = comb_sky['UNIQ']
+        UNIQ_ORIG = gw_sky['UNIQ']
+        intersection = uniq_intersection(UNIQ_ORIG, UNIQ)
+        DIST_MU = reraster(UNIQ_ORIG,
+                           gw_sky["DISTMU"],
+                           UNIQ,
+                           method='copy',
+                           intersection=intersection)
+        DIST_SIGMA = reraster(UNIQ_ORIG,
+                              gw_sky["DISTSIGMA"],
+                              UNIQ,
+                              method='copy',
+                              intersection=intersection)
+        DIST_NORM = reraster(UNIQ_ORIG,
+                             gw_sky["DISTNORM"],
+                             UNIQ,
+                             method='copy',
+                             intersection=intersection)
+        comb_sky.add_columns([DIST_MU, DIST_SIGMA, DIST_NORM],
+                             names=['DISTMU', 'DISTSIGMA', 'DISTNORM'])
+
+        distmean, diststd = parameters_to_marginal_moments(
+            comb_sky['PROBDENSITY'] * comb_sky_hpmoc.area().value,
+            comb_sky['DISTMU'], comb_sky['DISTSIGMA'])
+        comb_sky.meta['distmean'], comb_sky.meta['diststd'] = distmean, diststd
+    if 'instruments' not in ext_sky.meta:
+        ext_sky.meta.update({'instruments': {'external instrument'}})
+    if 'instruments' in comb_sky.meta:
+        comb_sky.meta['instruments'].update(ext_sky.meta['instruments'])
+    if 'HISTORY' in comb_sky.meta:
+        ext_instrument = list(ext_sky.meta['instruments'])[0]
+        comb_sky.meta['HISTORY'].extend([
+            '', 'The values were reweighted by using data from {0}{1}'.format(
+                ('an ' if ext_instrument == 'external instrument'
+                 else ''),
+                ext_instrument)])
+
+    # Remove redundant field
+    if 'ORDERING' in comb_sky.meta:
+        del comb_sky.meta['ORDERING']
+    return comb_sky
+
+
 def combine_skymaps_moc_flat(gw_sky, ext_sky, ext_header):
-    """This function combines a multiordered (MOC) GW sky map with a flattened
-    external one by reweighting the MOC sky map using the values of the
+    """This function combines a multi-ordered (MOC) GW sky map with a flattened
+    external one by re-weighting the MOC sky map using the values of the
     flattened one.
 
     Header info is generally inherited from the GW sky map or recalculated
@@ -248,8 +301,8 @@ def combine_skymaps_moc_flat(gw_sky, ext_sky, ext_header):
 
 
 @app.task(shared=False)
-def combine_skymaps(skymapsbytes, gw_moc=True):
-    """This task combines the two input skymaps, in this case the external
+def combine_skymaps(skymapsbytes, ext_moc=True):
+    """This task combines the two input sky maps, in this case the external
     trigger skymap and the LVK skymap and writes to a temporary output file. It
     then returns the contents of the file as a byte array.
 
@@ -270,31 +323,28 @@ def combine_skymaps(skymapsbytes, gw_moc=True):
         Bytes of combined sky map
     """
     gw_skymap_bytes, ext_skymap_bytes = skymapsbytes
-    suffix = ".fits" if gw_moc else ".fits.gz"
-    with NamedTemporaryFile(mode='rb', suffix=suffix) as combinedskymap, \
+    with NamedTemporaryFile(mode='rb', suffix=".fits") as combinedskymap, \
             NamedTemporaryFile(content=gw_skymap_bytes) as gw_skymap_file, \
             NamedTemporaryFile(content=ext_skymap_bytes) as ext_skymap_file, \
             handling_system_exit():
 
+        gw_skymap = fits.read_sky_map(gw_skymap_file.name, moc=True)
         # If GW sky map is multiordered, use reweighting method
-        if gw_moc:
-            #  FIXME: Use method that regrids the combined sky map e.g. mhealpy
-            #  once this method is quicker and preserves the header
-            #  Load sky maps
-            gw_skymap = fits.read_sky_map(gw_skymap_file.name, moc=True)
+        if ext_moc:
+            #  Load external sky map
+            ext_skymap = fits.read_sky_map(ext_skymap_file.name, moc=True)
+            #  Create and write combined sky map
+            combined_skymap = combine_skymaps_moc_moc(gw_skymap,
+                                                      ext_skymap)
+        # If GW sky map is flattened, use older method
+        else:
+            #  Load external sky map
             ext_skymap, ext_header = fits.read_sky_map(ext_skymap_file.name,
                                                        moc=False)
             #  Create and write combined sky map
             combined_skymap = combine_skymaps_moc_flat(gw_skymap, ext_skymap,
                                                        ext_header)
-            fits.write_sky_map(combinedskymap.name, combined_skymap, moc=True)
-        # If GW sky map is flattened, use older method
-        else:
-            ligo_skymap_combine.main([gw_skymap_file.name,
-                                      ext_skymap_file.name,
-                                      combinedskymap.name])
-        #  FIXME: Add method for MOC-MOC if there is a switch to MOC external
-        #  skymaps
+        fits.write_sky_map(combinedskymap.name, combined_skymap, moc=True)
         return combinedskymap.read()
 
 
@@ -487,6 +537,56 @@ def get_upload_external_skymap(event, skymap_link=None):
     ).delay()
 
 
+def from_cone(pts, ra, dec, error):
+    """
+    Based on the given RA, DEC, and error radius of the center points,
+    it calculates the gaussian pdf.
+    """
+    ras, decs = pts.T
+    center = SkyCoord(ra * u.deg, dec * u.deg)
+    error_radius = error * u.deg
+
+    pts_loc = SkyCoord(np.rad2deg(ras) * u.deg, np.rad2deg(decs) * u.deg)
+
+    distance = pts_loc.separation(center)
+    skymap = np.exp(-0.5 * np.square(distance / error_radius).to_value(
+        u.dimensionless_unscaled))
+    return skymap
+
+
+def _fisher(distance, error_stat, error_sys):
+    """
+    Calculates the Fisher distribution from Eq. 1 and Eq. 2 of Connaughton
+    et al. 2015 (doi: 10.1088/0067-0049/216/2/32).
+    """
+
+    error_tot2 = (
+            np.square(np.radians(error_stat)) +
+            np.square(np.radians(error_sys))
+    )
+    kappa = 1 / (0.4356 * error_tot2)
+    return kappa / (2 * np.pi * (np.exp(kappa) - np.exp(-kappa))) \
+        * np.exp(kappa * np.cos(distance))
+
+
+def fermi_error_model(pts, ra, dec, error, core, tail, core_weight):
+    """
+    Calculate the Fermi GBM error model from Connaughton et al. 2015 based
+    on the given RA, Dec and error radius of the center point using the model
+    parameters of core radii, tail radii, and core proportion (f in the paper).
+    """
+    ras, decs = pts.T
+    center = SkyCoord(ra * u.deg, dec * u.deg)
+
+    pts_loc = SkyCoord(np.rad2deg(ras) * u.deg, np.rad2deg(decs) * u.deg)
+    distance = pts_loc.separation(center).rad  # Ensure the output is in radian
+
+    core_component = core_weight * _fisher(distance, error, core)
+    tail_component = (1 - core_weight) * _fisher(distance, error, tail)
+
+    return core_component + tail_component
+
+
 def create_external_skymap(ra, dec, error, pipeline, notice_type=111):
     """Create a sky map, either a gaussian or a single
     pixel sky map, given an RA, dec, and error radius.
@@ -518,65 +618,53 @@ def create_external_skymap(ra, dec, error, pipeline, notice_type=111):
         Sky map array
 
     """
-    max_nside = 2048
-    if error:
-        # Correct 90% containment to 1-sigma for Swift
-        if pipeline == 'Swift':
-            error /= np.sqrt(-2 * np.log1p(-.9))
-        error_radius = error * u.deg
-        # Use minimum nside of 256
-        nside = max(pixel_resolution_to_nside(error_radius, round='up'), 256)
-    else:
-        nside = np.inf
-    if nside >= max_nside:
-        nside = max_nside
+    # Dictionary definitions for core_weight, core, and tail values
+    # for different notice types.
+    # Flight notice: Values from first row of Table 7
+    # Ground notice: Values from first row of Table 3
+    # Final notice: Values from second row of Table 3
+    fermi_params = {
+        gcn.NoticeType.FERMI_GBM_FLT_POS: {"core_weight": 0.897,
+                                           "core_width": 7.52,
+                                           "tail_width": 55.6},
+        gcn.NoticeType.FERMI_GBM_GND_POS: {"core_weight": 0.804,
+                                           "core_width": 3.72,
+                                           "tail_width": 13.7},
+        gcn.NoticeType.FERMI_GBM_FIN_POS: {"core_weight": 0.900,
+                                           "core_width": 3.71,
+                                           "tail_width": 14.3},
+    }
 
-        #  Find the one pixel the event can localized to
-        hpx = HEALPix(nside, 'ring', frame=ICRS())
-        skymap = np.zeros(hpx.npix)
-        ind = hpx.lonlat_to_healpix(ra * u.deg, dec * u.deg)
-        skymap[ind] = 1.
-    else:
-        #  If larger error, create gaussian sky map
-        hpx = HEALPix(nside, 'ring', frame=ICRS())
-        ipix = np.arange(hpx.npix)
-
-        #  Evaluate Gaussian.
-        center = SkyCoord(ra * u.deg, dec * u.deg)
-        distance = hpx.healpix_to_skycoord(ipix).separation(center)
-        skymap = np.exp(-0.5 * np.square(distance / error_radius).to_value(
-            u.dimensionless_unscaled))
-        skymap /= skymap.sum()
+    # Correct 90% containment to 1-sigma for Swift
+    if pipeline == 'Swift':
+        error /= np.sqrt(-2 * np.log1p(-.9))
+    # Set minimum error radius so function does not return void
+    # FIXME: Lower this when fixes are made to ligo.skymap to fix nans when
+    #        the error radius is too low
+    error = max(error, .08)
+    # This function adaptively refines the grid based on the given gaussian
+    # pdf to create the multi-ordered skymap.
     if pipeline == 'Fermi' and notice_type is not None:
         # Correct for Fermi systematics based on recommendations from GBM team
         # Convolve with both a narrow core and wide tail Gaussian with error
         # radius determined by the scales respectively, each comprising a
-        # fraction determined by the weights respectively
-        if notice_type == gcn.NoticeType.FERMI_GBM_FLT_POS:
-            # Flight notice
-            # Values from first row of Table 7
-            weights = [0.897, 0.103]
-            scales = [7.52, 55.6]
-        elif notice_type == gcn.NoticeType.FERMI_GBM_GND_POS:
-            # Ground notice
-            # Values from first row of Table 3
-            weights = [0.804, 0.196]
-            scales = [3.72, 13.7]
-        elif notice_type == gcn.NoticeType.FERMI_GBM_FIN_POS:
-            # Final notice
-            # Values from second row of Table 3
-            weights = [0.900, 0.100]
-            scales = [3.71, 14.3]
-        else:
-            raise AssertionError(
-                'Need to provide a supported Fermi notice type')
-        skymap = sum(
-            weight * hp.sphtfunc.smoothing(skymap, sigma=np.radians(scale))
-            for weight, scale in zip(weights, scales))
+        # fraction determined by the weights respectively.
+        if notice_type not in fermi_params:
+            raise AssertionError('Provide a supported Fermi notice type')
+        core_weight = fermi_params[notice_type]["core_weight"]
+        # Note that tail weight = 1 - core_weight
+        core_width = fermi_params[notice_type]["core_width"]
+        tail_width = fermi_params[notice_type]["tail_width"]
 
-    # Renormalize due to possible lack of precision
-    # Enforce the skymap to be non-negative
-    return np.abs(skymap) / np.abs(skymap).sum()
+        # Integrate the fermi_error_model using bayestar_adaptive_grid
+        skymap = bayestar_adaptive_grid(fermi_error_model, ra, dec, error,
+                                        core_width, tail_width, core_weight,
+                                        rounds=8)
+    else:
+        # Use generic cone method for Swift, INTEGRAL, AGILE, etc.
+        skymap = bayestar_adaptive_grid(from_cone, ra, dec, error, rounds=8)
+
+    return skymap
 
 
 def write_to_fits(skymap, event, notice_type, notice_date):
@@ -607,7 +695,7 @@ def write_to_fits(skymap, event, notice_type, notice_date):
         msgtype = NOTICE_TYPE_DICT[str(notice_type)]
 
     gcn_id = event['extra_attributes']['GRB']['trigger_id']
-    with NamedTemporaryFile(suffix='.fits.gz') as f:
+    with NamedTemporaryFile(suffix='.fits') as f:
         fits.write_sky_map(f.name, skymap,
                            objid=gcn_id,
                            url=event['links']['self'],
@@ -639,7 +727,7 @@ def create_upload_external_skymap(event, notice_type, notice_date):
 
     """
     graceid = event['graceid']
-    skymap_filename = event['pipeline'].lower() + '_skymap.fits.gz'
+    skymap_filename = event['pipeline'].lower() + '_skymap.multiorder.fits'
 
     ra = event['extra_attributes']['GRB']['ra']
     dec = event['extra_attributes']['GRB']['dec']

@@ -114,6 +114,7 @@ pytest-cov = {version="*", optional=true}
 pytest-flask = {version="*", optional=true}
 pytest-socket = {version="*", optional=true}
 ligo-rrt-chat = ">=0.1.1"
+hpmoc = ">=1.0.0"
 
 [tool.poetry.extras]
 doc = ["pep517", "sphinx"]

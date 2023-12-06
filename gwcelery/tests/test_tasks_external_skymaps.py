@@ -2,6 +2,7 @@ from importlib import resources
 from unittest.mock import patch
 
 from astropy.table import Table
+import astropy_healpix as ah
 import numpy as np
 import pytest
 from urllib.error import HTTPError
@@ -12,6 +13,7 @@ from .test_tasks_skymaps import toy_fits_filecontents  # noqa: F401
 from .test_tasks_skymaps import toy_3d_fits_filecontents  # noqa: F401
 from ..tasks import external_skymaps
 from ..tasks import gracedb
+from ..tasks import gcn
 
 
 true_heasarc_link = ('http://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/'
@@ -69,8 +71,10 @@ def mock_get_file_contents(monkeypatch, toy_fits_filecontents):  # noqa: F811
 
 def get_gw_moc_skymap():
     array = [np.arange(12, dtype=np.float64)] * 5
+    # Normalize
+    array[0] = array[0] / sum(array[0]) / (4 * np.pi) * len(array[0])
     #  Modify UNIQ table to be allowable values
-    array[4] = array[4] + 4
+    array[4] = np.asarray(array[4] + 4, dtype=int)
     table = Table(
         array,
         names=['PROBDENSITY', 'DISTMU', 'DISTSIGMA', 'DISTNORM', 'UNIQ'])
@@ -110,28 +114,28 @@ def _mock_read_sky_map(filename, moc=True):
         return ext_sky, ext_header
 
 
-@pytest.mark.parametrize('gw_moc',
+@pytest.mark.parametrize('ext_moc',
                          [True, False])
-@patch('ligo.skymap.tool.ligo_skymap_combine.main')
+@patch('gwcelery.tasks.external_skymaps.combine_skymaps_moc_moc')
 @patch('gwcelery.tasks.external_skymaps.combine_skymaps_moc_flat')
 @patch('ligo.skymap.io.fits.read_sky_map', side_effect=_mock_read_sky_map)
 @patch('ligo.skymap.io.fits.write_sky_map')
 def test_combine_skymaps(mock_write_sky_map,
                          mock_read_sky_map,
                          mock_skymap_combine_moc_flat,
-                         mock_skymap_combine_flat_flat,
-                         gw_moc):
+                         mock_skymap_combine_moc_moc,
+                         ext_moc):
     """Test using our internal MOC-flat sky map combination gives back the
     input using a uniform sky map, ensuring the test is giving a sane result
     and is at least running to completion.
     """
-    external_skymaps.combine_skymaps((b'', b''), gw_moc=gw_moc)
-    if gw_moc:
-        mock_read_sky_map.assert_called()
-        mock_skymap_combine_moc_flat.assert_called_once()
-        mock_write_sky_map.assert_called_once()
+    external_skymaps.combine_skymaps((b'', b''), ext_moc=ext_moc)
+    mock_read_sky_map.assert_called()
+    if ext_moc:
+        mock_skymap_combine_moc_moc.assert_called_once()
     else:
-        mock_skymap_combine_flat_flat.assert_called()
+        mock_skymap_combine_moc_flat.assert_called_once()
+    mock_write_sky_map.assert_called_once()
 
 
 @pytest.mark.parametrize('missing_header_values,instrument',
@@ -159,6 +163,43 @@ def test_create_combined_skymap_moc_flat(missing_header_values, instrument):
     combined_sky = external_skymaps.combine_skymaps_moc_flat(gw_sky, ext_sky,
                                                              ext_header)
     assert all(combined_sky['PROBDENSITY'] == gw_sky['PROBDENSITY'])
+    if missing_header_values:
+        assert 'instruments' not in combined_sky.meta
+    else:
+        assert ('Fermi' in combined_sky.meta['instruments'] if instrument else
+                'external instrument' in combined_sky.meta['instruments'])
+
+
+@pytest.mark.parametrize('missing_header_values,instrument',
+                         [[False, 'Fermi'],
+                          [True, 'Fermi'],
+                          [False, None],
+                          [True, None]])
+def test_create_combined_skymap_moc_moc(monkeypatch,
+                                        missing_header_values, instrument):
+    """Test using our internal MOC-MOC sky map combination gives back the
+    input using a uniform sky map, ensuring the test is giving a sane result
+    and is at least running to completion.
+    """
+    # Run function under test
+    gw_sky = get_gw_moc_skymap()
+    if missing_header_values:
+        del gw_sky['DISTMU']
+        del gw_sky['DISTSIGMA']
+        gw_sky.meta.pop('instruments')
+        gw_sky.meta.pop('HISTORY')
+    if instrument:
+        ext_header = {'instruments': set({instrument}), 'nest': True}
+    else:
+        ext_header = {'nest': True}
+    # Create new uniform sky map so nothing is changed
+    ext_sky = Table([np.arange(4, 16, dtype=int), np.full(12, 1 / 12)],
+                    names=['UNIQ', 'PROBDENSITY'],
+                    meta=ext_header)
+    # Load sky maps into temporary files to be read by combine_skymaps_moc_moc
+    combined_sky = external_skymaps.combine_skymaps_moc_moc(gw_sky, ext_sky)
+    assert all(combined_sky['PROBDENSITY'].value ==
+               gw_sky['PROBDENSITY'].value)
     if missing_header_values:
         assert 'instruments' not in combined_sky.meta
     else:
@@ -284,21 +325,43 @@ def test_get_upload_external_skymap_subgrb(mock_get_external_skymap,
     mock_upload.assert_called()
 
 
-@pytest.mark.parametrize('ra,dec,error,pix',
-                         [[0, 90, 0, 0],
-                          [270, -90, .01, -1]])
-def test_create_swift_skymap(ra, dec, error, pix):
+@pytest.mark.parametrize('ra,dec,error',
+                         [[0, 90, 0],
+                          [270, -90, .1]])
+def test_create_swift_skymap(ra, dec, error):
     """Test created single pixel sky maps for Swift localization."""
     skymap = external_skymaps.create_external_skymap(ra, dec, error, 'Swift')
-    assert skymap[pix] == 1
+
+    level, ipix = ah.uniq_to_level_ipix(skymap['UNIQ'])
+    nsides = ah.level_to_nside(level)
+    areas = ah.nside_to_pixel_area(nsides)
+    # Ensure new map is generated and normalized
+    assert np.sum((skymap['PROBDENSITY'] * areas).value) == \
+        pytest.approx(1.0, 1.e-9)
 
 
-def test_create_fermi_skymap():
-    """Test created single pixel sky maps for Swift localization."""
-    ra, dec, error = 0, 90, 10
-    assert (np.sum(external_skymaps.create_external_skymap(
-               ra, dec, error, 'Fermi')) ==
-           pytest.approx(1.0, 1.e-9))
+@pytest.mark.parametrize('error,notice_type',
+                         [[20., gcn.NoticeType.FERMI_GBM_FLT_POS],
+                          [10., gcn.NoticeType.FERMI_GBM_GND_POS],
+                          [3.0, gcn.NoticeType.FERMI_GBM_FIN_POS]])
+def test_create_fermi_skymap(error, notice_type):
+    """Test designed to validate the creation of sky maps for Fermi
+    localizations."""
+    skymap = external_skymaps.create_external_skymap(
+                 0, 90, error, 'Fermi', notice_type=notice_type)
+
+    level, ipix = ah.uniq_to_level_ipix(skymap['UNIQ'])
+    nsides = ah.level_to_nside(level)
+    areas = ah.nside_to_pixel_area(nsides)
+    # Ensure new map is generated and normalized
+    assert np.sum((skymap['PROBDENSITY'] * areas).value) == \
+        pytest.approx(1.0, 1.e-9)
+
+
+def test_create_fermi_skymap_wrong_notice_type():
+    with pytest.raises(AssertionError):
+        external_skymaps.create_external_skymap(
+            0., 0., 10., 'Fermi', notice_type=gcn.NoticeType.FERMI_GBM_ALERT)
 
 
 @pytest.mark.parametrize('notice_type', ['61', None])

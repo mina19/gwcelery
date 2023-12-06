@@ -355,9 +355,8 @@ def handle_grb_igwn_alert(alert):
             'EM_COINC' in alert['object']['labels'] and \
             'fit' in alert['data']['filename'] and \
             'flat' not in alert['data']['comment'].lower() and \
-            (alert['data']['filename'] not in
-             {external_skymaps.COMBINED_SKYMAP_FILENAME_MULTIORDER,
-              external_skymaps.COMBINED_SKYMAP_FILENAME_FLAT}):
+            (alert['data']['filename'] !=
+             external_skymaps.COMBINED_SKYMAP_FILENAME_MULTIORDER):
         superevent_id, external_id = _get_superevent_ext_ids(
                                          graceid, alert['object'])
         if 'S' in graceid:
@@ -614,14 +613,12 @@ def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid,
                  tl, th, gw_group, use_superevent_skymap=use_superevent)
     # Swift localizations are incredibly well localized and require
     # a different method from Fermi/Integral/AGILE
-    # FIXME: Add Swift localization information in the future
-    if ext_event['pipeline'] != 'Swift':
-        # Create new updated combined sky map
-        canvas |= external_skymaps.create_combined_skymap.si(
-                      superevent['superevent_id'], ext_event['graceid'],
-                      preferred_event=(
-                          None if use_superevent
-                          else superevent['preferred_event']))
+    # Create new updated combined sky map
+    canvas |= external_skymaps.create_combined_skymap.si(
+                  superevent['superevent_id'], ext_event['graceid'],
+                  preferred_event=(
+                      None if use_superevent
+                      else superevent['preferred_event']))
     canvas.delay()
 
 

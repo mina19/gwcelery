@@ -137,7 +137,6 @@ def test_calculate_spacetime_coincidence_far_fermi(
         se_fitsfile='fermi_skymap.fits.gz',
         ext_fitsfile='fermi_skymap.fits.gz',
         se_moc=True, ext_moc=False,
-        use_radec=False,
         gracedb=gracedb.client, far_grb=None,
         far_gw_thresh=None, far_grb_thresh=None,
         use_preferred_event_skymap=False)
@@ -145,7 +144,7 @@ def test_calculate_spacetime_coincidence_far_fermi(
 
 @pytest.mark.parametrize('group', ['CBC', 'Burst'])  # noqa: F811
 @patch('gwcelery.tasks.external_skymaps.get_skymap_filename',
-       return_value='swift_skymap.fits.gz')
+       return_value='swift_skymap.multiorder.fits')
 @patch('ligo.raven.search.calc_signif_gracedb')
 def test_calculate_spacetime_coincidence_far_swift(
         mock_calc_signif, mock_get_skymap_filename, group):
@@ -164,10 +163,9 @@ def test_calculate_spacetime_coincidence_far_swift(
         'S1234', 'E4321', tl, th,
         incl_sky=True, grb_search='GRB',
         se_dict=se, ext_dict=ext,
-        se_fitsfile='swift_skymap.fits.gz',
-        ext_fitsfile='swift_skymap.fits.gz',
-        se_moc=True, ext_moc=False,
-        use_radec=True,
+        se_fitsfile='swift_skymap.multiorder.fits',
+        ext_fitsfile='swift_skymap.multiorder.fits',
+        se_moc=True, ext_moc=True,
         gracedb=gracedb.client, far_grb=None,
         far_gw_thresh=None, far_grb_thresh=None,
         use_preferred_event_skymap=False)
@@ -198,7 +196,6 @@ def test_calculate_spacetime_coincidence_far_preferred(
         se_fitsfile='fermi_skymap.fits.gz',
         ext_fitsfile='fermi_skymap.fits.gz',
         se_moc=True, ext_moc=False,
-        use_radec=False,
         gracedb=gracedb.client, far_grb=None,
         far_gw_thresh=None, far_grb_thresh=None,
         use_preferred_event_skymap=True)

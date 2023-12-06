@@ -164,7 +164,7 @@ class KafkaWriter(KafkaBase):
         super().__init__(name, config, 'producer')
         self._open_hop_stream = self._hop_stream.open(
             config['url'], 'w',
-            message_max_bytes=1024 * 1024 * 2,
+            message_max_bytes=1024 * 1024 * 8,
             compression_type='zstd')
 
         # Set up flag for failed delivery of messages

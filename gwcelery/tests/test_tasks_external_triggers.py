@@ -371,11 +371,8 @@ def test_handle_skymaps_ready(mock_get_superevent,
                                                 'E1212', alert['object'],
                                                 -5, 1, 'CBC',
                                                 use_superevent_skymap=False)
-    if pipeline != 'Swift':
-        mock_create_combined_skymap.assert_called_once_with(
-            'S1234', 'E1212', preferred_event='G1234')
-    else:
-        mock_create_combined_skymap.assert_not_called()
+    mock_create_combined_skymap.assert_called_once_with(
+        'S1234', 'E1212', preferred_event='G1234')
 
 
 @patch('gwcelery.tasks.raven.trigger_raven_alert')
@@ -478,12 +475,13 @@ def test_handle_rerun_combined_skymap(mock_create_combined_skymap,
     if graceid == 'S1':
         mock_create_combined_skymap.assert_has_calls(
             [call('S1', 'E1', preferred_event=None),
+             call('S1', 'E2', preferred_event=None),
              call('S1', 'E3', preferred_event=None)]
         )
-    elif graceid in {'E1', 'E3'}:
+    elif 'E' in graceid:
         mock_create_combined_skymap.assert_called_once_with(
             'S1', graceid,
-            preferred_event=('G1' if graceid == 'E1' else None))
+            preferred_event=('G1' if graceid in ['E1', 'E2'] else None))
     else:
         mock_create_combined_skymap.assert_not_called()
     if 'S' in graceid:
@@ -516,21 +514,16 @@ def test_handle_rerun_combined_skymap(mock_create_combined_skymap,
 
 
 @pytest.mark.parametrize(
-    "alert_type, comment,"
-    "expected_combined_skymap_calls, expected_pipeline_calls,"
-    "expected_result",
+    "alert_type, comment, expected_skymap_calls, expected_result",
     [
         ("log",
-         "Updated superevent parameters: preferred_event: example", 1, 2,
-         True),
+         "Updated superevent parameters: preferred_event: example", 2, True),
         ("log",
-         "Some other comment", 0, 0, False),
+         "Some other comment", 0, False),
         ("other_type",
-         "Updated superevent parameters: preferred_event: example", 0, 0,
-         False),
+         "Updated superevent parameters: preferred_event: example", 0, False),
         ("log",
-         "Updated superevent parameters: different_param: example", 0, 0,
-         False)
+         "Updated superevent parameters: different_param: example", 0, False)
     ]
 )
 @patch('gwcelery.tasks.raven.raven_pipeline.run')
@@ -541,8 +534,7 @@ def test_preferred_event_coinc_far_calculation(
         mock_raven_pipeline,
         alert_type,
         comment,
-        expected_combined_skymap_calls,
-        expected_pipeline_calls,
+        expected_skymap_calls,
         expected_result):
     alert = {
         "alert_type": alert_type,
@@ -557,13 +549,15 @@ def test_preferred_event_coinc_far_calculation(
 
     external_triggers.handle_grb_igwn_alert(alert)
 
-    assert (mock_create_combined_skymap.call_count ==
-            expected_combined_skymap_calls)
-    assert mock_raven_pipeline.call_count == expected_pipeline_calls
+    assert mock_create_combined_skymap.call_count == expected_skymap_calls
+    assert mock_raven_pipeline.call_count == expected_skymap_calls
 
     if expected_result:
-        mock_create_combined_skymap.assert_called_with(
-            'S1', 'E1', preferred_event='G1')
+        mock_create_combined_skymap.assert_has_calls(
+            [call(
+                'S1', 'E1', preferred_event='G1'),
+             call(
+                'S1', 'E2', preferred_event='G1')])
         mock_raven_pipeline.assert_has_calls(
             [call(
                 [_mock_get_event('E1')],

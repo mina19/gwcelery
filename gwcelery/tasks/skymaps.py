@@ -240,9 +240,8 @@ def handle_plot_coherence(alert):
     if alert['alert_type'] != 'log':
         return  # not for us
     if not alert['data']['filename'].endswith('.fits') or \
-            (alert['data']['filename'] in
-             {external_skymaps.COMBINED_SKYMAP_FILENAME_MULTIORDER,
-              external_skymaps.COMBINED_SKYMAP_FILENAME_FLAT}):
+            (alert['data']['filename'] ==
+             external_skymaps.COMBINED_SKYMAP_FILENAME_MULTIORDER):
         return  # not for us
 
     graceid = alert['uid']
