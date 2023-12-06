@@ -699,8 +699,8 @@ def _annotate_fits_and_return_input(input_list, superevent_id):
     input_list : list
         The output of the group that downloads the skymap, embright, and
         p-astro files. This list is in the form [skymap, skymap_filename],
-        [em_bright, em_bright_filename], [p_astro, p_astro_filename], though
-        the em-bright and p-astro lists can be populated by Nones
+        [em_bright, em_bright_filename], [p_astro_dict, p_astro_filename],
+        though the em-bright and p-astro lists can be populated by Nones
     superevent_id : str
         A list of the sky map, em_bright, and p_astro filenames.
     """
@@ -732,8 +732,8 @@ def _unpack_args_and_send_earlywarning_preliminary_alert(input_list, alert,
     input_list : list
         The output of the group that downloads the skymap, embright, and
         p-astro files. This list is in the form [skymap, skymap_filename],
-        [em_bright, em_bright_filename], [p_astro, p_astro_filename], though
-        the em-bright and p-astro lists can be populated by Nones
+        [em_bright, em_bright_filename], [p_astro_dict, p_astro_filename],
+        though the em-bright and p-astro lists can be populated by Nones
     alert : dict
         IGWN-Alert dictionary
     alert_type : str
@@ -744,7 +744,7 @@ def _unpack_args_and_send_earlywarning_preliminary_alert(input_list, alert,
         return
 
     [skymap, skymap_filename], [em_bright, em_bright_filename], \
-        [p_astro, p_astro_filename] = input_list
+        [p_astro_dict, p_astro_filename] = input_list
 
     # Update to latest state after downloading files
     superevent = gracedb.get_superevent(alert['object']['superevent_id'])
@@ -752,7 +752,7 @@ def _unpack_args_and_send_earlywarning_preliminary_alert(input_list, alert,
     earlywarning_preliminary_initial_update_alert.delay(
         [skymap_filename, em_bright_filename, p_astro_filename],
         superevent, alert_type,
-        filecontents=[skymap, em_bright, p_astro]
+        filecontents=[skymap, em_bright, p_astro_dict]
     )
 
 
@@ -1137,12 +1137,12 @@ def earlywarning_preliminary_initial_update_alert(
     voevent_significance = 0 if alert_type == 'less-significant' else 1
 
     if filecontents and not combined_skymap_filename:
-        skymap, em_bright, p_astro = filecontents
+        skymap, em_bright, p_astro_dict = filecontents
 
         # check high profile and apply label if true
         if alert_type == 'preliminary':
             high_profile_canvas = rrt_utils.check_high_profile.si(
-                skymap, em_bright, p_astro, superevent
+                skymap, em_bright, p_astro_dict, superevent
             )
         else:
             high_profile_canvas = identity.si()
@@ -1150,7 +1150,7 @@ def earlywarning_preliminary_initial_update_alert(
         download_andor_expose_group = []
 
         voevent_canvas = _create_voevent.si(
-            (em_bright, p_astro),
+            (em_bright, p_astro_dict),
             superevent_id,
             alert_type_voevent,
             Significant=voevent_significance,
@@ -1165,7 +1165,7 @@ def earlywarning_preliminary_initial_update_alert(
         # The alert_type value passed to alerts.send is used to
         # set this field in the alert dictionary
         kafka_alert_canvas = alerts.send.si(
-            (skymap, em_bright, p_astro),
+            (skymap, em_bright, p_astro_dict),
             superevent,
             alert_type,
             raven_coinc=raven_coinc
