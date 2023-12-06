@@ -4,7 +4,8 @@ Changelog
 2.1.11 (unreleased)
 -------------------
 
--   No changes yet.
+-   Add acceptance check to whether dependencies have been approved by SCCB and
+    check that Bilby PE summary is available.
 
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------

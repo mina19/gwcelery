@@ -11,6 +11,28 @@
     release, then the list of issues and merge requests that have been
     addressed is accurate. Any unaddressed issues and merge requests have been
     moved to another milestone.
+5.  [ ] Check the versions of the following packages in the [`poetry.lock`](https://git.ligo.org/emfollow/gwcelery/-/blob/main/poetry.lock) file have been approved by the SCCB (i.e. either has the status:deploy or status:deployed label).
+    - [ ] [`bilby`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=bilby&first_page_size=100)
+    - [ ] [`bilby_pipe`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=bilby_pipe&first_page_size=100)
+    - [ ] [`gracedb-sdk`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=gracedb-sdk&first_page_size=100)
+    - [ ] [`gwdatafind`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=gwdatafind&first_page_size=100)
+    - [ ] [`gwpy`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=gwpy&first_page_size=100)
+    - [ ] [`gwskynet`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=gwskynet&first_page_size=100)
+    - [ ] [`igwn-alert`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=igwn-alert&first_page_size=100)
+    - [ ] [`igwn-alert-schema`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=igwn-gwalert-schema&first_page_size=20)
+    - [ ] [`lalsuite`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=lalsuite&first_page_size=100)
+    - [ ] [`ligo-followup-advocate`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=ligo-followup-advocate&first_page_size=100)
+    - [ ] [`ligo-gracedb`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=ligo-gracedb&first_page_size=100)
+    - [ ] [`ligo-raven`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=ligo-raven&first_page_size=100)
+    - [ ] [`ligo-segments`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=ligo-segments&first_page_size=20)
+    - [ ] [`ligo.em-bright`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=ligo.em-bright&first_page_size=20)
+    - [ ] [`ligo.skymap`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=ligo.skymap&first_page_size=100)
+    - [ ] [`lscsoft-glue`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=lscsoft-glue&first_page_size=100)
+    - [ ] [`pesummary`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=pesummary&first_page_size=100)
+    - [ ] [`python-ligo-lw`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=python-ligo-lw&first_page_size=100)
+    - [ ] [`rapidpe`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=Rapidpe&first_page_size=20)
+    - [ ] [`rapidpe-rift-pipe`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=RapidPE%20pipeline&first_page_size=20)
+    - [ ] [`RIFT`](https://git.ligo.org/computing/sccb/-/issues/?sort=updated_desc&state=all&search=rift&first_page_size=100)
 
 ## Test deployment
 
