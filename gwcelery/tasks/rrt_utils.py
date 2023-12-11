@@ -30,7 +30,7 @@ def check_high_profile(skymap, em_bright,
        far_list_sorted[0]["search"] != "BBH":
         gracedb.create_label.si(
             'HIGH_PROFILE', superevent_id).delay()
-        return "Significant Burst event. Applying label"
+        return "Event with the lowest FAR is a Burst event. Applying label"
 
     # annotation number condition
     preferred_event = superevent['preferred_event_data']
