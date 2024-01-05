@@ -9,6 +9,8 @@ Changelog
 
 -   Do not add events involving KAGRA to superevents.
 
+-   Require pesummary>=1.0.2 to fix bug in postprocessing of bilby results. 
+
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
 
