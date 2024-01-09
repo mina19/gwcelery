@@ -6,6 +6,7 @@ import platform
 import re
 import socket
 import sys
+import os
 
 from astropy.time import Time
 from celery import group
@@ -20,10 +21,13 @@ from .tasks import first2years, gracedb, orchestrator, circulars, \
     superevents, first2years_external, external_skymaps
 from .util import PromiseProxy
 
+# Change the application root url
+PREFIX = os.getenv('FLASK_APP_PREFIX', '')
+
 distributions = PromiseProxy(lambda: tuple(metadata.distributions()))
 
 
-@app.route('/')
+@app.route(PREFIX + '/')
 def index():
     """Render main page."""
     return render_template(
@@ -52,7 +56,7 @@ _typeahead_superevent_id_regex = re.compile(
     re.IGNORECASE)
 
 
-@app.route('/typeahead_superevent_id')
+@app.route(PREFIX + '/typeahead_superevent_id')
 @cache.cached(query_string=True)
 def typeahead_superevent_id():
     """Search GraceDB for superevents by ID.
@@ -116,7 +120,7 @@ def typeahead_superevent_id():
     return jsonify(list(take_n(max_results, superevent_ids)))
 
 
-@app.route('/typeahead_event_id')
+@app.route(PREFIX + '/typeahead_event_id')
 @cache.cached(query_string=True)
 def typeahead_event_id():
     """Search GraceDB for events by ID."""
@@ -152,7 +156,7 @@ def _search_by_tag_and_filename(superevent_id, filename, extension, tag):
             raise
 
 
-@app.route('/typeahead_skymap_filename')
+@app.route(PREFIX + '/typeahead_skymap_filename')
 @cache.cached(query_string=True)
 def typeahead_skymap_filename():
     """Search for sky maps by filename."""
@@ -163,7 +167,7 @@ def typeahead_skymap_filename():
     ))
 
 
-@app.route('/typeahead_em_bright_filename')
+@app.route(PREFIX + '/typeahead_em_bright_filename')
 @cache.cached(query_string=True)
 def typeahead_em_bright_filename():
     """Search em_bright files by filename."""
@@ -174,7 +178,7 @@ def typeahead_em_bright_filename():
     ))
 
 
-@app.route('/typeahead_p_astro_filename')
+@app.route(PREFIX + '/typeahead_p_astro_filename')
 @cache.cached(query_string=True)
 def typeahead_p_astro_filename():
     """Search p_astro files by filename."""
@@ -203,7 +207,7 @@ def _construct_igwn_alert_and_send_prelim_alert(superevent_event_list,
     )
 
 
-@app.route('/send_preliminary_gcn', methods=['POST'])
+@app.route(PREFIX + '/send_preliminary_gcn', methods=['POST'])
 def send_preliminary_gcn():
     """Handle submission of preliminary alert form."""
     keys = ('superevent_id', 'event_id')
@@ -241,7 +245,7 @@ def send_preliminary_gcn():
     return redirect(url_for('index'))
 
 
-@app.route('/change_preferred_event', methods=['POST'])
+@app.route(PREFIX + '/change_preferred_event', methods=['POST'])
 def change_preferred_event():
     """Handle submission of preliminary alert form."""
     keys = ('superevent_id', 'event_id')
@@ -302,7 +306,7 @@ def change_preferred_event():
     return redirect(url_for('index'))
 
 
-@app.route('/change_pipeline_preferred_event', methods=['POST'])
+@app.route(PREFIX + '/change_pipeline_preferred_event', methods=['POST'])
 def change_pipeline_preferred_event():
     """Handle submission of preliminary alert form."""
     keys = ('superevent_id', 'pipeline', 'event_id')
@@ -363,7 +367,7 @@ def change_pipeline_preferred_event():
     return redirect(url_for('index'))
 
 
-@app.route('/send_update_gcn', methods=['POST'])
+@app.route(PREFIX + '/send_update_gcn', methods=['POST'])
 def send_update_gcn():
     """Handle submission of update alert form."""
     keys = ('superevent_id', 'skymap_filename',
@@ -386,7 +390,7 @@ def send_update_gcn():
     return redirect(url_for('index'))
 
 
-@app.route('/create_medium_latency_gcn_circular', methods=['POST'])
+@app.route(PREFIX + '/create_medium_latency_gcn_circular', methods=['POST'])
 def create_medium_latency_gcn_circular():
     """Handle submission of medium_latency GCN Circular form."""
     ext_event_id = request.form.get('ext_event_id')
@@ -401,7 +405,7 @@ def create_medium_latency_gcn_circular():
     return redirect(url_for('index'))
 
 
-@app.route('/create_update_gcn_circular', methods=['POST'])
+@app.route(PREFIX + '/create_update_gcn_circular', methods=['POST'])
 def create_update_gcn_circular():
     """Handle submission of GCN Circular form."""
     keys = ['sky_localization', 'em_bright', 'p_astro', 'raven']
@@ -419,7 +423,7 @@ def create_update_gcn_circular():
     return redirect(url_for('index'))
 
 
-@app.route('/download_upload_external_skymap', methods=['POST'])
+@app.route(PREFIX + '/download_upload_external_skymap', methods=['POST'])
 def download_upload_external_skymap():
     """Download sky map from URL to be uploaded to external event. Passes
     a search field 'FromURL' which indicates to get_upload_external_skymap
@@ -459,7 +463,7 @@ def _update_preferred_external_event(ext_event, superevent_id):
                               space_coinc_far=space_coinc_far)
 
 
-@app.route('/apply_raven_labels', methods=['POST'])
+@app.route(PREFIX + '/apply_raven_labels', methods=['POST'])
 def apply_raven_labels():
     """Applying RAVEN alert label and update the preferred external event
     to the given coincidence."""
@@ -485,7 +489,7 @@ def apply_raven_labels():
     return redirect(url_for('index'))
 
 
-@app.route('/send_mock_event', methods=['POST'])
+@app.route(PREFIX + '/send_mock_event', methods=['POST'])
 def send_mock_event():
     """Handle submission of mock alert form."""
     first2years.upload_event.delay()
@@ -504,7 +508,7 @@ def _create_upload_external_event(gpstime):
     return ext_event
 
 
-@app.route('/send_mock_joint_event', methods=['POST'])
+@app.route(PREFIX + '/send_mock_joint_event', methods=['POST'])
 def send_mock_joint_event():
     """Handle submission of mock alert form."""
     (
