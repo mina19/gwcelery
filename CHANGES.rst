@@ -17,6 +17,9 @@ Changelog
     limit on worker processes before being replaced with a new process.
     This is the celery setting ``max-memory-per-child``.
 
+-   Add documentation of the duties of the current ROTA member, who is meant
+    to actively monitor the various gwcelery instances and deal with active
+    issues.
 
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------

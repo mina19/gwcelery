@@ -3,6 +3,28 @@
 Monitoring and Management
 =========================
 
+To ensure the smooth and continuous operation of gwcelery, constant monitoring
+of the various systems is paramount.
+
+Monitoring Responsibilities
+---------------------------
+
+There is a weeklong rotating position among gwcelery librarians involving
+active monitoring and management of gwcelery, with the following explicit
+responsibilities:
+
+1.  Handle new releases, both creation and following up on `active SCCB issues`_
+
+2.  Check issues on Sentry_
+
+3.  Follow up on Nagios issues
+
+4.  Handle `active issues`_, especially in those latest milestones_
+
+5.  Dig through `stale issues`_, assigning, bumping, or working on
+
+6.  Check on security updates
+
 GWCelery supports a rich selection of management and monitoring tools. Here is
 an introduction to a few of them. For more Celery monitoring solutions, see the
 :doc:`Celery monitoring and management guide <celery:userguide/monitoring>`.
@@ -105,6 +127,10 @@ utilities <celery:monitoring-control>`, including the following:
     .. image:: _static/celeryevent-screenshot.png
        :alt: Screenshot of celeryevent text UI monitor
 
+.. _active SCCB issues: https://git.ligo.org/computing/sccb/-/issues/?sort=updated_asc&state=opened&search=gwcelery&first_page_size=100
+.. _active issues: https://git.ligo.org/emfollow/gwcelery/-/issues/?sort=updated_desc&state=opened&first_page_size=100
+.. _milestones: https://git.ligo.org/groups/emfollow/-/milestones?search_title=GWCelery&state=&sort=
+.. _stale issues: https://git.ligo.org/emfollow/gwcelery/-/issues/?sort=updated_asc&state=opened&first_page_size=100
 .. _Flower: https://flower.readthedocs.io/
 .. _dashboard.ligo.org: https://dashboard.ligo.org/
 .. _monitor.ligo.org: https://monitor.ligo.org/
