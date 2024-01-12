@@ -11,6 +11,8 @@ Changelog
 
 -   Require pesummary>=1.0.2 to fix bug in postprocessing of bilby results. 
 
+-   Update gwpy>=3.0.8 to fix issue with lal caches being discontiguous. 
+
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
 
