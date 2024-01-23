@@ -145,7 +145,7 @@ superevent_far_threshold = 1 / 3600
 """Maximum false alarm rate to consider events superevents."""
 
 superevent_candidate_preference = {
-    'cbc': {'allsky': 1, 'earlywarning': 1, 'ssm': 1, 'mdc': 1},
+    'cbc': {'allsky': 2, 'earlywarning': 1, 'ssm': 1, 'mdc': 1},
     'burst': {'allsky': 0, 'bbh': 0, 'mdc': 0},
 }
 """Group/search preference for individual candidates. This is

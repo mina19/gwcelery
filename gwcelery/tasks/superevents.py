@@ -82,15 +82,7 @@ def handle(payload):
         return
 
     search = payload['object']['search']
-    if search == EARLY_WARNING_SEARCH_NAME and \
-            far > app.conf['early_warning_alert_far_threshold'] / \
-            app.conf['early_warning_alert_trials_factor']:
-        log.info(
-            "Skipping processing EW event %s because it does not"
-            "meet significant event criterion", gid
-        )
-        return
-    elif search == SUBSOLAR_SEARCH_NAME:
+    if search == SUBSOLAR_SEARCH_NAME:
         log.info("Skipping processing subsolar search event %s", gid)
         return
 
@@ -109,7 +101,6 @@ def handle(payload):
             return
     elif alert_type != 'new':
         return
-
     process.si(payload).apply_async(priority=priority)
 
 

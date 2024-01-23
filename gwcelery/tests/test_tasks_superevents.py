@@ -199,7 +199,7 @@ def test_raven_alert(mock_create_label, labels):
             "pipeline": "gstlal",
             "group": "CBC",
             "search": "AllSky",
-            "far": 1.e-6,
+            "far": 1e-6,
             "instruments": "H1,L1",
             "superevent": "S100",
             "superevent_neighbours": {
@@ -228,7 +228,7 @@ def test_raven_alert(mock_create_label, labels):
                                 'snr': 10.17
                             },
                         },
-                        "far": 1.e-6,
+                        "far": 1e-6,
                         "far_is_upper_limit": False,
                         "gpstime": 1000000,
                         "graceid": "G000003",
@@ -286,6 +286,102 @@ def test_raven_alert(mock_create_label, labels):
              call('SIGNIF_LOCKED', 'S100')]
         )
     mock_create_label.assert_has_calls(calls, any_order=True)
+
+
+@pytest.mark.parametrize('allsky_far', [1e-6, 1e-9])
+def test_allsky_preferred_over_earlywarning(allsky_far):
+    """New AllSky event (both low-significance and otherwise) updates
+    preferred event of an existing superevent with a low-significance
+    EarlyWarning preferred event."""
+    payload = {
+        "uid": "G123456",
+        "alert_type": "new",
+        "object": {
+            "graceid": "G123456",
+            "pipeline": "gstlal",
+            "group": "CBC",
+            "search": "AllSky",
+            "far": allsky_far,
+            "instruments": "H1,L1",
+            "superevent": None,
+            "superevent_neighbours": {
+                "S100": {  # assumed to be low-significance early-warning
+                    "far": 1e-6,
+                    "gw_events": [
+                        "G567890"
+                    ],
+                    "preferred_event": "G567890",
+                    "preferred_event_data": {
+                        "extra_attributes": {
+                            'SingleInspiral': [
+                                {
+                                    'chisq': 1.07,
+                                    'snr': 10.95,
+                                    'ifo': 'L1'
+                                },
+                                {
+                                    'chisq': 0.54,
+                                    'snr': 12.35,
+                                    'ifo': 'H1'
+                                }
+                            ],
+                            'CoincInspiral': {
+                                'snr': 10.17
+                            },
+                        },
+                        "far": 1.e-6,
+                        "far_is_upper_limit": False,
+                        "gpstime": 1000000,
+                        "graceid": "G567890",
+                        "group": "CBC",
+                        "instruments": "H1,L1",
+                        "labels": ['SKYMAP_READY', 'EMBRIGHT_READY'],
+                        "offline": False,
+                        "pipeline": "gstlal[]",
+                        "reporting_latency": "",
+                        "search": "EarlyWarning",
+                        "submitter": "albert.einstein@LIGO.ORG"
+                    },
+                    "superevent_id": "S100",
+                    "labels": [],
+                    "t_0": 1000000,
+                    "t_end": 1000001,
+                    "t_start": 999999
+                }
+            },
+            "offline": False,
+            "gpstime": 1000000.1,
+            "labels": [],
+            'extra_attributes': {
+                'SingleInspiral': [
+                    {
+                        'chisq': 1.07,
+                        'snr': 8,
+                        'ifo': 'L1'
+                    },
+                    {
+                        'chisq': 0.54,
+                        'snr': 8,
+                        'ifo': 'H1'
+                    }
+                ],
+                'CoincInspiral': {
+                    'snr': 11.3
+                },
+            },
+        },
+    }
+    superevent_response = payload['object']['superevent_neighbours']['S100']
+    with patch('gwcelery.tasks.gracedb.get_superevents',
+               return_value=[superevent_response]), \
+            patch('gwcelery.tasks.gracedb.get_superevent',
+                  return_value=superevent_response), \
+            patch('gwcelery.tasks.gracedb.update_superevent') as p:
+        superevents.handle(payload)
+        p.assert_called_once_with(
+            'S100', t_start=999999, t_end=1000001.1, t_0=1000000.1,
+            preferred_event='G123456'
+        )
 
 
 @pytest.mark.parametrize('labels',
@@ -347,10 +443,11 @@ def test_process_called(labels, label, search, alert_type, group, ifos):
         superevents.handle(payload)
         if "K1" in ifos:
             process.assert_not_called()
-        elif search == superevents.EARLY_WARNING_SEARCH_NAME or \
-                search == superevents.SUBSOLAR_SEARCH_NAME:
+        elif search == superevents.SUBSOLAR_SEARCH_NAME:
             process.assert_not_called()
         elif superevents.is_complete(payload['object']):
+            process.assert_called()
+        elif alert_type == 'new':
             process.assert_called()
         else:
             process.assert_not_called()
