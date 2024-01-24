@@ -16,8 +16,7 @@ log = logging.getLogger('BAYESTAR')
 
 
 @app.task(queue='openmp', shared=False)
-def localize(coinc_psd, graceid, filename='bayestar.fits.gz',
-             disabled_detectors=None):
+def localize(coinc_psd, graceid, disabled_detectors=None):
     """Generate a rapid sky localization using
     :mod:`BAYESTAR <ligo.skymap.bayestar>`.
 
@@ -28,8 +27,6 @@ def localize(coinc_psd, graceid, filename='bayestar.fits.gz',
     graceid : str
         The GraceDB ID, used for FITS metadata and recording log messages
         to GraceDB.
-    filename : str, optional
-        The name of the FITS file.
     disabled_detectors : list, optional
         List of detectors to disable.
 
