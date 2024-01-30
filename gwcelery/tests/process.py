@@ -46,7 +46,7 @@ class _TeeStreamReaderProtocol(
 
 async def _read_until_magic_words(magic_words, timeout, *streams):
     done, _ = await asyncio.wait(
-        [s.readuntil(magic_words) for s in streams],
+        [asyncio.create_task(s.readuntil(magic_words)) for s in streams],
         return_when=asyncio.FIRST_COMPLETED,
         timeout=timeout)
     if not done:
