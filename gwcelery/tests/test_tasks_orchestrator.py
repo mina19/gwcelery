@@ -7,7 +7,7 @@ import pytest
 from .. import app
 from ..tasks import orchestrator
 from ..tasks import superevents
-from ..util import read_json
+from ..util import read_binary, read_json
 from .test_tasks_skymaps import toy_3d_fits_filecontents  # noqa: F401
 from . import data
 
@@ -109,8 +109,8 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         elif filename == 'em_bright.json' and group == 'CBC':
             return json.dumps({'HasNS': 0.0, 'HasRemnant': 0.0})
         elif filename == 'psd.xml.gz':
-            with resources.path('psd.xml.gz') as p:
-                return str(p)
+            return str(
+                resources.as_file(resources.files().joinpath('psd.xml.gz')))
         elif filename == 'S1234-1-Preliminary.xml':
             return b'fake VOEvent file contents'
         elif group == 'CBC' and filename == f'{pipeline}.p_astro.json':
@@ -634,7 +634,7 @@ def mock_download(filename, graceid, *args, **kwargs):
     assert graceid == 'M394156'
     filenames = {'coinc.xml': 'coinc.xml',
                  'ranking_data.xml.gz': 'ranking_data_G322589.xml.gz'}
-    return resources.read_binary(data, filenames[filename])
+    return read_binary(data, filenames[filename])
 
 
 @pytest.mark.parametrize(

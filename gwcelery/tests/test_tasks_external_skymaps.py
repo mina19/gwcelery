@@ -1,4 +1,3 @@
-from importlib import resources
 from unittest.mock import patch
 
 from astropy.table import Table
@@ -8,7 +7,7 @@ import pytest
 from urllib.error import HTTPError
 
 from . import data
-from ..util import read_json
+from ..util import read_binary, read_json
 from .test_tasks_skymaps import toy_fits_filecontents  # noqa: F401
 from .test_tasks_skymaps import toy_3d_fits_filecontents  # noqa: F401
 from ..tasks import external_skymaps
@@ -51,8 +50,7 @@ def mock_download(monkeypatch, toy_3d_fits_filecontents):  # noqa: F811
         elif (graceid == 'E12345' and
               filename == ('nasa.gsfc.gcn_Fermi%23GBM_Gnd_Pos_2017-08-17'
                            + 'T12%3A41%3A06.47_524666471_57-431.xml')):
-            return resources.read_binary(
-                data, 'externaltrigger_original_data.xml')
+            return read_binary(data, 'externaltrigger_original_data.xml')
         else:
             raise ValueError
 

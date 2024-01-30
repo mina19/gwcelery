@@ -8,7 +8,7 @@ from . import data
 from .. import app
 from ..tasks import external_triggers
 from ..tasks import detchar
-from ..util import read_json
+from ..util import read_binary, read_json
 
 
 @pytest.mark.parametrize('pipeline, path',
@@ -32,14 +32,13 @@ def test_handle_create_grb_event(mock_create_event,
                                  mock_create_upload_external_skymap,
                                  pipeline, path):
     if pipeline == 'INTEGRAL':
-        with resources.path(data, path) as p:
-            fname = str(p)
-        root = etree.parse(fname)
+        with resources.as_file(resources.files(data).joinpath(path)) as fname:
+            root = etree.parse(fname)
         root.find("./What/Param[@name='TrigID']").attrib['value'] = \
             '123456'.encode()
         text = etree.tostring(root, xml_declaration=True, encoding="UTF-8")
     else:
-        text = resources.read_binary(data, path)
+        text = read_binary(data, path)
     external_triggers.handle_grb_gcn(payload=text)
     mock_create_event.assert_called_once_with(
         filecontents=text,
@@ -109,10 +108,10 @@ def test_handle_create_subthreshold_grb_event(mock_get_upload_ext_skymap,
                                               mock_check_vectors,
                                               mock_create_event,
                                               mock_get_events):
-    text = resources.read_binary(data, 'fermi_subthresh_grb_lowconfidence.xml')
+    text = read_binary(data, 'fermi_subthresh_grb_lowconfidence.xml')
     external_triggers.handle_grb_gcn(payload=text)
     mock_create_event.assert_not_called()
-    text = resources.read_binary(data, 'fermi_subthresh_grb_gcn.xml')
+    text = read_binary(data, 'fermi_subthresh_grb_gcn.xml')
     external_triggers.handle_grb_gcn(payload=text)
     mock_get_events.assert_called_once_with(query=(
                                             'group: External pipeline: '
@@ -153,7 +152,7 @@ def test_handle_noise_fermi_event(mock_check_vectors,
                                   mock_get_events,
                                   mock_get_upload_external_skymap,
                                   filename):
-    text = resources.read_binary(data, filename)
+    text = read_binary(data, filename)
     external_triggers.handle_grb_gcn(payload=text)
     mock_get_events.assert_called_once_with(query=(
                                             'group: External pipeline: '
@@ -184,7 +183,7 @@ def test_handle_initial_fermi_event(mock_check_vectors,
                                     mock_get_events,
                                     mock_get_upload_external_skymap,
                                     mock_create_external_skymap):
-    text = resources.read_binary(data, 'fermi_initial_grb_gcn.xml')
+    text = read_binary(data, 'fermi_initial_grb_gcn.xml')
     external_triggers.handle_grb_gcn(payload=text)
     mock_get_events.assert_called_once_with(query=(
                                             'group: External pipeline: '
@@ -229,7 +228,7 @@ def test_handle_replace_grb_event(mock_get_events,
                                   mock_get_upload_external_skymap,
                                   mock_create_upload_external_skymap,
                                   filename):
-    text = resources.read_binary(data, filename)
+    text = read_binary(data, filename)
     external_triggers.handle_grb_gcn(payload=text)
     if 'subthresh' in filename:
         mock_replace_event.assert_not_called()
@@ -280,7 +279,7 @@ def test_handle_integral_test(monkeypatch, host):
         'gwcelery.tasks.gracedb.get_events.run',
         mock_get_events)
 
-    text = resources.read_binary(data, 'integral_test_gcn.xml')
+    text = read_binary(data, 'integral_test_gcn.xml')
     external_triggers.handle_grb_gcn(payload=text)
     # Block Test INTEGRAL on production server but not for test servers
     if 'gracedb.ligo.org' == host:
@@ -612,7 +611,7 @@ def test_handle_sog_manuscript_pipeline(mock_sog_paper_pipeline,
     'search': 'Supernova'})
 def test_handle_create_snews_event(mock_create_event,
                                    mock_upload, mock_json):
-    text = resources.read_binary(data, 'snews_gcn.xml')
+    text = read_binary(data, 'snews_gcn.xml')
     external_triggers.handle_snews_gcn(payload=text)
     mock_create_event.assert_called_once_with(filecontents=text,
                                               search='Supernova',
@@ -649,7 +648,7 @@ def test_handle_create_snews_event(mock_create_event,
                       'pipeline': 'SNEWS'}])
 def test_handle_replace_snews_event(mock_get_events, mock_remove_label,
                                     mock_replace_event):
-    text = resources.read_binary(data, 'snews_gcn.xml')
+    text = read_binary(data, 'snews_gcn.xml')
     external_triggers.handle_snews_gcn(payload=text)
     mock_replace_event.assert_called_once_with('E1', text)
 
@@ -844,9 +843,9 @@ def test_handle_targeted_kafka_alert(mock_plot_allsky,
     labels = ['NOT_GRB'] if 'ignore' in kafka_path else None
     # Update VOEvent with sky localization info or ID if needed
     if no_loc or replace_event or labels:
-        with resources.path(data, voevent_path) as p:
-            fname = str(p)
-        root = etree.parse(fname)
+        with resources.as_file(
+                resources.files(data).joinpath(voevent_path)) as fname:
+            root = etree.parse(fname)
         if no_loc:
             # Set template to also be zeros if nothing in kafka alert
             root.find(("./WhereWhen/ObsDataLocation/"
@@ -874,7 +873,7 @@ def test_handle_targeted_kafka_alert(mock_plot_allsky,
         text += b'\n'
     # If no changes needed, read the file directly
     else:
-        text = resources.read_binary(data, voevent_path)
+        text = read_binary(data, voevent_path)
 
     # Send alert through handler
     external_triggers.handle_targeted_kafka_alert(alert)

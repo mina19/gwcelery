@@ -1,4 +1,3 @@
-from importlib import resources
 from unittest.mock import patch
 
 from astropy import table
@@ -10,6 +9,7 @@ import pytest
 from . import data
 from ..tasks.bayestar import localize
 from ..util.tempfile import NamedTemporaryFile
+from ..util import read_binary
 
 
 def mock_bayestar(event, *args, **kwargs):
@@ -26,7 +26,7 @@ def mock_bayestar(event, *args, **kwargs):
 
 @pytest.fixture
 def coinc():
-    return resources.read_binary(data, 'coinc.xml')
+    return read_binary(data, 'coinc.xml')
 
 
 @patch('ligo.skymap.bayestar.localize', mock_bayestar)

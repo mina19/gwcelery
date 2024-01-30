@@ -1,8 +1,8 @@
 from collections import defaultdict
-from importlib import resources
 from unittest import mock
 
 from ..tasks import gracedb
+from ..util import read_binary
 from . import data
 
 
@@ -158,7 +158,7 @@ def test_get_labels(mock_gracedb):
 
 @patch('gwcelery.tasks.gracedb.client')
 def test_replace_event(mock_gracedb):
-    text = resources.read_binary(data, 'fermi_grb_gcn.xml')
+    text = read_binary(data, 'fermi_grb_gcn.xml')
     gracedb.replace_event(graceid='G123456', payload=text)
     mock_gracedb.events.update.assert_called_once_with('G123456',
                                                        filecontents=text)

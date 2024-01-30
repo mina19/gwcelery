@@ -1,12 +1,11 @@
 import fastavro
-from importlib import resources
-import json
 from unittest.mock import Mock, patch
 
 import pytest
 
 from .. import app
 from ..tasks import alerts
+from ..util import read_binary, read_json
 from . import data
 from ..kafka.bootsteps import AvroBlobWrapper, schema
 
@@ -19,7 +18,7 @@ def _validate_alert(public_alert_avro_blob):
 
 @pytest.mark.parametrize(
     'superevent,classification,skymap', [
-        ['MS220722v.xml', [
+        ['MS220722v.json', [
             '{"HasNS": 1.0, "HasRemnant": 1.0}',
             '{"BNS": 0.9999976592278448, "NSBH": 0.0, "BBH": 0.0,'
             '"Terrestrial": 2.3407721552252815e-06}'
@@ -30,7 +29,7 @@ def _validate_alert(public_alert_avro_blob):
     ])
 @patch('gwcelery.tasks.alerts._upload_notice.run')
 @patch('gwcelery.tasks.gracedb.download._orig_run',
-       return_value=resources.read_binary(
+       return_value=read_binary(
            data,
            'MS220722v_bayestar.multiorder.fits'
        ))  # Using only bayestar sky map because content doesnt matter
@@ -48,7 +47,7 @@ def test_validate_alert(mock_download, mock_upload, monkeypatch,
     monkeypatch.setitem(app.conf, 'kafka_streams', {'scimma': mock_stream})
 
     # Load superevent dictionary
-    superevent_dict = json.loads(resources.read_binary(data, superevent))
+    superevent_dict = read_json(data, superevent)
 
     # Test preliminary, initial, and update alerts. All three are generated
     # using the same code path, so we only need to test 1
@@ -62,7 +61,7 @@ def test_validate_alert(mock_download, mock_upload, monkeypatch,
 
 @patch('gwcelery.tasks.alerts._upload_notice.run')
 @patch('gwcelery.tasks.gracedb.download._orig_run',
-       return_value=resources.read_binary(
+       return_value=read_binary(
            data,
            'MS220722v_bayestar.multiorder.fits'
        ))
@@ -79,7 +78,7 @@ def test_validate_retraction_alert(mock_download, mock_upload, monkeypatch):
     monkeypatch.setitem(app.conf, 'kafka_streams', {'scimma': mock_stream})
 
     # Load superevent dictionary, and embright/pastro json tuple
-    superevent = json.loads(resources.read_binary(data, 'MS220722v.xml'))
+    superevent = read_json(data, 'MS220722v.json')
 
     # Test retraction alerts.
     alerts.send(None, superevent, 'retraction', None)
@@ -90,7 +89,7 @@ def test_validate_retraction_alert(mock_download, mock_upload, monkeypatch):
 
 @patch('gwcelery.tasks.alerts._upload_notice.run')
 @patch('gwcelery.tasks.gracedb.download._orig_run',
-       return_value=resources.read_binary(
+       return_value=read_binary(
            data,
            'MS220722v_bayestar.multiorder.fits'
        ))
@@ -107,7 +106,7 @@ def test_validation_fail(mock_download, mock_upload, monkeypatch):
     monkeypatch.setitem(app.conf, 'kafka_streams', {'scimma': mock_stream})
 
     # Load superevent dictionary, and embright/pastro json tuple
-    superevent = json.loads(resources.read_binary(data, 'MS220722v.xml'))
+    superevent = read_json(data, 'MS220722v.json')
     classification = (
         '{"HasNS": 1.0, "HasRemnant": 1.0}',
         '{"BNS": 0.9999976592278448, "NSBH": 0.0, "BBH": 0.0,'

@@ -1,10 +1,9 @@
-from importlib import resources
 from unittest.mock import patch
 
 import pytest
 
 from ..tasks.gcn import validate
-from ..util import read_json
+from ..util import read_binary, read_json
 from . import data
 
 
@@ -14,7 +13,7 @@ def fake_gcn(monkeypatch):
     def mock_download(filename, graceid):
         assert filename == 'G298048-1-Initial.xml'
         assert graceid == 'G298048'
-        return resources.read_binary(data, filename)
+        return read_binary(data, filename)
 
     def mock_get_log(graceid):
         assert graceid == 'G298048'
@@ -26,7 +25,7 @@ def fake_gcn(monkeypatch):
         'gwcelery.tasks.gracedb.get_log', mock_get_log)
 
     # Get the VOEvent.
-    yield resources.read_binary(data, 'G298048-1-Initial.xml')
+    yield read_binary(data, 'G298048-1-Initial.xml')
 
 
 @patch('gwcelery.tasks.gracedb.create_tag.run')

@@ -1,14 +1,14 @@
 import json
 import pytest
-from importlib import resources
 from unittest.mock import Mock
+
 from ..tasks import rrt_utils
-from gwcelery.tests import data
+from ..util import read_binary
+from . import data
 
 
-skymap_small = resources.read_binary(data, 'rrt_small_area.fits')
-skymap_large = resources.read_binary(
-    data, 'MS220722v_bayestar.multiorder.fits')
+skymap_small = read_binary(data, 'rrt_small_area.fits')
+skymap_large = read_binary(data, 'MS220722v_bayestar.multiorder.fits')
 
 # checks
 # 1. Burst far checks   ---> True

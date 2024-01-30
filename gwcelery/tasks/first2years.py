@@ -22,7 +22,8 @@ log = get_task_logger(__name__)
 
 def pick_coinc():
     """Pick a coincidence from the "First Two Years" paper."""
-    with resources.open_binary(data_first2years, 'gstlal.xml.gz') as f:
+    with resources.files(
+            data_first2years).joinpath('gstlal.xml.gz').open('rb') as f:
         xmldoc = utils.load_fileobj(f, contenthandler=ContentHandler)
     root, = xmldoc.childNodes
 

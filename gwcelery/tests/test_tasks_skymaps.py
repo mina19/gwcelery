@@ -1,6 +1,5 @@
 import argparse
 import gzip
-from importlib import resources
 import io
 import os
 from unittest.mock import patch
@@ -10,6 +9,7 @@ import numpy as np
 import pytest
 
 from ..tasks import external_skymaps, skymaps
+from ..util import read_binary, read_text
 from . import data
 
 
@@ -74,7 +74,7 @@ def test_fits_header(toy_fits_filecontents):
     html = skymaps.fits_header(toy_fits_filecontents, 'test.fits')
 
     # Check output
-    assert html == resources.read_text(data, 'fits_header_result.html')
+    assert html == read_text(data, 'fits_header_result.html')
 
 
 @patch('ligo.skymap.tool.ligo_skymap_plot.main')
@@ -134,7 +134,7 @@ def test_skymap_from_samples(toy_3d_fits_filecontents):
         with open(os.path.join(args.outdir, args.fitsoutname), 'wb') as f:
             f.write(toy_3d_fits_filecontents)
 
-    inbytes = resources.read_binary(data, 'samples.hdf5')
+    inbytes = read_binary(data, 'samples.hdf5')
 
     with patch('ligo.skymap.tool.ligo_skymap_from_samples.main',
                mock_skymap_from_samples):

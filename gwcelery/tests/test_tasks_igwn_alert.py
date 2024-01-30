@@ -26,7 +26,7 @@ def netrc_lvalert(tmpdir):
 
 @pytest.fixture
 def fake_lvalert():
-    with resources.open_binary(data, 'lvalert_xmpp.xml') as f:
+    with resources.files(data).joinpath('lvalert_xmpp.xml').open('rb') as f:
         root = lxml.etree.parse(f)
     node = root.find('.//{*}items').attrib['node']
     payload = root.find('.//{*}entry').text

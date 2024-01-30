@@ -1,21 +1,22 @@
 """Package data helpers."""
 from importlib import resources
 import json
-import pickle
-
-from astropy.utils.data import get_readable_fileobj
 
 
-__all__ = ('read_json', 'read_pickle')
+__all__ = ('read_binary', 'read_json', 'read_text')
 
 
-def read_json(*args, **kwargs):
+def read_binary(pkg, filename):
+    """Load a binary file from package data."""
+    return resources.files(pkg).joinpath(filename).read_bytes()
+
+
+def read_json(pkg, filename):
     """Load a JSON file from package data."""
-    with resources.open_text(*args, **kwargs) as f:
+    with resources.files(pkg).joinpath(filename).open('r') as f:
         return json.load(f)
 
 
-def read_pickle(*args, **kwargs):
-    """Load a pickle file using astropy.utils.data."""
-    with get_readable_fileobj(*args, **kwargs) as f:
-        return pickle.load(f)
+def read_text(pkg, filename):
+    """Load a binary file from package data."""
+    return resources.files(pkg).joinpath(filename).read_text()
