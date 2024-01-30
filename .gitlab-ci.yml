@@ -56,6 +56,9 @@ test/poetry/python3.9:
 test/poetry/python3.10:
   extends: .test-poetry
   image: python:3.10
+test/poetry/python3.11:
+  extends: .test-poetry
+  image: python:3.11
 
 # Run test suite using wheel and bleeding-edge dependencies
 .test-wheel:
@@ -75,6 +78,9 @@ test/wheel/python3.9:
 test/wheel/python3.10:
   extends: .test-wheel
   image: python:3.10
+test/wheel/python3.11:
+  extends: .test-wheel
+  image: python:3.11
 
 lint:
   stage: test
@@ -102,9 +108,7 @@ doc:
   extends:
     - .debian:base
     - .python:sphinx
-  # FIXME: temporarily set image to Python 3.9 because default `python` image
-  # is now Python 3.10 which lacks wheels for many packages right now.
-  image: python:3.9
+  image: python:3.11
   variables:
     SOURCEDIR: doc
     REQUIREMENTS: .[doc]
