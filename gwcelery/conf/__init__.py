@@ -8,11 +8,10 @@ To override the configuration, define the ``CELERY_CONFIG_MODULE`` environment
 variable to the fully qualified name of any Python module that can be located
 in :obj:`sys.path`, including any of the following presets:
 
- * :mod:`gwcelery.conf.development`
- * :mod:`gwcelery.conf.playground` (the default)
+ * :mod:`gwcelery.conf.playground`
  * :mod:`gwcelery.conf.production`
  * :mod:`gwcelery.conf.test`
- * :mod:`gwcelery.conf.dev`
+ * :mod:`gwcelery.conf.dev` (the default)
 """
 
 import getpass
@@ -63,10 +62,10 @@ igwn_alert_server = None
 igwn_alert_noauth = False
 """IGWN alert server no-authetication"""
 
-igwn_alert_group = 'gracedb-playground'
+igwn_alert_group = 'gracedb-test01'
 """IGWN alert group."""
 
-gracedb_host = 'gracedb-playground.ligo.org'
+gracedb_host = 'gracedb-test01.igwn.org'
 """GraceDB host."""
 
 gwskynet_upper_far_threshold = 1 / 21600

@@ -21,6 +21,8 @@ Changelog
     to actively monitor the various gwcelery instances and deal with active
     issues.
 
+-   Make the ``dev`` configuration the default for testing.
+
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
 

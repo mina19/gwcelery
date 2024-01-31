@@ -14,12 +14,23 @@ using `poetry`_.
 There are two instances of GWCelery that are running on the LIGO-Caltech
 computing cluster and that are managed in this manner:
 
-*   **Playground**: The playground instance is re-deployed *on every push to
-    main that passes the unit tests*. It uses the
+*   **Minikube**: The minkube instance is inteded for local development
+    where all services that gwcelery interacts with are started locally.
+    It uses the :mod:`gwcelery.conf.minikube` configuration preset.
+
+*   **Dev**: The dev instance is intended for the testing of branches with
+    a live testing environment. It uses the :mod:`gwcelery.conf.dev` configuration preset.
+
+*   **Test**: The playground instance is re-deployed *automatically on every push
+    to the main branch*. It uses the
     :mod:`gwcelery.conf.playground` configuration preset.
 
-*   **Production**: The production instance is re-deployed *only when manually
-    triggered through GitLab*. It uses the
+*   **Playground**: The playground instance is manually deployed for
+    release/release-candidate tags *manually deployed via gitlab*. It uses the
+    :mod:`gwcelery.conf.playground` configuration preset.
+
+*   **Production**: The production instance is re-deployed *only for reviewed releases
+    and manually triggered through GitLab*. It uses the
     :mod:`gwcelery.conf.production` configuration preset.
 
 When we observe that the Playground instance shows correct end-to-end behavior,
