@@ -3,10 +3,15 @@ gwcelery.conf module
 
 .. automodule:: gwcelery.conf
 
-gwcelery.conf.development module
---------------------------------
+gwcelery.conf.minikube module
+-----------------------------
 
-.. automodule:: gwcelery.conf.development
+.. automodule:: gwcelery.conf.minikube
+
+gwcelery.conf.dev module
+------------------------
+
+.. automodule:: gwcelery.conf.dev
 
 gwcelery.conf.playground module
 -------------------------------
