@@ -74,8 +74,8 @@ completed those steps, you can start each of the GWCelery manually.
 Authentication
 ~~~~~~~~~~~~~~
 
-To authenticate for GraceDB, obtain grid credentials from the `LSC
-DataGrid Client`_ by running ``ligo-proxy-init``::
+To authenticate for GraceDB, obtain grid credentials from `ligo-proxy-utils`_
+by running ``ligo-proxy-init``::
 
     $ ligo-proxy-init albert.einstein
 
@@ -89,7 +89,7 @@ passwords and store them in your ~/.netrc file with appropriate file permissions
     $ echo machine kafka://kafka.scimma.org/ login albert.einstein password password-for-playground >> ~/.netrc
     $ echo machine kafka://kafka.scimma.org/ login albert.einstein password password-for-test >> ~/.netrc
 
-.. _`LSC DataGrid Client`: https://www.lsc-group.phys.uwm.edu/lscdatagrid/doc/installclient.html
+.. _`ligo-proxy-utils`: https://computing.docs.ligo.org/guide/auth/x509/#install-ligo-proxy-init
 
 Redis
 ~~~~~
