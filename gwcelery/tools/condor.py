@@ -17,8 +17,7 @@ import lxml.etree
 
 from .. import data
 
-SUBMIT_FILE = str(
-    resources.as_file(resources.files(data).joinpath('gwcelery.sub')))
+SUBMIT_FILE = str(resources.files(data).joinpath('gwcelery.sub'))
 
 
 @click.group(help=__doc__)

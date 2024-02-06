@@ -109,8 +109,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         elif filename == 'em_bright.json' and group == 'CBC':
             return json.dumps({'HasNS': 0.0, 'HasRemnant': 0.0})
         elif filename == 'psd.xml.gz':
-            return str(
-                resources.as_file(resources.files().joinpath('psd.xml.gz')))
+            return str(resources.files().joinpath('psd.xml.gz'))
         elif filename == 'S1234-1-Preliminary.xml':
             return b'fake VOEvent file contents'
         elif group == 'CBC' and filename == f'{pipeline}.p_astro.json':
