@@ -56,7 +56,7 @@ def annotate_fits(filecontents, versioned_filename, graceid, tags):
         '{versioned_filename}">{versioned_filename}</a>').format(
             graceid=graceid, versioned_filename=versioned_filename)
     flatten_msg = (
-        'Flat-resolution fits file created from '
+        'Flat-resolution FITS file created from '
         '<a href="/api/superevents/{graceid}/files/'
         '{versioned_filename}">{versioned_filename}</a>').format(
             graceid=graceid, versioned_filename=versioned_filename)
@@ -180,7 +180,7 @@ def unflatten(filecontents, filename):
 
 @app.task(shared=False, queue='multiprocessing')
 def skymap_from_samples(samplefilecontents):
-    """Generate multi-resolution fits file from samples."""
+    """Generate multi-resolution FITS file from samples."""
     with NamedTemporaryFile(content=samplefilecontents) as samplefile, \
             tempfile.TemporaryDirectory() as tmpdir, \
             handling_system_exit():

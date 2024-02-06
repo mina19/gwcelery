@@ -403,7 +403,7 @@ def handle_burst_event(alert):
     if filename.endswith('.fits.gz'):
         new_filename = filename.replace('.fits.gz', '.multiorder.fits')
         flatten_msg = (
-            'Multi-resolution fits file created from '
+            'Multi-resolution FITS file created from '
             '<a href="/api/events/{graceid}/files/'
             '{filename}">{filename}</a>').format(
             graceid=graceid, filename=filename)
@@ -424,7 +424,7 @@ def handle_burst_event(alert):
                     'mdc_superevent',
                     shared=False)
 def handle_posterior_samples(alert):
-    """Generate multi-resolution and flat-resolution fits files and skymaps
+    """Generate multi-resolution and flat-resolution FITS files and skymaps
     from an uploaded HDF5 file containing posterior samples.
     """
     if alert['alert_type'] != 'log' or \
@@ -449,7 +449,7 @@ def handle_posterior_samples(alert):
 
             gracedb.upload.s(
                 skymap_filename, superevent_id,
-                'Multiresolution fits file generated from "{}"'.format(info),
+                'Multiresolution FITS file generated from "{}"'.format(info),
                 labels
             )
         )
@@ -1202,7 +1202,7 @@ def earlywarning_preliminary_initial_update_alert(
         )
 
     to_expose = [skymap_filename, em_bright_filename, p_astro_filename]
-    # Since PE skymap images, HTML, and gzip fits are not made public when they
+    # Since PE skymap images, HTML, and gzip FITS are not made public when they
     # are uploaded, we need to expose them here.
     if (
         skymap_filename is not None and 'bilby' in skymap_filename.lower()

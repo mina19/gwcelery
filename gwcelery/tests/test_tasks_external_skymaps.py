@@ -211,7 +211,7 @@ def test_create_combined_skymap_moc_moc(monkeypatch,
                          ['S12345', 'S23456', 'E12345'])
 @patch('gwcelery.tasks.gracedb.get_log', side_effect=mock_get_log)
 def test_get_skymap_filename(mock_get_logs, graceid):
-    """Test getting the LVC skymap fits filename"""
+    """Test getting the LVC skymap FITS filename"""
     filename = external_skymaps.get_skymap_filename(graceid,
                                                     is_gw='S' in graceid)
     if graceid == 'S12345':
@@ -231,14 +231,14 @@ def test_get_skymap_filename_404(mock_get_logs):
 
 @patch('gwcelery.tasks.gracedb.get_log', mock_get_log)
 def test_external_trigger_heasarc(mock_download):
-    """Test retrieving HEASARC fits file link from GCN"""
+    """Test retrieving HEASARC FITS file link from GCN"""
     heasarc_link = external_skymaps.external_trigger_heasarc('E12345')
     assert heasarc_link == true_heasarc_link
 
 
 @patch('gwcelery.tasks.gracedb.get_log', mock_get_log)
 def test_external_trigger_heasarc_404(mock_download):
-    """Test retrieving HEASARC fits file link from GCN"""
+    """Test retrieving HEASARC FITS file link from GCN"""
     with pytest.raises(ValueError):
         external_skymaps.external_trigger_heasarc('E23456')
 

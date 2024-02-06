@@ -154,7 +154,7 @@ Changelog
     that don't provide them. This fixes the case where burst only alerts
     contained garbled information in the classification and properties section.
 
--   Expose PE skymap images, HTML, and gzip fits when update notice is sent.
+-   Expose PE skymap images, HTML, and gzip FITS when update notice is sent.
 
 -   Prevent public tag being applied automatically to ``RapidPE_RIFT.p_astro.json``.
     Therefore this is not included automatically at the time of sending initial alert.
@@ -626,7 +626,7 @@ Changelog
 
 -   Update BAYESTAR task to use PSD in ``coinc.xml`` file for all pipelines.
 
--   Convert cWB fits files to multiorder format if not already in the
+-   Convert cWB FITS files to multiorder format if not already in the
     multiorder format.
 
 -   Don't compute p-astro for PyCBC/AllSky because it now computes

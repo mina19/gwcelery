@@ -109,7 +109,7 @@ def create_combined_skymap(se_id, ext_id, preferred_event=None):
 @app.task(autoretry_for=(ValueError,), retry_backoff=10,
           retry_backoff_max=600)
 def get_skymap_filename(graceid, is_gw):
-    """Get the skymap fits filename.
+    """Get the skymap FITS filename.
 
     If not available, will try again 10 seconds later, then 20, then 40, etc.
     up to a max 10 minutes retry delay.
@@ -350,7 +350,7 @@ def combine_skymaps(skymapsbytes, ext_moc=True):
 
 @app.task(shared=False)
 def external_trigger_heasarc(external_id):
-    """Returns the HEASARC fits file link.
+    """Returns the HEASARC FITS file link.
 
     Parameters
     ----------
@@ -380,7 +380,7 @@ def external_trigger_heasarc(external_id):
 @app.task(autoretry_for=(gracedb.RetryableHTTPError,), retry_backoff=10,
           max_retries=14)
 def get_external_skymap(link, search):
-    """Download the Fermi sky map fits file and return the contents as a byte
+    """Download the Fermi sky map FITS file and return the contents as a byte
     array. If GRB, will construct a HEASARC url, while if SubGRB, will use the
     link directly.
 
@@ -668,7 +668,7 @@ def create_external_skymap(ra, dec, error, pipeline, notice_type=111):
 
 
 def write_to_fits(skymap, event, notice_type, notice_date):
-    """Write external sky map fits file, populating the
+    """Write external sky map FITS file, populating the
     header with relevant info.
 
     Parameters
