@@ -7,27 +7,15 @@ candidates.
 import json
 import re
 
-from celery import chain, group
-
-from ..import app
-from . import alerts
-from . import bayestar
-from . import circulars
-from .core import identity, get_first
-from . import detchar
-from . import em_bright
-from . import external_skymaps
-from . import gcn
-from . import gracedb
-from . import inference
-from . import igwn_alert
-from . import p_astro
-from . import rrt_utils
-from . import skymaps
-from . import superevents
-
-from ligo.rrt_chat import channel_creation
 from astropy.time import Time
+from celery import chain, group
+from ligo.rrt_chat import channel_creation
+
+from .. import app
+from . import (alerts, bayestar, circulars, detchar, em_bright,
+               external_skymaps, gcn, gracedb, igwn_alert, inference, p_astro,
+               rrt_utils, skymaps, superevents)
+from .core import get_first, identity
 
 
 @igwn_alert.handler('superevent',

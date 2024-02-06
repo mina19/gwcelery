@@ -1,5 +1,5 @@
-from functools import cache
 import json
+from functools import cache
 from os import path
 from threading import Thread
 
@@ -8,13 +8,13 @@ from celery.concurrency import solo
 from celery.utils.log import get_logger
 from confluent_kafka.error import KafkaException
 from fastavro.schema import parse_schema
-from hop import auth, Stream
+from hop import Stream, auth
 from hop.io import list_topics
 from hop.models import AvroBlob, JSONBlob
 from xdg.BaseDirectory import xdg_config_home
 
-from .signals import kafka_record_consumed
 from ..util import read_json
+from .signals import kafka_record_consumed
 
 __all__ = ('Producer', 'Consumer')
 

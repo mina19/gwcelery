@@ -1,10 +1,9 @@
 import io
 from unittest.mock import call, patch
 
-from ligo.lw import utils
-from ligo.lw import lsctables
-from ligo.skymap.io.events.ligolw import ContentHandler
 import pytest
+from ligo.lw import lsctables, utils
+from ligo.skymap.io.events.ligolw import ContentHandler
 
 from .. import app
 from ..tasks.first2years import pick_coinc, upload_event

@@ -1,12 +1,12 @@
 import gzip
 import io
-from unittest.mock import patch
 import json
+from unittest.mock import patch
 
-from astropy.table import Table
 import numpy as np
-import scipy.stats as stats
 import pytest
+import scipy.stats as stats
+from astropy.table import Table
 
 from ..tasks import gwskynet
 

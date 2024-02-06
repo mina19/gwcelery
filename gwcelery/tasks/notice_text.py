@@ -9,8 +9,8 @@ import email
 import email.policy
 from math import isclose
 
-from celery.utils.log import get_task_logger
 import lxml.etree
+from celery.utils.log import get_task_logger
 
 from .. import app
 from ..email.signals import email_received

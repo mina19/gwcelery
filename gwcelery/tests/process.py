@@ -1,9 +1,9 @@
 import asyncio
-from contextlib import contextmanager, ExitStack
-from functools import partial
 import multiprocessing
 import os
 import sys
+from contextlib import ExitStack, contextmanager
+from functools import partial
 
 import pytest
 

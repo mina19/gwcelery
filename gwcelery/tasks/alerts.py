@@ -1,14 +1,14 @@
 import json
 
+import numpy as np
 from astropy import time
 from celery import group
 from celery.utils.log import get_logger
-import numpy as np
 
-from ..import app
-from .core import DispatchHandler
-from . import gracedb
+from .. import app
 from ..kafka.signals import kafka_record_consumed
+from . import gracedb
+from .core import DispatchHandler
 
 log = get_logger(__name__)
 

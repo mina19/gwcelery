@@ -1,7 +1,6 @@
 """Package data helpers."""
-from importlib import resources
 import json
-
+from importlib import resources
 
 __all__ = ('read_binary', 'read_json', 'read_text')
 

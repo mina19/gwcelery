@@ -1,14 +1,13 @@
 from importlib import resources
-from lxml import etree
-from unittest.mock import patch, call, Mock
+from unittest.mock import Mock, call, patch
 
 import pytest
+from lxml import etree
 
-from . import data
 from .. import app
-from ..tasks import external_triggers
-from ..tasks import detchar
+from ..tasks import detchar, external_triggers
 from ..util import read_binary, read_json
+from . import data
 
 
 @pytest.mark.parametrize('pipeline, path',

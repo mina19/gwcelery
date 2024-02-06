@@ -1,19 +1,16 @@
 from unittest.mock import patch
+from urllib.error import HTTPError
 
-from astropy.table import Table
 import astropy_healpix as ah
 import numpy as np
 import pytest
-from urllib.error import HTTPError
+from astropy.table import Table
 
-from . import data
+from ..tasks import external_skymaps, gcn, gracedb
 from ..util import read_binary, read_json
-from .test_tasks_skymaps import toy_fits_filecontents  # noqa: F401
+from . import data
 from .test_tasks_skymaps import toy_3d_fits_filecontents  # noqa: F401
-from ..tasks import external_skymaps
-from ..tasks import gracedb
-from ..tasks import gcn
-
+from .test_tasks_skymaps import toy_fits_filecontents  # noqa: F401
 
 true_heasarc_link = ('http://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/'
                      + 'triggers/2017/bn170817529/current/')

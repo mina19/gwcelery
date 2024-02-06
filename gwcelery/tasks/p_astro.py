@@ -6,16 +6,18 @@ import io
 import json
 
 from celery.utils.log import get_task_logger
+
 try:
     from ligo.p_astro import computation as pastrocomp
 except ImportError:  # p_astro older than lscsoft/p_astro!42
     from ligo import p_astro_computation as pastrocomp
-from matplotlib import pyplot as plt
-import numpy as np
 
-from . import gracedb, igwn_alert
+import numpy as np
+from matplotlib import pyplot as plt
+
 from .. import app
-from ..util import closing_figures, PromiseProxy, read_json
+from ..util import PromiseProxy, closing_figures, read_json
+from . import gracedb, igwn_alert
 
 MEAN_VALUES_DICT = PromiseProxy(
     read_json, ('ligo.data', 'H1L1V1-mean_counts-1126051217-61603201.json'))

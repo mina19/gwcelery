@@ -1,9 +1,9 @@
 import logging
 from unittest.mock import patch
 
-from comet.utility.xml import xml_document
 import lxml.etree
 import pytest
+from comet.utility.xml import xml_document
 
 from ..tasks import gcn
 from ..util import read_binary

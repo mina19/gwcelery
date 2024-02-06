@@ -6,8 +6,7 @@ import urllib.parse
 from celery.exceptions import Ignore
 from ligo.lw.utils import load_fileobj
 from ligo.skymap import bayestar as _bayestar
-from ligo.skymap.io import events
-from ligo.skymap.io import fits
+from ligo.skymap.io import events, fits
 
 from .. import app
 from . import gracedb

@@ -1,21 +1,20 @@
 """Create mock events from the "First Two Years" paper."""
-from importlib import resources
 import io
 import random
+from importlib import resources
 
+import lal
+import numpy as np
 from celery import group
 from celery.utils.log import get_task_logger
+from ligo.lw import lsctables, utils
 from ligo.lw.table import Table
-from ligo.lw import utils
-from ligo.lw import lsctables
-import lal
 from ligo.skymap.io.events.ligolw import ContentHandler
-import numpy as np
 
-from .core import get_last
+from .. import app
 from ..data import first2years as data_first2years
-from ..import app
-from . import gracedb, first2years_external
+from . import first2years_external, gracedb
+from .core import get_last
 
 log = get_task_logger(__name__)
 

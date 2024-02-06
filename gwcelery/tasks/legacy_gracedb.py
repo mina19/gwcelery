@@ -5,7 +5,7 @@ from socket import gaierror
 
 from ligo.gracedb import rest
 
-from ..import app
+from .. import app
 from ..util import PromiseProxy
 
 client = PromiseProxy(rest.GraceDb,

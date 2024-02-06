@@ -1,13 +1,13 @@
 """GWSkyNet annotation with GWSkyNet model"""
-from functools import cache
 import json
 import re
+from functools import cache
 
 import numpy as np
 
-from . import gracedb, igwn_alert, superevents
-from ..import app
+from .. import app
 from ..util.tempfile import NamedTemporaryFile
+from . import gracedb, igwn_alert, superevents
 
 manual_pref_event_change_regexp = re.compile(
     app.conf['views_manual_preferred_event_log_message'].replace('.', '\\.')

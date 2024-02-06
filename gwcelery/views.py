@@ -1,24 +1,24 @@
 """Flask web application views."""
 import datetime
-from importlib import metadata
 import json
+import os
 import platform
 import re
 import socket
 import sys
-import os
+from importlib import metadata
 
 from astropy.time import Time
 from celery import group
-from flask import flash, jsonify, redirect, render_template, request, url_for
-from flask import make_response
+from flask import (flash, jsonify, make_response, redirect, render_template,
+                   request, url_for)
 from requests.exceptions import HTTPError
 
 from . import app as celery_app
 from ._version import get_versions
 from .flask import app, cache
-from .tasks import first2years, gracedb, orchestrator, circulars, \
-    superevents, first2years_external, external_skymaps
+from .tasks import (circulars, external_skymaps, first2years,
+                    first2years_external, gracedb, orchestrator, superevents)
 from .util import PromiseProxy
 
 # Change the application root url

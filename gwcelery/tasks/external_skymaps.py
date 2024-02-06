@@ -1,32 +1,30 @@
 """Create and upload external sky maps."""
-from astropy import units as u
-from astropy.coordinates import SkyCoord
-import astropy_healpix as ah
-from hpmoc.utils import uniq_intersection, reraster
-from hpmoc import PartialUniqSkymap
-from base64 import b64decode
-from celery import group
-#  import astropy.utils.data
-import numpy as np
-from ligo.skymap.io import fits
-from ligo.skymap.distance import parameters_to_marginal_moments
-from ligo.skymap.plot.bayes_factor import plot_bayes_factor
-from ligo.skymap.moc import bayestar_adaptive_grid
-import gcn
 import io
-import lxml.etree
 import re
 import ssl
 import urllib
+from base64 import b64decode
 from urllib.error import HTTPError
 
-from ..import app
-from . import gracedb
-from . import skymaps
+import astropy_healpix as ah
+import gcn
+import lxml.etree
+#  import astropy.utils.data
+import numpy as np
+from astropy import units as u
+from astropy.coordinates import SkyCoord
+from celery import group
+from hpmoc import PartialUniqSkymap
+from hpmoc.utils import reraster, uniq_intersection
+from ligo.skymap.distance import parameters_to_marginal_moments
+from ligo.skymap.io import fits
+from ligo.skymap.moc import bayestar_adaptive_grid
+from ligo.skymap.plot.bayes_factor import plot_bayes_factor
+
+from .. import _version, app
 from ..util.cmdline import handling_system_exit
 from ..util.tempfile import NamedTemporaryFile
-from ..import _version
-
+from . import gracedb, skymaps
 
 COMBINED_SKYMAP_FILENAME_MULTIORDER = 'combined-ext.multiorder.fits'
 """Filename of combined sky map in a multiordered format"""

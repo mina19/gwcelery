@@ -124,6 +124,8 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 ipython = "*"  # Include IPython for a nicer ``gwcelery shell`` experience.
 ipykernel = "*"  # Include IPython kernel for Jupyter Lab support.
 flower = ">=2.0.1"  # https://git.ligo.org/emfollow/gwcelery/-/issues/688
+flake8 = "^7.0.0"
+isort = "^5.13.2"
 
 [tool.poetry.scripts]
 gwcelery = "gwcelery:main"

@@ -1,15 +1,14 @@
-from importlib import resources
 import json
-from unittest.mock import call, Mock, patch
+from importlib import resources
+from unittest.mock import Mock, call, patch
 
 import pytest
 
 from .. import app
-from ..tasks import orchestrator
-from ..tasks import superevents
+from ..tasks import orchestrator, superevents
 from ..util import read_binary, read_json
-from .test_tasks_skymaps import toy_3d_fits_filecontents  # noqa: F401
 from . import data
+from .test_tasks_skymaps import toy_3d_fits_filecontents  # noqa: F401
 
 
 @pytest.mark.parametrize(  # noqa: F811

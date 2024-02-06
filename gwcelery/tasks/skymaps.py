@@ -2,26 +2,21 @@
 import os
 import tempfile
 
-from astropy.io import fits
 from astropy import table
+from astropy.io import fits
 from celery import group
 from celery.exceptions import Ignore
-from ligo.skymap.tool import ligo_skymap_flatten
-from ligo.skymap.tool import ligo_skymap_unflatten
-from ligo.skymap.tool import ligo_skymap_from_samples
-from ligo.skymap.tool import ligo_skymap_plot
-from ligo.skymap.tool import ligo_skymap_plot_coherence
-from ligo.skymap.tool import ligo_skymap_plot_volume
+from ligo.skymap.tool import (ligo_skymap_flatten, ligo_skymap_from_samples,
+                              ligo_skymap_plot, ligo_skymap_plot_coherence,
+                              ligo_skymap_plot_volume, ligo_skymap_unflatten)
 from matplotlib import pyplot as plt
 
-from . import external_skymaps
-from . import gracedb
-from . import igwn_alert
-from ..import app
+from .. import app
 from ..jinja import env
 from ..util.cmdline import handling_system_exit
 from ..util.matplotlib import closing_figures
 from ..util.tempfile import NamedTemporaryFile
+from . import external_skymaps, gracedb, igwn_alert
 
 
 @app.task(ignore_result=True, shared=False)

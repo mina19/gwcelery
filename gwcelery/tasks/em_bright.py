@@ -1,15 +1,14 @@
 """Qualitative source properties for CBC events."""
 import io
 import json
-from matplotlib import pyplot as plt
 
 from celery.utils.log import get_task_logger
+from matplotlib import pyplot as plt
 
-from ..import app
+from .. import app
+from ..util import NamedTemporaryFile, closing_figures
 from . import gracedb, igwn_alert
 from .p_astro import _format_prob
-from ..util import closing_figures, NamedTemporaryFile
-
 
 log = get_task_logger(__name__)
 

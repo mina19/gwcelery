@@ -3,9 +3,8 @@ from unittest.mock import call, patch
 import pytest
 
 from .. import app
+from ..tasks import gracedb, raven
 from .test_tasks_skymaps import toy_fits_filecontents  # noqa: F401
-from ..tasks import gracedb
-from ..tasks import raven
 
 
 @pytest.mark.live_worker

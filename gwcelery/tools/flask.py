@@ -1,13 +1,13 @@
 """Flask web application for manually triggering certain tasks."""
 from contextlib import ExitStack, nullcontext
 
-from celery.bin.base import CeleryDaemonCommand, CeleryOption, LOG_LEVEL
-from celery.platforms import detached
 import click
+from celery.bin.base import LOG_LEVEL, CeleryDaemonCommand, CeleryOption
+from celery.platforms import detached
 from flask.cli import FlaskGroup
 
-from ..flask import app
 from .. import views as _  # noqa: F401
+from ..flask import app
 
 
 class CeleryDaemonFlaskGroup(FlaskGroup):

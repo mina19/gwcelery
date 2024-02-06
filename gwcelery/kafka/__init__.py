@@ -1,7 +1,7 @@
 """Embed a Kafka producer into a Celery worker by
 :doc:`extending Celery with bootsteps <celery:userguide/extending>`.
 """
-from .bootsteps import Producer, Consumer
+from .bootsteps import Consumer, Producer
 
 
 def install(app):

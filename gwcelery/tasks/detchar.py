@@ -21,23 +21,21 @@ import json
 import socket
 import time
 
+import matplotlib.pyplot as plt
+import numpy as np
+import sentry_sdk
 from astropy.time import Time
 from celery import group
 from celery.utils.log import get_task_logger
 from glue.lal import Cache
 from gwdatafind import find_urls
-from gwpy.timeseries import Bits, StateVector, TimeSeries
 from gwpy.plot import Plot
-import matplotlib.pyplot as plt
-import numpy as np
-import sentry_sdk
+from gwpy.timeseries import Bits, StateVector, TimeSeries
 
-from . import gracedb
-from ..import app
-from ..import _version
+from .. import _version, app
 from ..jinja import env
 from ..util import closing_figures
-
+from . import gracedb
 
 __author__ = 'Geoffrey Mo <geoffrey.mo@ligo.org>'
 

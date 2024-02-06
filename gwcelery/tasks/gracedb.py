@@ -1,12 +1,12 @@
 """Communication with GraceDB."""
-from requests.exceptions import ConnectionError, HTTPError
 import functools
 import re
 
-from celery.utils.log import get_task_logger
 import gracedb_sdk
+from celery.utils.log import get_task_logger
+from requests.exceptions import ConnectionError, HTTPError
 
-from ..import app
+from .. import app
 from ..util import PromiseProxy
 
 client = PromiseProxy(gracedb_sdk.Client,

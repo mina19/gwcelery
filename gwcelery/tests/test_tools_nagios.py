@@ -1,10 +1,10 @@
 from distutils.spawn import find_executable
+from pathlib import Path
 from unittest.mock import Mock
 
 import lal
-from gwpy.time import tconvert
 import pytest
-from pathlib import Path
+from gwpy.time import tconvert
 
 from .. import app, main
 from ..tools import nagios

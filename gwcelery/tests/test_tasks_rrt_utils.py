@@ -1,11 +1,11 @@
 import json
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from ..tasks import rrt_utils
 from ..util import read_binary
 from . import data
-
 
 skymap_small = read_binary(data, 'rrt_small_area.fits')
 skymap_large = read_binary(data, 'MS220722v_bayestar.multiorder.fits')

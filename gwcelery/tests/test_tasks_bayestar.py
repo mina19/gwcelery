@@ -1,15 +1,15 @@
 from unittest.mock import patch
 
+import numpy as np
+import pytest
 from astropy import table
 from astropy.io import fits
 from celery.exceptions import Ignore
-import numpy as np
-import pytest
 
-from . import data
 from ..tasks.bayestar import localize
-from ..util.tempfile import NamedTemporaryFile
 from ..util import read_binary
+from ..util.tempfile import NamedTemporaryFile
+from . import data
 
 
 def mock_bayestar(event, *args, **kwargs):

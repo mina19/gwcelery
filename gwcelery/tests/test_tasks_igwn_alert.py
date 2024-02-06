@@ -1,8 +1,8 @@
-from importlib import resources
 import json
 import logging
 import os
 import stat
+from importlib import resources
 from unittest.mock import patch
 
 import lxml

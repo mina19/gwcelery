@@ -1,18 +1,14 @@
-from astropy.time import Time
-from lxml import etree
+from pathlib import Path
 from urllib.parse import urlparse
+
+from astropy.time import Time
 from celery import group
 from celery.utils.log import get_logger
-from pathlib import Path
+from lxml import etree
 
-from ..import app
-from . import alerts
-from . import detchar
-from . import gcn
-from . import gracedb
-from . import external_skymaps
-from . import igwn_alert
-from . import raven
+from .. import app
+from . import (alerts, detchar, external_skymaps, gcn, gracedb, igwn_alert,
+               raven)
 
 log = get_logger(__name__)
 

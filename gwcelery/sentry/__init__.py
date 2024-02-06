@@ -1,9 +1,9 @@
 """Error telemetry for `Sentry <https://sentry.io>`_."""
 from urllib.parse import urlparse, urlunparse
 
-from celery.utils.log import get_logger
-from safe_netrc import netrc, NetrcParseError
 import sentry_sdk
+from celery.utils.log import get_logger
+from safe_netrc import NetrcParseError, netrc
 from sentry_sdk.integrations import celery, flask, logging, redis, tornado
 
 from .. import _version

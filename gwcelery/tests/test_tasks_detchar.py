@@ -1,17 +1,16 @@
-from io import BytesIO
 import logging
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import call, patch
 
-from astropy.time import Time
 import celery
-from gwpy.timeseries import Bits
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from astropy.time import Time
+from gwpy.timeseries import Bits
 
-from ..import app
-from ..import _version
+from .. import _version, app
 from ..tasks import detchar
 
 

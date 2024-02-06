@@ -1,8 +1,8 @@
 """Integration between the Celery, Twisted, and Comet logging systems."""
 
+import comet.log
 from celery.signals import after_setup_logger
 from celery.utils.log import get_logger
-import comet.log
 from twisted.python.log import PythonLoggingObserver
 
 log = get_logger(__name__)

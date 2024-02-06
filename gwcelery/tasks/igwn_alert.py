@@ -3,10 +3,10 @@ import json
 
 from celery.utils.log import get_task_logger
 
-from ..igwn_alert.signals import igwn_alert_received
 from .. import app
-from .core import DispatchHandler
+from ..igwn_alert.signals import igwn_alert_received
 from . import gracedb
+from .core import DispatchHandler
 
 log = get_task_logger(__name__)
 

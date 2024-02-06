@@ -1,9 +1,11 @@
-from . import gracedb
 import json
-from ..util.tempfile import NamedTemporaryFile
-from ..import app
+
 from ligo.skymap.io import read_sky_map
 from ligo.skymap.postprocess.crossmatch import crossmatch
+
+from .. import app
+from ..util.tempfile import NamedTemporaryFile
+from . import gracedb
 
 
 @app.task(shared=False)

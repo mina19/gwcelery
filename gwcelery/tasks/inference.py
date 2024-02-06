@@ -1,23 +1,21 @@
 """Source Parameter Estimation with LALInference, Bilby, and RapidPE."""
-from distutils.spawn import find_executable
-from distutils.dir_util import mkpath
 import glob
 import json
 import os
 import subprocess
 import urllib
+from distutils.dir_util import mkpath
+from distutils.spawn import find_executable
 
-from bilby_pipe.utils import convert_string_to_dict
+import numpy as np
 from bilby_pipe.bilbyargparser import BilbyConfigFileParser
+from bilby_pipe.utils import convert_string_to_dict
 from celery import group
 from celery.exceptions import Ignore
-import numpy as np
 
 from .. import app
 from ..jinja import env
-from . import condor
-from . import gracedb
-
+from . import condor, gracedb
 
 _RAPIDPE_NO_GSTLAL_TRIGGER_EXIT_CODE = 100
 

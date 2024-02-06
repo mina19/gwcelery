@@ -4,13 +4,13 @@ Data Grid clusters.
 These commands apply to the GWCelery instance that is
 running in the current working directory.
 """
-from importlib import resources
 import json
 import os
 import shlex
 import subprocess
 import sys
 import time
+from importlib import resources
 
 import click
 import lxml.etree

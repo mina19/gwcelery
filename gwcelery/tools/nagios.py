@@ -2,17 +2,17 @@
 
 See https://nagios-plugins.org/doc/guidelines.html.
 """
-from enum import IntEnum
 import glob
+from enum import IntEnum
 from pathlib import Path
 from sys import exit
 from traceback import format_exc, format_exception
 
 import click
-from gwpy.time import tconvert
 import kombu.exceptions
-import numpy as np
 import lal
+import numpy as np
+from gwpy.time import tconvert
 
 # Make sure that all tasks are registered
 from .. import tasks  # noqa: F401

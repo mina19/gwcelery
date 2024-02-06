@@ -3,10 +3,9 @@ import ligo.raven.search
 from celery import group
 from celery.utils.log import get_task_logger
 
-from ..import app
+from .. import app
+from . import external_skymaps, gracedb
 from .core import identity
-from . import external_skymaps
-from . import gracedb
 
 log = get_task_logger(__name__)
 

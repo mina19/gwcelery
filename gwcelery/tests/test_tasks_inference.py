@@ -1,21 +1,20 @@
 import configparser
 import glob
-from itertools import product
+import json
 import os
 import subprocess
-
-from celery.exceptions import Ignore
 from contextlib import nullcontext as does_not_raise
-import json
-import pytest
+from itertools import product
 from unittest.mock import Mock
 
+import pytest
+from celery.exceptions import Ignore
+
 from .. import app
-from ..tasks import condor
-from ..tasks import inference
-from ..conf import production as conf_production
 from ..conf import playground as conf_playground
+from ..conf import production as conf_production
 from ..conf import test as conf_test
+from ..tasks import condor, inference
 
 
 def test_find_appropriate_cal_env(tmp_path):

@@ -1,19 +1,18 @@
 """Create mock external events to be in coincidence
    with MDC superevents."""
 
-from astropy.time import Time
-from lxml import etree
-import numpy as np
-from pathlib import Path
 import random
 import re
+from pathlib import Path
 
-from ..import app
-from . import external_triggers
-from . import igwn_alert
-from . import raven
+import numpy as np
+from astropy.time import Time
+from lxml import etree
+
+from .. import app
 from ..tests import data
 from ..util import read_json
+from . import external_triggers, igwn_alert, raven
 
 
 def create_upload_external_event(gpstime, pipeline, ext_search):

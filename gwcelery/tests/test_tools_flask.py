@@ -1,6 +1,7 @@
 from unittest.mock import Mock
 
-from .. import main, app as celery_app
+from .. import app as celery_app
+from .. import main
 from ..tools import flask
 
 

@@ -5,20 +5,20 @@ References
 .. [GCN] https://gcn.gsfc.nasa.gov
 
 """
-import html
 import difflib
+import html
 import urllib.parse
 
-from comet.utility.xml import xml_document
 import gcn
-from gcn import get_notice_type, NoticeType
 import lxml.etree
+from comet.utility.xml import xml_document
+from gcn import NoticeType, get_notice_type
 from twisted.internet import reactor
 
+from .. import app
 from ..voevent.signals import voevent_received
-from ..import app
-from .core import DispatchHandler
 from . import gracedb
+from .core import DispatchHandler
 
 
 class _VOEventDispatchHandler(DispatchHandler):

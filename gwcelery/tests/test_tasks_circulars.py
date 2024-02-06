@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from ..tasks import circulars
 from ..tasks import legacy_gracedb as gracedb

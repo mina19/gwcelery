@@ -1,6 +1,6 @@
 import json
-from threading import Thread
 import warnings
+from threading import Thread
 
 from adc.errors import KafkaException
 from celery import bootsteps

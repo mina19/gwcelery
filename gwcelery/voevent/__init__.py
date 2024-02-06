@@ -2,7 +2,7 @@
 worker by :doc:`extending Celery with bootsteps
 <celery:userguide/extending>`.
 """
-from .bootsteps import Reactor, Broadcaster, Receiver
+from .bootsteps import Broadcaster, Reactor, Receiver
 
 
 def install(app):

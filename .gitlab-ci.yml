@@ -86,6 +86,8 @@ lint:
   stage: test
   extends: .python:flake8
   needs: []
+  variables:
+    REQUIREMENTS: flake8-isort
 
 associate commits in Sentry:
   stage: test

@@ -4,13 +4,9 @@ import sys
 
 from celery import Celery
 
+from . import email, igwn_alert, kafka, sentry, voevent
 from ._version import get_versions
 from .conf import playground
-from . import email
-from . import igwn_alert
-from . import kafka
-from . import sentry
-from . import voevent
 
 __all__ = ('app',)
 

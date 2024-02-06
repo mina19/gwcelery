@@ -18,11 +18,11 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import builtins
-from pathlib import Path
 import sys
+from pathlib import Path
 
-from packaging.version import Version
 import pep517.meta
+from packaging.version import Version
 
 # Make it possible for our code to tell that it is running under Sphinx.
 # See https://stackoverflow.com/a/65147676/167694

@@ -1,10 +1,11 @@
-import pytest
-from unittest.mock import call, Mock, patch
+from unittest.mock import Mock, call, patch
 
-from . import data
+import pytest
+
 from .. import app
 from ..tasks import first2years_external
 from ..util import read_json
+from . import data
 
 
 @pytest.mark.parametrize('ext_search', ['GRB', 'SubGRB', 'SubGRBTargeted'])

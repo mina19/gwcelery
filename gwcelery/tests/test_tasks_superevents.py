@@ -1,15 +1,14 @@
-from celery import exceptions
-import pytest
 from unittest.mock import call, patch
 
+import pytest
+from celery import exceptions
 from requests.exceptions import HTTPError
 from requests.models import Response
 
+from .. import app
 from ..tasks import gracedb, superevents
 from ..util import read_json
-from .. import app
 from . import data
-
 
 SUPEREVENTS_NEIGHBOURS = read_json(data, 'superevents.json')
 """Dictionary storing mock superevent neighbors"""

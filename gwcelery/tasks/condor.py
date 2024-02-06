@@ -10,10 +10,10 @@ References
 .. [2] http://research.cs.wisc.edu/htcondor/classad/refman/node3.html
 
 """
-from distutils.dir_util import mkpath
 import os
 import subprocess
 import tempfile
+from distutils.dir_util import mkpath
 
 import lxml.etree
 

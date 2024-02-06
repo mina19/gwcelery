@@ -1,10 +1,10 @@
 import datetime
-from unittest.mock import MagicMock, Mock, patch, call
+from unittest.mock import MagicMock, Mock, call, patch
 
+import pytest
 from flask import get_flashed_messages, url_for
 from requests.exceptions import HTTPError
 from requests.models import Response
-import pytest
 from werkzeug.http import HTTP_STATUS_CODES
 
 from .. import flask

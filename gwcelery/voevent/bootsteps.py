@@ -3,9 +3,9 @@ import threading
 from celery import bootsteps
 from celery.concurrency import solo
 
-from .util import get_host_port, get_local_ivo, get_network
 from .logging import log
 from .signals import voevent_received
+from .util import get_host_port, get_local_ivo, get_network
 
 __all__ = ('Broadcaster', 'Reactor', 'Receiver')
 
@@ -158,6 +158,7 @@ class Receiver(TwistedService):
         from comet.icomet import IHandler
         from twisted.application.internet import TCPClient
         from zope.interface import implementer
+
         from .subscriber import VOEventSubscriberFactory
 
         @implementer(IHandler)

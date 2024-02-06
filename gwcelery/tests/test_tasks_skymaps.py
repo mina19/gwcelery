@@ -4,9 +4,9 @@ import io
 import os
 from unittest.mock import patch
 
-from astropy.table import Table
 import numpy as np
 import pytest
+from astropy.table import Table
 
 from ..tasks import external_skymaps, skymaps
 from ..util import read_binary, read_text

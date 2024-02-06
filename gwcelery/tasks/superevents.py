@@ -11,7 +11,7 @@ from itertools import filterfalse, groupby
 from celery.utils.log import get_task_logger
 from ligo.segments import segment, segmentlist
 
-from ..import app
+from .. import app
 from . import gracedb, igwn_alert
 
 log = get_task_logger(__name__)

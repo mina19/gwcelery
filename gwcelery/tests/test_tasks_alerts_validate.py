@@ -1,13 +1,13 @@
-import fastavro
 from unittest.mock import Mock, patch
 
+import fastavro
 import pytest
 
 from .. import app
+from ..kafka.bootsteps import AvroBlobWrapper, schema
 from ..tasks import alerts
 from ..util import read_binary, read_json
 from . import data
-from ..kafka.bootsteps import AvroBlobWrapper, schema
 
 
 def _validate_alert(public_alert_avro_blob):

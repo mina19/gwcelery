@@ -1,5 +1,5 @@
-from contextlib import contextmanager
 import tempfile
+from contextlib import contextmanager
 
 __all__ = ('NamedTemporaryFile',)
 
