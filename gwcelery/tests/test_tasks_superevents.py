@@ -442,8 +442,6 @@ def test_process_called(labels, label, search, alert_type, group, ifos):
         superevents.handle(payload)
         if "K1" in ifos:
             process.assert_not_called()
-        elif search == superevents.SUBSOLAR_SEARCH_NAME:
-            process.assert_not_called()
         elif superevents.is_complete(payload['object']):
             process.assert_called()
         elif alert_type == 'new':

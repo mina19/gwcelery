@@ -81,11 +81,6 @@ def handle(payload):
         log.info("Skipping processing of %s because of high FAR", gid)
         return
 
-    search = payload['object']['search']
-    if search == SUBSOLAR_SEARCH_NAME:
-        log.info("Skipping processing subsolar search event %s", gid)
-        return
-
     priority = 1
     if alert_type == 'label_added':
         priority = 0

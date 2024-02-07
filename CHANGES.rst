@@ -23,6 +23,9 @@ Changelog
 
 -   Make the ``dev`` configuration the default for testing.
 
+-   Allow SSM events to be added to/create superevents. Disable em-bright
+    on SSM events until implementation exists.
+
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
 
