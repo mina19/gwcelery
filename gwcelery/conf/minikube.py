@@ -18,9 +18,6 @@ igwn_alert_group = 'default'
 gracedb_host = 'gracedb.default.svc.cluster.local'
 """GraceDB host."""
 
-early_warning_alert_far_threshold = float('inf')
-"""False alarm rate threshold for early warning alerts."""
-
 mock_events_simulate_multiple_uploads = False
 """If True, then upload each mock event several times in rapid succession with
 random jitter in order to simulate multiple pipeline uploads."""

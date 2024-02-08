@@ -963,9 +963,17 @@ def parameter_estimation(far_event, superevent_id, pe_pipeline):
     uploads messages explaining why parameter estimation is not started.
     """
     far, event = far_event
-    threshold = (app.conf['significant_alert_far_threshold']['cbc'] /
-                 app.conf['significant_alert_trials_factor']['cbc'])
-    if event['group'] != 'CBC':
+    group = event['group'].lower()
+    search = event['search'].lower()
+    if search in app.conf['significant_alert_far_threshold']['cbc']:
+        threshold = (
+            app.conf['significant_alert_far_threshold']['cbc'][search] /
+            app.conf['significant_alert_trials_factor']['cbc'][search]
+        )
+    else:
+        # Fallback in case an event is uploaded to an unlisted search
+        threshold = -1 * float('inf')
+    if group != 'cbc':
         gracedb.upload.delay(
             filecontents=None, filename=None,
             graceid=superevent_id,
@@ -981,7 +989,7 @@ def parameter_estimation(far_event, superevent_id, pe_pipeline):
                     'than the PE threshold, {}  Hz.'.format(threshold),
             tags='pe'
         )
-    elif event['search'] == 'MDC':
+    elif search == 'mdc':
         gracedb.upload.delay(
             filecontents=None, filename=None,
             graceid=superevent_id,

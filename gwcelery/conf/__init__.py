@@ -153,36 +153,83 @@ superevent_candidate_preference = {
 used by :meth:`gwcelery.tasks.superevents.keyfunc` to sort
 candidates for the preferred event before a ranking statistic is used."""
 
-significant_alert_far_threshold = {'cbc': 1 / (30 * 86400),
-                                   'burst': 1 / (365 * 86400),
-                                   'test': 1 / (30 * 86400)}
-"""Group specific maximum false alarm rate to consider
-sending significant alerts."""
+significant_alert_far_threshold = {
+    'cbc': {
+        'allsky': 1 / (30 * 86400),
+        'earlywarning': 1 / (30 * 86400),
+        'mdc': 1 / (30 * 86400),
+        'ssm': -1 * float('inf')  # SSM public alerts disabled until approved
+    },
+    'burst': {
+        'allsky': 1 / (365 * 86400),
+        'bbh': 1 / (30 * 86400)
+    },
+    'test': {
+        'allsky': 1 / (30 * 86400),
+        'bbh': 1 / (30 * 86400),
+        'earlywarning': 1 / (30 * 86400),
+        'ssm': 1 / (30 * 86400)
+    }
+}
+"""Group and search specific maximum false alarm rate to consider sending
+significant alerts. A threshold of negative infinity disables alerts."""
 
-early_warning_alert_trials_factor = 4.0
-"""Trials factor for early warning alerts. There are two pipelines that are
-producing early warning events: gstlal and spiir."""
+significant_alert_trials_factor = {
+    'cbc': {'allsky': 6,
+            'earlywarning': 4,
+            'mdc': 6,
+            'ssm': 2},
+    'burst': {'allsky': 4,
+              'bbh': 6,
+              'imbh': 4}
+}
+"""Trials factor corresponding to trigger categories. The CBC AllSky and Burst
+BBH searches are treated as one group with a common trials factor. CBC AllSky
+pipelines are gstlal, pycbc, mbta, spiir, and raven. The Burst BBH pipeline is
+cwb. CBC EarlyWarning pipelines are gstlal, pycbc, mbta, and spiir. CBC SSM
+pipelines are gstlal and mbta. The Burst AllSky and IMBH searches are treated
+as one group with one trials factor. The Burst AllSky piplines are cwb, olib,
+and raven. The Burst IMBH pipeline is cwb."""
 
-early_warning_alert_far_threshold = 1 / (30 * 86400)
-"""False alarm rate threshold for significant early warning alerts."""
-
-significant_alert_trials_factor = dict(cbc=5.0, burst=4.0)
-"""Trials factor corresponding to trigger categories. For CBC and Burst, trials
-factor is the number of pipelines. CBC pipelines are gstlal, pycbc, mbta and
-spiir. Burst searches are cwb.allsky, cwb.imbh, and olib."""
-
-preliminary_alert_trials_factor = dict(cbc=7.0, burst=7.0)
-"""Trials factor for less significant alerts."""
+preliminary_alert_trials_factor = {
+    'cbc': {'allsky': 8,
+            'earlywarning': 4,
+            'mdc': 8,
+            'ssm': 2},
+    'burst': {'allsky': 8,
+              'bbh': 8,
+              'imbh': 8}
+}
+"""Trials factor for less significant alert categories. The CBC AllSky, Burst
+AllSky, Burst BBH, and Burst IMBH searches are all treated as one group with a
+shared trials factor. CBC AllSky pipelines are gstlal, pycbc, mbta, and spiir.
+Burst AllSky pipelines are cwb and olib. The Burst BBH pipeline is cwb. The
+Burst IMBH pipeline is cwb."""
 
 preliminary_alert_far_threshold = {
-    'cbc': 2 / (1 * 86400) * preliminary_alert_trials_factor['cbc'],
-    'burst': 2 / (1 * 86400) * preliminary_alert_trials_factor['burst'],
-    'test': 2 / (1 * 86400) * preliminary_alert_trials_factor['cbc']
+    'cbc': {
+        'allsky': 2 / (1 * 86400) * preliminary_alert_trials_factor['cbc']['allsky'],  # noqa: E501
+        'earlywarning': -1 * float('inf'),
+        'mdc': -1 * float('inf'),
+        'ssm': -1 * float('inf')
+    },
+    'burst': {
+        'allsky': 2 / (1 * 86400) * preliminary_alert_trials_factor
+        ['burst']['allsky'],
+        'bbh': 2 / (1 * 86400) * preliminary_alert_trials_factor
+        ['burst']['bbh']
+    },
+    'test': {
+        'allsky': 2 / (1 * 86400) * preliminary_alert_trials_factor
+        ['cbc']['allsky'],
+        'earlywarning': -1 * float('inf'),
+        'ssm': -1 * float('inf')
+    }
 }
-"""Group specific maximum false alarm rate to consider sending less significant
-alerts. Trials factors are included here to ensure events are sent with the
-false alarm rate initially listed and removing trials factors are from the
-threshold calculation."""
+"""Group and search specific maximum false alarm rate to consider sending less
+significant alerts. Trials factors are included here to ensure events are sent
+with the false alarm rate initially listed and removing trials factors are from
+the threshold calculation. A threshold of negative infinity disables alerts."""
 
 snews_gw_far_threshold = 1 / (3600 * 24)
 """Maximum false alarm rate for a superevent to send out a coincidence alert

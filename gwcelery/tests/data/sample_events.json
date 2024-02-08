@@ -30,7 +30,7 @@
       "EMBRIGHT_READY",
       "SKYMAP_READY"
     ],
-    "search": "LowMass",
+    "search": "AllSky",
     "nevents": 2,
     "superevent": "S1",
     "superevent_neighbours": {"S1": {}},
@@ -69,7 +69,7 @@
       "PASTRO_READY",
       "EMBRIGHT_READY"
     ],
-    "search": "LowMass",
+    "search": "AllSky",
     "nevents": 2,
     "superevent": "S1",
     "submitter": "submitter",
@@ -108,7 +108,7 @@
       "EMBRIGHT_READY",
       "SKYMAP_READY"
     ],
-    "search": "LowMass",
+    "search": "AllSky",
     "nevents": 2,
     "superevent": "S1",
     "superevent_neighbours": {"S1": {}},

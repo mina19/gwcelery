@@ -489,47 +489,47 @@ def _mock_get_event(graceid):
     if graceid == "S1234":
         return {"superevent_id": "S1234",
                 "preferred_event": "G000001",
-                "preferred_event_data": {"group": "Burst"},
+                "preferred_event_data": {"group": "Burst", "search": "AllSky"},
                 "far": 1e-5}
     elif graceid == "S2345":
         return {"superevent_id": "S2345",
                 "preferred_event": "G000002",
-                "preferred_event_data": {"group": "Burst"},
+                "preferred_event_data": {"group": "Burst", "search": "AllSky"},
                 "far": 1e-10}
     elif graceid == "S2468":
         return {"superevent_id": "S2468",
                 "preferred_event": "G000002",
-                "preferred_event_data": {"group": "CBC"},
+                "preferred_event_data": {"group": "CBC", "search": "AllSky"},
                 "far": 1e-4}
     elif graceid == "S5678":
         return {"superevent_id": "S5678",
                 "preferred_event": "G000003",
-                "preferred_event_data": {"group": "CBC"},
+                "preferred_event_data": {"group": "CBC", "search": "AllSky"},
                 "far": 1e-5}
     elif graceid == "S8642":
         return {"superevent_id": "S8642",
                 "preferred_event": "G000003",
-                "preferred_event_data": {"group": "Burst"},
+                "preferred_event_data": {"group": "Burst", "search": "AllSky"},
                 "far": 1e-3}
     elif graceid == "S9876":
         return {"superevent_id": "S9876",
                 "preferred_event": "G000003",
-                "preferred_event_data": {"group": "Burst"},
+                "preferred_event_data": {"group": "Burst", "search": "AllSky"},
                 "far": 1e-6}
     elif graceid == "S9999":
         return {"superevent_id": "S9876",
                 "preferred_event": "G000003",
-                "preferred_event_data": {"group": "Burst"},
+                "preferred_event_data": {"group": "Burst", "search": "AllSky"},
                 "far": -1e-6}
     elif graceid == "TS1111":
         return {"superevent_id": "TS1111",
                 "preferred_event": "G000003",
-                "preferred_event_data": {"group": "Test"},
+                "preferred_event_data": {"group": "Test", "search": "AllSky"},
                 "far": 1e-6}
     elif graceid == "MS1111":
         return {"superevent_id": "MS1111",
                 "preferred_event": "M000004",
-                "preferred_event_data": {"group": "CBC"},
+                "preferred_event_data": {"group": "CBC", "search": "AllSky"},
                 "far": 1e-9}
     elif graceid == 'E1':
         return {"graceid": "E1",

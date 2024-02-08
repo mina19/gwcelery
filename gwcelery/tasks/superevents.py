@@ -502,21 +502,34 @@ def _should_publish(event, significant=False):
     """
     group = event['group'].lower()
     search = event.get('search', '').lower()
-    pipeline = event.get('pipeline', '').lower()
-    # Define the special case burst-cwb-bbh that is a CBC
-    if pipeline == 'cwb' and search == 'bbh':
-        group = 'cbc'
-    if EARLY_WARNING_LABEL in event['labels']:
-        far_threshold = app.conf['early_warning_alert_far_threshold']
-        trials_factor = app.conf['early_warning_alert_trials_factor']
-    elif not significant:
-        far_threshold = app.conf['preliminary_alert_far_threshold'][group]
-        trials_factor = app.conf['preliminary_alert_trials_factor'][group]
+    if search in app.conf['significant_alert_far_threshold'][group]:
+        low_signif_far_threshold = \
+            app.conf['preliminary_alert_far_threshold'][group][search]
+        low_signif_trials_factor = \
+            app.conf['preliminary_alert_trials_factor'][group][search]
+        signif_far_threshold = \
+            app.conf['significant_alert_far_threshold'][group][search]
+        signif_trials_factor = \
+            app.conf['significant_alert_trials_factor'][group][search]
+
+        low_signif_far = low_signif_trials_factor * event['far']
+        signif_far = signif_trials_factor * event['far']
     else:
-        far_threshold = app.conf['significant_alert_far_threshold'][group]
-        trials_factor = app.conf['significant_alert_trials_factor'][group]
-    far = trials_factor * event['far']
+        # Fallback in case an event is uploaded to an unlisted search
+        low_signif_far = -1 * float('inf')
+        signif_far = -1 * float('inf')
+
     raven_coincidence = ('RAVEN_ALERT' in event['labels'])
+
+    # Ensure that anything that returns True for significant=True also returns
+    # True for significant=False. For example, a significant EarlyWarning event
+    # should return True for both significant=True and significant=False.
+    if significant or signif_far < signif_far_threshold:
+        far = signif_far
+        far_threshold = signif_far_threshold
+    else:
+        far = low_signif_far
+        far_threshold = low_signif_far_threshold
 
     return (not event['offline'] and 'INJ' not in event['labels'],
             far <= far_threshold or raven_coincidence)

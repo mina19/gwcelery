@@ -446,8 +446,13 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
     # Specify group is not given, currently missing for subthreshold searches
     gw_group = gw_group or superevent['preferred_event_data']['group']
     gw_group = gw_group.lower()
+    gw_search = superevent['preferred_event_data']['search'].lower()
     pipeline = ext_event['pipeline']
-    trials_factor = app.conf['significant_alert_trials_factor'][gw_group]
+    if gw_search in app.conf['significant_alert_trials_factor'][gw_group]:
+        trials_factor = \
+            app.conf['significant_alert_trials_factor'][gw_group][gw_search]
+    else:
+        trials_factor = 1
     missing_skymap = True
     comments = []
     messages = []
@@ -483,7 +488,14 @@ def trigger_raven_alert(coinc_far_dict, superevent, gracedb_id,
             coinc_far = time_coinc_far
 
         far_type = 'joint'
-        far_threshold = app.conf['significant_alert_far_threshold'][gw_group]
+        if gw_search in app.conf['significant_alert_far_threshold'][gw_group]:
+            far_threshold = (
+                app.conf['significant_alert_far_threshold'][gw_group]
+                [gw_search]
+            )
+        else:
+            # Fallback in case an event is uploaded to an unlisted search
+            far_threshold = -1 * float('inf')
         coinc_far_f = coinc_far * trials_factor * (trials_factor - 1.)
         pass_far_threshold = coinc_far_f <= far_threshold
         is_far_negative = coinc_far_f < 0

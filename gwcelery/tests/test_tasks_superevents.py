@@ -239,7 +239,7 @@ def test_raven_alert(mock_create_label, labels):
                         "offline": False,
                         "pipeline": "gstlal",
                         "reporting_latency": "",
-                        "search": "",
+                        "search": "AllSky",
                         "submitter": "albert.einstein@LIGO.ORG"
                     },
                     "superevent_id": "S100",
@@ -381,6 +381,107 @@ def test_allsky_preferred_over_earlywarning(allsky_far):
             'S100', t_start=999999, t_end=1000001.1, t_0=1000000.1,
             preferred_event='G123456'
         )
+
+
+@pytest.mark.parametrize('search', ['EarlyWarning', 'SSM'])
+def test_do_not_send_low_signif_alerts(search):
+    """Test that uploads from EarlyWarning and SSM do not trigger low
+    significance notices.
+    """
+    payload = {
+        "uid": "G123456",
+        "alert_type": "label_added",
+        "data": {"name": "SKYMAP_READY"},
+        "object": {
+            "graceid": "G123456",
+            "pipeline": "gstlal",
+            "group": "CBC",
+            "search": search,
+            "far": 2e-6,
+            "instruments": "H1,L1",
+            "superevent": "S100",
+            "superevent_neighbours":
+            {
+                "S100": {
+                    "far": 2e-6,
+                    "gw_events": [
+                        "G123456"
+                    ],
+                    "preferred_event": "G123456",
+                    "preferred_event_data": {
+                        'extra_attributes': {
+                            'SingleInspiral': [
+                                {
+                                    'chisq': 1.07,
+                                    'snr': 8,
+                                    'ifo': 'L1'
+                                },
+                                {
+                                    'chisq': 0.54,
+                                    'snr': 8,
+                                    'ifo': 'H1'
+                                }
+                            ],
+                            'CoincInspiral': {
+                                'snr': 11.3
+                            },
+                        },
+                        "far": 3.e-6,
+                        "far_is_upper_limit": False,
+                        "gpstime": 1000000.1,
+                        "graceid": "G123456",
+                        "group": "CBC",
+                        "instruments": "H1,L1",
+                        "labels": ['SKYMAP_READY', 'PASTRO_READY',
+                                   'EMBRIGHT_READY'],
+                        "offline": False,
+                        "pipeline": "gstlal",
+                        "reporting_latency": "",
+                        "search": search,
+                        "submitter": "albert.einstein@LIGO.ORG"
+                    },
+                    "superevent_id": "S100",
+                    "labels": [],
+                    "t_0": 1000000,
+                    "t_end": 1000001,
+                    "t_start": 999999
+                }
+            },
+            "offline": False,
+            "gpstime": 1000000.1,
+            "labels": ['SKYMAP_READY', 'PASTRO_READY', 'EMBRIGHT_READY'],
+            'extra_attributes': {
+                'SingleInspiral': [
+                    {
+                        'chisq': 1.07,
+                        'snr': 8,
+                        'ifo': 'L1'
+                    },
+                    {
+                        'chisq': 0.54,
+                        'snr': 8,
+                        'ifo': 'H1'
+                    }
+                ],
+                'CoincInspiral': {
+                    'snr': 11.3
+                },
+            },
+        },
+    }
+    superevent_response = payload['object']['superevent_neighbours']['S100']
+
+    with patch('gwcelery.tasks.gracedb.get_superevents',
+               return_value=[superevent_response]), \
+            patch('gwcelery.tasks.gracedb.get_superevent',
+                  return_value=superevent_response), \
+            patch('gwcelery.tasks.gracedb.update_superevent') as p1, \
+            patch('gwcelery.tasks.gracedb.create_label._orig_run') as p2:
+        superevents.handle(payload)
+
+        p1.assert_not_called()
+        p2.assert_called_with(superevents.READY_LABEL, 'S100')
+        assert_not_called_with(p2, superevents.FROZEN_LABEL, 'S100')
 
 
 @pytest.mark.parametrize('labels',
@@ -553,7 +654,13 @@ def test_upload_same_event():
         True, True],
      ['CBC', 'gstlal', 'EarlyWarning', False, 1.e-15, 'H1,L1,V1',  # EW search
         ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY'],
-        True, True]])
+        True, True],
+     ['CBC', 'gstlal', 'EarlyWarning', False, 2.e-6, 'H1,L1,V1',  # EW search
+        ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY'],
+        False, False],
+     ['CBC', 'gstlal', 'SSM', False, 2.e-6, 'H1,L1,V1',  # SSM search
+        ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY'],
+        False, False]])
 def test_should_publish(group, pipeline, search, offline, far, instruments,
                         labels, expected_result,
                         expected_result_less_significant):

@@ -12,48 +12,57 @@ from .test_tasks_skymaps import toy_3d_fits_filecontents  # noqa: F401
 
 
 @pytest.mark.parametrize(  # noqa: F811
-    'alert_type,alert_label,group,pipeline,offline,far,instruments,'
+    'alert_type,alert_label,group,search,pipeline,offline,far,instruments,'
     'superevent_id,superevent_labels',
-    [['label_added', superevents.FROZEN_LABEL, 'CBC', 'gstlal', False, 1.e-9,
-        ['H1'], 'S1234', [superevents.FROZEN_LABEL]],
-     ['label_added', 'ADVREQ', 'CBC', 'gstlal', False, 1.e-9,
+    [['label_added', superevents.FROZEN_LABEL, 'CBC', 'AllSky', 'gstlal',
+        False, 1.e-9, ['H1'], 'S1234', [superevents.FROZEN_LABEL]],
+     ['label_added', 'ADVREQ', 'CBC', 'AllSky', 'gstlal', False, 1.e-9,
         ['H1'], 'S1234', ['ADVREQ']],
-     ['label_added', superevents.SIGNIFICANT_LABEL, 'CBC', 'gstlal', False,
-         1.e-9, ['H1', 'L1'], 'S1234', [superevents.FROZEN_LABEL]],
-     ['label_added', superevents.SIGNIFICANT_LABEL, 'CBC', 'gstlal', False,
-         1.e-9, ['H1', 'L1', 'V1'], 'S1234', [superevents.FROZEN_LABEL]],
-     ['label_added', superevents.SIGNIFICANT_LABEL, 'CBC', 'gstlal', False,
-         1.e-9, ['H1', 'L1', 'V1'], 'S2468',
-         [superevents.FROZEN_LABEL, 'COMBINEDSKYMAP_READY', 'RAVEN_ALERT',
-          'EM_COINC']],
-     ['label_added', superevents.SIGNIFICANT_LABEL, 'Burst', 'CWB', False,
-         1.e-9, ['H1', 'L1', 'V1'], 'S1234', [superevents.FROZEN_LABEL]],
-     ['label_added', superevents.SIGNIFICANT_LABEL, 'Burst', 'oLIB', False,
-         1.e-9, ['H1', 'L1', 'V1'], 'S1234', [superevents.FROZEN_LABEL]],
-     ['label_added', 'GCN_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', [superevents.SIGNIFICANT_LABEL]],
-     ['label_added', superevents.FROZEN_LABEL, 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', [superevents.SIGNIFICANT_LABEL]],
-     ['label_added', superevents.FROZEN_LABEL, 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', []],
-     ['label_added', superevents.FROZEN_LABEL, 'CBC', 'gstlal', False, 1.e-5,
-         ['H1', 'L1', 'V1'], 'S1234', []],
-     ['label_added', superevents.FROZEN_LABEL, 'CBC', 'gstlal', False, 1.e-10,
-         ['H1', 'L1', 'V1'], 'S1234', [superevents.EARLY_WARNING_LABEL]],
-     ['label_added', 'LOW_SIGNIF_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-9,
-         ['H1', 'L1', 'V1'], 'S1234', [superevents.SIGNIFICANT_LABEL]],
-     ['label_added', 'LOW_SIGNIF_PRELIM_SENT', 'CBC', 'gstlal', False, 1.e-7,
-         ['H1', 'L1', 'V1'], 'S1234', [superevents.FROZEN_LABEL]],
-     ['new', '', 'CBC', 'gstlal', False, 1.e-9, ['H1', 'L1'], 'S1234',
+     ['label_added', superevents.SIGNIFICANT_LABEL, 'CBC', 'AllSky', 'gstlal',
+         False, 1.e-9, ['H1', 'L1'], 'S1234', [superevents.FROZEN_LABEL]],
+     ['label_added', superevents.SIGNIFICANT_LABEL, 'CBC', 'AllSky', 'gstlal',
+         False, 1.e-9, ['H1', 'L1', 'V1'], 'S1234',
          [superevents.FROZEN_LABEL]],
-     ['label_added', superevents.EARLY_WARNING_LABEL, 'CBC', 'gstlal', False,
-         1.e-10, ['H1', 'L1', 'V1'], 'S1234', []],
-     ['label_added', superevents.EARLY_WARNING_LABEL, 'CBC', 'gstlal', False,
-         1.e-10, ['H1', 'L1', 'V1'], 'S1234', [superevents.SIGNIFICANT_LABEL]],
-     ['label_added', superevents.SIGNIFICANT_LABEL, 'CBC', 'gstlal', False,
-         1.e-10, ['H1', 'L1', 'V1'], 'S1234', []]])
+     ['label_added', superevents.SIGNIFICANT_LABEL, 'CBC', 'AllSky', 'gstlal',
+         False, 1.e-9, ['H1', 'L1', 'V1'], 'S2468', [
+             superevents.FROZEN_LABEL, 'COMBINEDSKYMAP_READY', 'RAVEN_ALERT',
+             'EM_COINC'
+         ]],
+     ['label_added', superevents.SIGNIFICANT_LABEL, 'Burst', 'AllSky', 'CWB',
+         False, 1.e-9, ['H1', 'L1', 'V1'], 'S1234',
+         [superevents.FROZEN_LABEL]],
+     ['label_added', superevents.SIGNIFICANT_LABEL, 'Burst', 'AllSky', 'oLIB',
+         False, 1.e-9, ['H1', 'L1', 'V1'], 'S1234',
+         [superevents.FROZEN_LABEL]],
+     ['label_added', 'GCN_PRELIM_SENT', 'CBC', 'AllSky', 'gstlal', False,
+         1.e-9, ['H1', 'L1', 'V1'], 'S1234', [superevents.SIGNIFICANT_LABEL]],
+     ['label_added', superevents.FROZEN_LABEL, 'CBC', 'AllSky', 'gstlal',
+         False, 1.e-9, ['H1', 'L1', 'V1'], 'S1234',
+         [superevents.SIGNIFICANT_LABEL]],
+     ['label_added', superevents.FROZEN_LABEL, 'CBC', 'AllSky', 'gstlal',
+         False, 1.e-9, ['H1', 'L1', 'V1'], 'S1234', []],
+     ['label_added', superevents.FROZEN_LABEL, 'CBC', 'AllSky', 'gstlal',
+         False, 1.e-5, ['H1', 'L1', 'V1'], 'S1234', []],
+     ['label_added', superevents.FROZEN_LABEL, 'CBC', 'AllSky', 'gstlal',
+         False, 1.e-10, ['H1', 'L1', 'V1'], 'S1234',
+         [superevents.EARLY_WARNING_LABEL]],
+     ['label_added', 'LOW_SIGNIF_PRELIM_SENT', 'CBC', 'AllSky', 'gstlal',
+         False, 1.e-9, ['H1', 'L1', 'V1'], 'S1234',
+         [superevents.SIGNIFICANT_LABEL]],
+     ['label_added', 'LOW_SIGNIF_PRELIM_SENT', 'CBC', 'AllSky', 'gstlal',
+         False, 1.e-7, ['H1', 'L1', 'V1'], 'S1234',
+         [superevents.FROZEN_LABEL]],
+     ['new', '', 'CBC', 'AllSky', 'gstlal', False, 1.e-9, ['H1', 'L1'],
+         'S1234', [superevents.FROZEN_LABEL]],
+     ['label_added', superevents.EARLY_WARNING_LABEL, 'CBC', 'AllSky',
+         'gstlal', False, 1.e-10, ['H1', 'L1', 'V1'], 'S1234', []],
+     ['label_added', superevents.EARLY_WARNING_LABEL, 'CBC', 'AllSky',
+         'gstlal', False, 1.e-10, ['H1', 'L1', 'V1'], 'S1234',
+         [superevents.SIGNIFICANT_LABEL]],
+     ['label_added', superevents.SIGNIFICANT_LABEL, 'CBC', 'AllSky', 'gstlal',
+         False, 1.e-10, ['H1', 'L1', 'V1'], 'S1234', []]])
 def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
-                           alert_type, alert_label, group, pipeline,
+                           alert_type, alert_label, group, search, pipeline,
                            offline, far, instruments, superevent_id,
                            superevent_labels):
     """Test a superevent is dispatched to the correct annotation task based on
@@ -355,8 +364,9 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
 
     if alert_type == 'new' and group == 'CBC':
         threshold = (
-            app.conf['preliminary_alert_far_threshold']['cbc'] /
-            app.conf['preliminary_alert_trials_factor']['cbc']
+            app.conf['preliminary_alert_far_threshold']['cbc'][search.lower()]
+            /
+            app.conf['preliminary_alert_trials_factor']['cbc'][search.lower()]
         )
         if far <= threshold:
             assert start_pe.call_count == 2
@@ -1040,15 +1050,17 @@ def test_handle_cbc_event_new_event(mock_source_properties,
 
 
 @pytest.mark.parametrize("alert_search,alert_pipeline",
-                         [(search, pipeline)
-                          for search in ['bbh', 'allsky']
-                          for pipeline in ['cwb', 'olib', 'mly']
-                          ])
+                         [('allsky', 'cwb'), ('bbh', 'cwb'),
+                          ('allsky', 'olib'), ('allsky', 'mly')])
 @patch('gwcelery.tasks.gracedb.download._orig_run', mock_download)
 @patch('gwcelery.tasks.em_bright.source_properties.run')
 def test_handle_burst_event_new_event(mock_source_properties,
                                       alert_search, alert_pipeline):
     alert = read_json(data, 'lvalert_event_creation.json')
+    # FIXME lvalert_event_creation.json contains CBC events. Either burst
+    # events should be added to it, or a burst event should be hardcoded here
+    alert['object']['group'] = 'Burst'
+
     alert['object']['search'] = alert_search
     alert['object']['pipeline'] = alert_pipeline
     if alert_pipeline == 'cwb':
@@ -1174,8 +1186,10 @@ def test_parameter_estimation(monkeypatch, far, event, pe_pipeline):
         far_event=(far, event), superevent_id=superevent_id,
         pe_pipeline=pe_pipeline)
 
-    threshold = (app.conf['significant_alert_far_threshold']['cbc'] /
-                 app.conf['significant_alert_trials_factor']['cbc'])
+    group = event['group'].lower()
+    search = event['search'].lower()
+    threshold = (app.conf['significant_alert_far_threshold'][group][search] /
+                 app.conf['significant_alert_trials_factor'][group][search])
     if (
         far <= threshold and event['group'] == 'CBC' and
         event['search'] != 'MDC' and

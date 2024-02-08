@@ -12,6 +12,11 @@ from .core import DispatchHandler
 
 log = get_logger(__name__)
 
+# FIXME Remove this once cwb bbh is uploading to cbc instead of burst
+CUSTOM_EVENT_GROUP_TO_NOTICE_GROUP_MAP = {
+    'Burst': {'BBH': 'CBC'}
+}
+
 
 class _KafkaDispatchHandler(DispatchHandler):
 
@@ -77,9 +82,24 @@ def _create_base_alert_dict(classification, superevent, alert_type):
     # GraceDB-playground and GraceDB-test.
     # Re time_created: Dont need better than second precision for alert times
 
+    # FIXME Dont change alert types internally
     # NOTE less-significant alerts have alert_type as PRELIMINARY
     alert_type_kafka = 'preliminary' if alert_type == 'less-significant' \
         else alert_type
+    # NOTE the alert group is usually the same as the g-event group. Exceptions
+    # are recorded in the CUSTOM_EVENT_GROUP_TO_NOTICE_GROUP_MAP definition
+    # above
+    superevent_group = superevent['preferred_event_data']['group']
+    superevent_search = superevent['preferred_event_data']['search']
+    if superevent_group in CUSTOM_EVENT_GROUP_TO_NOTICE_GROUP_MAP and \
+            superevent_search == \
+            CUSTOM_EVENT_GROUP_TO_NOTICE_GROUP_MAP[superevent_group]:
+        alert_group_kafka = \
+            CUSTOM_EVENT_GROUP_TO_NOTICE_GROUP_MAP[
+                superevent_group
+            ][superevent_search]
+    else:
+        alert_group_kafka = superevent['preferred_event_data']['group']
 
     alert_dict = {
         'alert_type': alert_type_kafka.upper(),
@@ -107,7 +127,7 @@ def _create_base_alert_dict(classification, superevent, alert_type):
     duration = None
     central_frequency = None
 
-    if superevent['preferred_event_data']['group'] == 'Burst':
+    if alert_group_kafka == 'Burst':
         if superevent['preferred_event_data']['pipeline'].lower() == 'cwb':
             duration = \
                 superevent['preferred_event_data']['extra_attributes'].get(
@@ -150,9 +170,9 @@ def _create_base_alert_dict(classification, superevent, alert_type):
         'instruments': sorted(
             superevent['preferred_event_data']['instruments'].split(',')
         ),
-        'group': superevent['preferred_event_data']['group'],
+        'group': alert_group_kafka,
         'pipeline': superevent['preferred_event_data']['pipeline'],
-        'search': superevent['preferred_event_data']['search'],
+        'search': superevent_search,
         'properties': properties,
         'classification': classification,
         'duration': duration,

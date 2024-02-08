@@ -13,6 +13,9 @@ Changelog
 -   Increase the number of parallel bilby jobs to increase the number of
     posterior samples.
 
+-   Add search field to alert threshold and trials factor configuration
+    variables.
+
 2.2.1 "Sheepsquatch" (2024-03-08)
 ---------------------------------
 
