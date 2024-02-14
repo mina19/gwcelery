@@ -29,6 +29,9 @@ Changelog
 -   If an official Fermi sky map is already uploaded to external event, block
     future uploads.
 
+-   Ignore events from VTInjection search with regards to annotations and superevent
+    creation.
+
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
 

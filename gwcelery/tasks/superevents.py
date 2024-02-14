@@ -47,6 +47,11 @@ READY_LABEL = 'EM_READY'
 """This label indicates that a preferred event has been assigned and it
 has all data products required to make it ready for annotations."""
 
+VT_SEARCH_NAME = 'VTInjection'
+"""Search name for events uploaded as a part of estimating the spacetime
+sensitive volume. Events from this search do not form superevents, and
+are not annotated."""
+
 
 @igwn_alert.handler('cbc_gstlal',
                     'cbc_spiir',
@@ -63,12 +68,17 @@ def handle(payload):
     alert_type = payload['alert_type']
     gid = payload['object']['graceid']
     alert_group = payload['object']['group'].lower()
+    alert_search = payload['object']['search']
 
     ifos = get_instruments(payload['object']) if alert_group == 'cbc' \
         else payload['object']['instruments'].split(',')
     # Ignore inclusion of events involving KAGRA; revert when policy is changed
     if "K1" in ifos:
         log.info('Skipping %s because it involves KAGRA data', gid)
+        return
+    # Ignore inclusion of events from VT search
+    if alert_search == VT_SEARCH_NAME:
+        log.info("Skipping {} event {}".format(VT_SEARCH_NAME, gid))
         return
 
     try:

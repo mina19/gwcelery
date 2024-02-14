@@ -689,7 +689,7 @@ def test_handle_posterior_samples(monkeypatch, alert_type, filename):
 @pytest.mark.parametrize("alert_search,alert_pipeline",
                          [(search, pipeline)
                           for search in ['earlywarning', 'mdc',
-                                         'allsky', 'ssm']
+                                         'allsky', 'ssm', 'vtinjection']
                           for pipeline in ['gstlal', 'pycbc', 'mbta', 'spiir']
                           ])
 @patch('gwcelery.tasks.gracedb.download._orig_run', mock_download)
@@ -705,15 +705,18 @@ def test_handle_cbc_event_new_event(mock_source_properties,
     alert['object']['search'] = alert_search
     alert['object']['pipeline'] = alert_pipeline
     orchestrator.handle_cbc_event(alert)
-    if alert_search == 'ssm':  # FIXME: remove once implementation is ready
+    if alert_search == 'vtinjection':
         mock_source_properties.assert_not_called()
-    else:
-        mock_source_properties.assert_called_once()
-    if (alert_pipeline, alert_search) in pipelines_stock_p_astro:
+        mock_p_astro.assert_not_called()
+        mock_localize.assert_not_called()
+    elif alert_search == 'ssm':  # FIXME: remove once implementation is ready
+        mock_source_properties.assert_not_called()
+    elif (alert_pipeline, alert_search) in pipelines_stock_p_astro:
         mock_p_astro.assert_called_once()
     else:
+        mock_source_properties.assert_called_once()
+        mock_localize.assert_called_once()
         mock_p_astro.assert_not_called()
-    mock_localize.assert_called_once()
 
 
 @patch(

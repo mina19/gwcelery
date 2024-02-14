@@ -301,6 +301,11 @@ def handle_cbc_event(alert):
     graceid = alert['uid']
     pipeline = alert['object']['pipeline'].lower()
     search = alert['object']['search'].lower()
+
+    # no annotations for events used in VT analysis
+    if search == superevents.VT_SEARCH_NAME.lower():
+        return
+
     priority = 0 if superevents.should_publish(alert['object']) else 1
 
     # Pipelines that use the GWCelery p-astro method
