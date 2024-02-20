@@ -20,6 +20,12 @@ from . import external_skymaps, gracedb, igwn_alert
 
 
 @app.task(ignore_result=True, shared=False)
+def annotate_fits_tuple(filecontents_versioned_filename, graceid, tags):
+    filecontents, versioned_filename = filecontents_versioned_filename
+    annotate_fits(filecontents, versioned_filename, graceid, tags)
+
+
+@app.task(ignore_result=True, shared=False)
 def annotate_fits(filecontents, versioned_filename, graceid, tags):
     """Perform annotations on a sky map.
 

@@ -701,11 +701,8 @@ def _annotate_fits_and_return_input(input_list, superevent_id):
         A list of the sky map, em_bright, and p_astro filenames.
     """
 
-    [skymap, skymap_filename], *_ = input_list
-
-    skymaps.annotate_fits.delay(
-        skymap,
-        skymap_filename,
+    skymaps.annotate_fits_tuple(
+        input_list[0],
         superevent_id,
         ['sky_loc', 'public']
     )

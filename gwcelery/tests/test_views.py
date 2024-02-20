@@ -564,3 +564,62 @@ def test_send_mock_joint_event(client, monkeypatch):
     assert HTTP_STATUS_CODES[response.status_code] == 'Found'
     mock_first2years_upload.assert_called_once()
     mock_handle_grb_gcn.assert_called_once()
+
+
+def test_create_skymap_with_disabled_detectors(client, monkeypatch):
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.download.run',
+        mock_download := Mock(return_value=b'coinc_bytes'))
+    monkeypatch.setattr(
+        'gwcelery.tasks.bayestar.localize.run',
+        mock_localize := Mock(return_value=b'skymap_bytes'))
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.upload.run',
+        mock_upload := Mock(return_value='bayestar.no-H1V1.multiorder.fits,0'))
+    monkeypatch.setattr(
+        'gwcelery.tasks.skymaps.annotate_fits', mock_annotate_fits := Mock())
+
+    response = client.post(
+        url_for('create_skymap_with_disabled_detectors'),
+        data={'event_id': 'M12344', 'V1': '', 'H1': ''})
+    assert HTTP_STATUS_CODES[response.status_code] == 'Found'
+
+    assert HTTP_STATUS_CODES[response.status_code] == 'Found'
+    mock_download.assert_called_once_with('coinc.xml', 'M12344')
+    mock_localize.assert_called_once_with(
+        b'coinc_bytes', 'M12344', disabled_detectors=['H1', 'V1'])
+    mock_upload.assert_called_once_with(
+        b'skymap_bytes', 'bayestar.no-H1V1.multiorder.fits', 'M12344',
+        'sky localization complete', ['sky_loc', 'public'])
+    mock_annotate_fits.assert_called_once_with(
+        b'skymap_bytes', 'bayestar.no-H1V1.multiorder.fits,0',
+        'M12344', ['sky_loc', 'public'])
+
+
+def test_copy_sky_map_between_events(client, monkeypatch):
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.download.run',
+        mock_download := Mock(return_value=b'skymap_bytes'))
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.upload.run',
+        mock_upload := Mock(return_value='bayestar.no-H1V1.multiorder.fits,0'))
+    monkeypatch.setattr(
+        'gwcelery.tasks.skymaps.annotate_fits', mock_annotate_fits := Mock())
+
+    response = client.post(
+        url_for('copy_sky_map_between_events'),
+        data={
+            'superevent_id': 'MS190208a',
+            'event_id': 'M12344',
+            'skymap_filename': 'bayestar.no-H1V1.multiorder.fits,0'
+        }
+    )
+    assert HTTP_STATUS_CODES[response.status_code] == 'Found'
+    mock_download.assert_called_once_with(
+        'bayestar.no-H1V1.multiorder.fits,0', 'M12344')
+    mock_upload.assert_called_once_with(
+        b'skymap_bytes', 'bayestar.no-H1V1.multiorder.fits', 'MS190208a',
+        'sky map copied from M12344', ['sky_loc', 'public'])
+    mock_annotate_fits.assert_called_once_with(
+        b'skymap_bytes', 'bayestar.no-H1V1.multiorder.fits,0',
+        'MS190208a', ['sky_loc', 'public'])

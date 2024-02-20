@@ -524,6 +524,77 @@
     </div>
     <div class="card mb-3">
         <div class=card-header>
+            Create Sky Map with Disabled Detectors
+        </div>
+        <div class=card-body>
+            <form method=post action="{{ url_for('create_skymap_with_disabled_detectors') }}">
+                <div class=form-row>
+                    <div class=form-group>
+                        <div class=form-text>Create a BAYESTAR sky map for an event with selected detectors disabled.</div>
+                    </div>
+                </div>
+                <label for=disabled_detectors>Disabled detectors</label>
+                <div class=form-row>
+                    <div class="form-group checkboxes-at-least-one" id=disabled_detectors>
+                        <div class=row>
+                            {% for detector in detectors %}
+                                <div class=col-1>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="{{ detector }}" name="{{ detector }}">
+                                        <label class="form-check-label" for="{{ detector }}">{{ detector }}</label>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md">
+                        <label for=event_id>Event ID</label>
+                        <input required name=event_id class="form-control">
+                    </div>
+                    <div class="form-group col-md">
+                        <label for=submit-button class=w-100>&nbsp;</label>
+                        <button type=submit id=submit-button class="btn btn-primary">Submit</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card mb-3">
+        <div class=card-header>
+            Copy Event Sky Map To Superevent
+        </div>
+        <div class=card-body>
+            <form method=post action="{{ url_for('copy_sky_map_between_events') }}">
+                <div class=form-row>
+                    <div class=form-group>
+                        <div class=form-text>Copy a sky map from an event to its superevent.</div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md">
+                        <label for=superevent_id>Superevent ID</label>
+                        <input required name=superevent_id class="form-control typeahead">
+                    </div>
+                    <div class="form-group col-md">
+                        <label for=event_id>Event ID</label>
+                        <input required name=event_id class="form-control typeahead" data-typeahead-url-template="{{ url_for('typeahead_event_id', superevent_id='SUPEREVENT_ID') }}">
+                    </div>
+                    <div class="form-group col-md">
+                        <label for=skymap_filename>Sky Map File</label>
+                        <input required name=skymap_filename class="form-control event-dependent typeahead" data-typeahead-url-template="{{ url_for('typeahead_skymap_filename', superevent_id='EVENT_ID', filename='TERM') }}">
+                    </div>
+                    <div class="form-group col-md">
+                        <label for=submit-button class=w-100>&nbsp;</label>
+                        <button type=submit id=submit-button name=submit-button class="btn btn-primary">Submit</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card mb-3">
+        <div class=card-header>
             Platform Information
         </div>
         <div class=card-body>
@@ -616,6 +687,14 @@
             bloodhound.identify = (datum => stringify({superevent_id: superevent_id, datum: datum}));
             bloodhound.initialize();
         });
+
+        $(this).closest('form').find("input[name='event_id']").on('typeahead:change typeahead:select', ev => {
+            const event_id = $(ev.target).val();
+            bloodhound.prefetch.url = url.replace('EVENT_ID', event_id);
+            bloodhound.remote.url = url.replace('EVENT_ID', event_id);
+            bloodhound.identify = (datum => stringify({event_id: event_id, datum: datum}));
+            bloodhound.initialize();
+        });
     });
 
     /* Enable typeahead completion for fields whose options depend on the
@@ -651,6 +730,39 @@
         });
     });
 
+    /* Enable typeahead completion for fields whose options depend on the
+     * superevent ID. */
+    $('.typeahead.event-dependent').each(function() {
+        const url = $(this).data('typeahead-url-template');
+
+        const bloodhound = new Bloodhound({
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            datumTokenizer: Bloodhound.tokenizers.whitespace,
+            prefetch: url.replace('TERM', ''),
+            remote: {
+                url: url,
+                wildcard: 'TERM'
+            }
+        });
+
+        const stringify = bloodhound.identify;
+
+        $(this).typeahead({
+            highlight: true,
+            minLength: 0
+        }, {
+            source: bloodhound
+        });
+
+        $(this).closest('form').find("input[name='event_id']").on('typeahead:change typeahead:select', ev => {
+            const event_id = $(ev.target).val();
+            bloodhound.prefetch.url = url.replace('EVENT_ID', event_id);
+            bloodhound.remote.url = url.replace('EVENT_ID', event_id);
+            bloodhound.identify = (datum => stringify({event_id: event_id, datum: datum}));
+            bloodhound.initialize();
+        });
+    });
+
     /* For forms that contain a <div class=modal> element to provide a
      * confirmation dialog box, capture any form submission event and
      * display the dialog box instead.*/
@@ -664,4 +776,20 @@
     $("form .modal button[type='submit']").on('click', function(event) {
         $(this).closest('form')[0].submit();
     });
+
+    $(".checkboxes-at-least-one").each(function () {
+        let div = this;
+        let checkboxes = $(":checkbox", div);
+        let first = checkboxes.first()[0];
+
+        function validate() {
+            first.setCustomValidity(
+                $(":checkbox:checked", div).length > 0
+                ? '' : 'Choose at least one detector'
+            );
+        }
+
+        checkboxes.on('change', validate);
+        validate();
+    })
 </script>

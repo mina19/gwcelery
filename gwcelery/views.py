@@ -8,6 +8,7 @@ import socket
 import sys
 from importlib import metadata
 
+import lal
 from astropy.time import Time
 from celery import group
 from flask import (flash, jsonify, make_response, redirect, render_template,
@@ -17,8 +18,9 @@ from requests.exceptions import HTTPError
 from . import app as celery_app
 from ._version import get_versions
 from .flask import app, cache
-from .tasks import (circulars, external_skymaps, first2years,
-                    first2years_external, gracedb, orchestrator, superevents)
+from .tasks import (bayestar, circulars, core, external_skymaps, first2years,
+                    first2years_external, gracedb, orchestrator, skymaps,
+                    superevents)
 from .util import PromiseProxy
 
 # Change the application root url
@@ -34,6 +36,7 @@ def index():
         'index.jinja2',
         conf=celery_app.conf,
         hostname=socket.getfqdn(),
+        detectors=sorted(lal.cached_detector_by_prefix.keys()),
         distributions=distributions,
         platform=platform.platform(),
         versions=get_versions(),
@@ -517,4 +520,61 @@ def send_mock_joint_event():
         _create_upload_external_event.s().set(countdown=5)
     ).delay()
     flash('Queued a mock joint event.', 'success')
+    return redirect(url_for('index'))
+
+
+@app.route(PREFIX + '/create_skymap_with_disabled_detectors', methods=['POST'])
+def create_skymap_with_disabled_detectors():
+    """Create a BAYESTAR sky map with one or more disabled detectors."""
+    form = request.form.to_dict()
+    graceid = form.pop('event_id')
+    disabled_detectors = sorted(form.keys())
+    tags = ['sky_loc', 'public']
+    if graceid and disabled_detectors:
+        filename = f'bayestar.no-{"".join(disabled_detectors)}.multiorder.fits'
+        (
+            gracedb.download.s('coinc.xml', graceid)
+            |
+            bayestar.localize.s(graceid, disabled_detectors=disabled_detectors)
+            |
+            group(
+                core.identity.s(),
+                gracedb.upload.s(
+                    filename, graceid,
+                    'sky localization complete', tags
+                )
+            )
+            |
+            skymaps.annotate_fits_tuple.s(graceid, tags)
+        ).delay()
+        flash('Creating sky map for event ID ' + graceid +
+              ' with these disabled detectors: ' +
+              ' '.join(disabled_detectors), 'success')
+    else:
+        flash('No sky map created. Please fill in all fields.', 'danger')
+    return redirect(url_for('index'))
+
+
+@app.route(PREFIX + '/copy_sky_map_between_events', methods=['POST'])
+def copy_sky_map_between_events():
+    superevent_id = request.form['superevent_id']
+    graceid = request.form['event_id']
+    skymap_filename = request.form['skymap_filename']
+    skymap_filename_no_version, _, _ = skymap_filename.rpartition(',')
+    tags = ['sky_loc', 'public']
+    (
+        gracedb.download.s(skymap_filename, graceid)
+        |
+        group(
+            core.identity.s(),
+            gracedb.upload.s(
+                skymap_filename_no_version, superevent_id,
+                f'sky map copied from {graceid}', tags
+            )
+        )
+        |
+        skymaps.annotate_fits_tuple.s(superevent_id, tags)
+    ).delay()
+    flash(f'Copying file {skymap_filename} from {graceid} to {superevent_id}',
+          'success')
     return redirect(url_for('index'))
