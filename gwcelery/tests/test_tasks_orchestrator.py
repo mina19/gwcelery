@@ -960,7 +960,10 @@ def test_handle_posterior_samples(monkeypatch, alert_type, filename):
     alert = {
         'alert_type': alert_type,
         'uid': 'S1234',
-        'data': {'comment': 'samples', 'filename': filename}
+        'data': {'comment': 'samples', 'filename': filename},
+        'object': {'preferred_event_data': {'extra_attributes': {
+            'SingleInspiral': [{'ifo': 'H1'}, {'ifo': 'L1'}]
+        }}}
     }
 
     download = Mock(return_value='posterior-sample-file-content')

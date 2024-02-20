@@ -460,11 +460,12 @@ def handle_posterior_samples(alert):
     prefix, _ = filename.rsplit('.posterior_samples.')
     skymap_filename = f'{prefix}.multiorder.fits'
     labels = ['pe', 'sky_loc']
+    ifos = superevents.get_instruments(alert['object']['preferred_event_data'])
 
     (
         gracedb.download.si(filename, superevent_id)
         |
-        skymaps.skymap_from_samples.s()
+        skymaps.skymap_from_samples.s(superevent_id, ifos)
         |
         group(
             skymaps.annotate_fits.s(

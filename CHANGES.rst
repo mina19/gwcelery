@@ -49,6 +49,9 @@ Changelog
     Changes to include pastro from RapidPE/RIFT in the second preliminary
     notice and initial notice+circular.
 
+-   Add instruments and objid fields to the header of sky map files produced
+    from posterior samples.
+
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
 

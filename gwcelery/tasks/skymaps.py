@@ -180,13 +180,14 @@ def unflatten(filecontents, filename):
 
 
 @app.task(shared=False, queue='multiprocessing')
-def skymap_from_samples(samplefilecontents):
+def skymap_from_samples(samplefilecontents, superevent_id, instruments):
     """Generate multi-resolution FITS file from samples."""
     with NamedTemporaryFile(content=samplefilecontents) as samplefile, \
             tempfile.TemporaryDirectory() as tmpdir, \
             handling_system_exit():
         ligo_skymap_from_samples.main([
-            '-j', '--seed', '150914', '--maxpts', '5000', '-o', tmpdir,
+            '-j', '--seed', '150914', '--maxpts', '5000', '--objid',
+            superevent_id, '--instruments', *instruments, '-o', tmpdir,
             samplefile.name])
         with open(os.path.join(tmpdir, 'skymap.fits'), 'rb') as f:
             return f.read()
