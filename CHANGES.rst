@@ -42,7 +42,8 @@ Changelog
     ``environment`` options explicitly.  Modified ``condor._submit``,
     ``condor.base_submit``, and ``condor.submit_rapidpe`` to accept an optional
     list for ``getenv``, to pass to the ``condor_submit`` executable. 
-    Changes to include pastro from RapidPE/RIFT in the second preliminary alert.
+    Changes to include pastro from RapidPE/RIFT in the second preliminary
+    notice and initial notice+circular.
 
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
