@@ -32,6 +32,8 @@ Changelog
 -   Ignore events from VTInjection search with regards to annotations and superevent
     creation.
 
+-   Disable sending alerts on production, leave them on for other instances.
+
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
 
