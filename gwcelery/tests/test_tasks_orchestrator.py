@@ -373,6 +373,323 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         check_vectors.assert_called_once()
 
 
+@patch("gwcelery.tasks.skymaps.annotate_fits")
+@patch(
+    "gwcelery.tasks.gracedb.create_voevent._orig_run",
+    return_value="S1234-1-Preliminary.xml,0")
+@patch("gwcelery.tasks.alerts.send.run")
+@patch("gwcelery.tasks.gcn.send.run")
+@patch("gwcelery.tasks.circulars.create_initial_circular.run")
+@pytest.mark.parametrize(
+    "alert_label,rapidpe_pastro_available,"
+    "preferred_event_updated, rapidpe_included_in_second_prelim",
+    [
+        ("GCN_PRELIM_SENT", False, False, None),
+        ("GCN_PRELIM_SENT", True, True, None),
+        ("GCN_PRELIM_SENT", True, False, None),
+        ("ADVOK", False, False, None),
+        ("ADVOK", True, True, True),
+        ("ADVOK", True, False, True),
+        ("ADVOK", True, True, False),
+        ("ADVOK", True, False, False),
+    ],
+)
+def test_update_rapidpe_pastro(
+    mock_create_initial_circular,
+    mock_gcn_send,
+    mock_alerts_send,
+    mock_create_voevent,
+    mock_annotate_fits,
+    alert_label,
+    rapidpe_pastro_available,
+    preferred_event_updated,
+    rapidpe_included_in_second_prelim,
+    monkeypatch,
+):
+    labels = ["PASTRO_READY", "EMBRIGHT_READY", alert_label]
+
+    renormalise_rapidpe = rapidpe_pastro_available * preferred_event_updated
+
+    pipeline = 'gstlal'
+    event = {
+        "group": "CBC",
+        "pipeline": pipeline,
+        "search": "AllSky",
+        "far": 1e-10,
+        "graceid": "G1234",
+        "gpstime": 1234.0,
+        "labels": labels,
+        "instruments": "H1,L1,V1",
+        "offline": False,
+    }
+    superevent = {
+        "gw_events": [event["graceid"]],
+        "preferred_event_data": event,
+        "category": "Production",
+        "superevent_id": "S1234",
+        "labels": labels,
+    }
+
+    alert = {
+        "alert_type": "label_added",
+        "uid": superevent["superevent_id"],
+        "object": superevent,
+        "data": {"name": alert_label},
+    }
+
+    mock_get_event = Mock(return_value=event)
+    monkeypatch.setattr(
+        "gwcelery.tasks.gracedb.get_event._orig_run",
+        mock_get_event,
+    )
+
+    mock_get_superevent = Mock(return_value=superevent)
+    monkeypatch.setattr(
+        "gwcelery.tasks.gracedb.get_superevent._orig_run",
+        mock_get_superevent,
+    )
+
+    mock_select_preferred_event = Mock(return_value=event)
+    monkeypatch.setattr(
+        "gwcelery.tasks.superevents.select_preferred_event.run",
+        mock_select_preferred_event,
+    )
+
+    pipeline_p_terr_initial = 0.01
+    pipeline_pastro_dict_initial = json.dumps(
+        {
+            "BNS": 0.94,
+            "NSBH": 0.03,
+            "BBH": 0.02,
+            "Terrestrial": pipeline_p_terr_initial,
+        }
+    )
+
+    mock_file_data = {
+        "S1234": {
+            "bayestar.multiorder.fits": resources.read_binary(
+                data, "MS220722v_bayestar.multiorder.fits"
+            ),
+            "em_bright.json": json.dumps({"HasNS": 0.0, "HasRemnant": 0.0}),
+            f"{pipeline}.p_astro.json": pipeline_pastro_dict_initial,
+            "S1234-1-Preliminary.xml": b"fake VOEvent file contents",
+        }
+    }
+    mock_log_data = [
+        {
+            "comment": "source probabilities",
+            "filename": f"{pipeline}.p_astro.json",
+            "file_version": 0,
+            "tag_names": ["public", "p_astro"],
+        },
+        {
+            "comment": "em bright complete",
+            "filename": "em_bright.json",
+            "file_version": 0,
+            "tag_names": ["public", "em_bright"],
+        },
+        {
+            "comment": "New VOEvent",
+            "filename": "S1234-1-Preliminary.xml",
+            "file_version": 0,
+            "tag_names": ["public", "em_follow", "gcn_received"],
+        },
+        {
+            "comment": "sky localization complete",
+            "filename": "bayestar.multiorder.fits",
+            "file_version": 0,
+            "tag_names": ["sky_loc", "public"],
+        },
+    ]
+    if rapidpe_pastro_available:
+        rapidpe_pastro_dict_initial = json.dumps(
+            {
+                "BNS": 0.95,
+                "NSBH": 0.02,
+                "BBH": 0.02,
+                "Terrestrial": pipeline_p_terr_initial,
+            }
+        )
+
+        mock_file_data["S1234"][
+            "RapidPE_RIFT.p_astro.json"
+        ] = rapidpe_pastro_dict_initial
+
+        tag_names = ["p_astro", "pe", "public"]
+        mock_log_data.append(
+            {
+                "comment": "RapidPE-RIFT Pastro results",
+                "filename": "RapidPE_RIFT.p_astro.json",
+                "file_version": 0,
+                "tag_names": tag_names,
+            }
+        )
+
+    if preferred_event_updated:
+        pipeline_p_terr_updated = 0.02
+        pipeline_pastro_dict_updated = json.dumps(
+            {
+                "BNS": 0.94,
+                "NSBH": 0.03,
+                "BBH": 0.01,
+                "Terrestrial": pipeline_p_terr_updated,
+            }
+        )
+        mock_file_data["S1234"][
+            f"{pipeline}.p_astro.json"
+        ] = pipeline_pastro_dict_updated
+
+        mock_log_data.append(
+            {
+                "comment": "source probabilities",
+                "filename": f"{pipeline}.p_astro.json",
+                "file_version": 1,
+                "tag_names": ["public", "p_astro"],
+            }
+        )
+
+        expected_rapidpe_pastro_dict = json.dumps(
+            read_json(data, 'updated_RapidPE_RIFT.p_astro.json')
+        )
+    mock_file_data["G1234"] = mock_file_data["S1234"]
+
+    def download(filename, graceid):
+        filename = filename.split(",")[0]
+        if filename in mock_file_data[graceid].keys():
+            f_data = mock_file_data[graceid][filename]
+        else:
+            f_data = b"some mock content"
+            mock_file_data[graceid][filename] = f_data
+        return f_data
+
+    mock_download = Mock()
+    mock_download.side_effect = download
+
+    monkeypatch.setattr("gwcelery.tasks.gracedb.download.run", mock_download)
+
+    def get_element_from_log(fname):
+        # this function retuns most recent info associated with the
+        # fname from mock_log_data
+        file_version = None
+        file_index_in_log = len(mock_log_data)
+        if fname is not None:
+            fname = fname.split(",")[0]
+        for i_compliment, mock_log_data_i_c in enumerate(
+            reversed(mock_log_data)
+        ):
+            i = len(mock_log_data) - i_compliment - 1
+            if mock_log_data_i_c['filename'] == fname:
+                file_version = mock_log_data_i_c['file_version']
+                file_index_in_log = i
+                break
+        return fname, file_version, file_index_in_log
+
+    def upload(filecontents, filename, graceid, message, tags=()):
+        _, current_file_version, _ = get_element_from_log(filename)
+        if current_file_version is not None:
+            file_version = current_file_version + 1
+        else:
+            file_version = 0
+
+        mock_file_data[graceid][filename] = filecontents
+        mock_log_data.append(
+            {
+                "comment": message,
+                "filename": filename,
+                "file_version": file_version,
+                "tag_names": tags,
+            }
+        )
+
+        return f"{filename},{file_version}"
+
+    mock_upload = Mock()
+    mock_upload.side_effect = upload
+    monkeypatch.setattr("gwcelery.tasks.gracedb.upload._orig_run", mock_upload)
+
+    def get_log(graceid):
+        return mock_log_data
+
+    mock_get_log = Mock()
+    mock_get_log.side_effect = get_log
+
+    monkeypatch.setattr("gwcelery.tasks.gracedb.get_log", mock_get_log)
+
+    def create_tag(filename, tag, graceid):
+        *_, file_N = get_element_from_log(filename)
+        mock_log_data[file_N]["tag_names"] += [tag]
+
+    mock_create_tag = Mock()
+    mock_create_tag.side_effect = create_tag
+    monkeypatch.setattr(
+        "gwcelery.tasks.gracedb.create_tag.run", mock_create_tag
+    )
+
+    orchestrator.handle_superevent(alert)
+    mock_upload_call_arg_list = mock_upload.call_args_list
+    if alert_label == "ADVOK":
+        list_of_expected_filename = ["initial-circular.txt"]
+    else:
+        list_of_expected_filename = [
+            f"{event['pipeline']}.p_astro.json",
+            "em_bright.json",
+            "bayestar.multiorder.fits",
+            "preliminary-circular.txt",
+        ]
+    if renormalise_rapidpe:
+        list_of_expected_filename += [
+            "RapidPE_RIFT.p_astro.json",
+            "RapidPE_RIFT.p_astro.png",
+        ]
+    for call_arg, _ in mock_upload_call_arg_list:
+        _, fname, _, *extra = call_arg
+        if "Superevent cleaned up after first preliminary alert" not in extra:
+            assert fname in list_of_expected_filename
+            if fname in [
+                "RapidPE_RIFT.p_astro.json",
+                "RapidPE_RIFT.p_astro.png",
+            ]:
+                _, file_version, file_N = get_element_from_log(fname)
+                assert file_version == 1 if renormalise_rapidpe else 0
+
+    alert_type = (
+        "preliminary" if alert_label == "GCN_PRELIM_SENT" else "initial"
+    )
+
+    len_of_extra = len(mock_alerts_send.call_args[0][0]) - 3
+    expected_input_list = (
+        mock_file_data["S1234"]["bayestar.multiorder.fits"],
+        mock_file_data["S1234"]["em_bright.json"],
+    )
+    if rapidpe_pastro_available:
+        if not renormalise_rapidpe:
+            expected_input_list += (rapidpe_pastro_dict_initial,)
+        else:
+            expected_input_list += (expected_rapidpe_pastro_dict,)
+    else:
+        if not preferred_event_updated:
+            expected_input_list += (pipeline_pastro_dict_initial,)
+        else:
+            expected_input_list += (pipeline_pastro_dict_updated,)
+    if len_of_extra != 0:
+        expected_input_list += (*([None] * (len_of_extra)),)
+    if alert_type == "initial":
+        mock_alerts_send.assert_called_once_with(
+            expected_input_list,
+            superevent,
+            alert_type,
+            raven_coinc=False,
+            combined_skymap_filename=None,
+        )
+    else:
+        mock_alerts_send.assert_called_once_with(
+            expected_input_list,
+            superevent,
+            alert_type,
+            raven_coinc=False,
+        )
+
+
 @pytest.mark.parametrize(
         "orig_labels,overall_dq_active_state",
         [[["ADVREQ"], None],

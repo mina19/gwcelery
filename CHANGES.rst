@@ -37,6 +37,13 @@ Changelog
 -   Add a form to the Flask console to create BAYESTAR sky maps with selected
     detectors disabled.
 
+-   Upgrade RapidPE/RIFT to v0.6.7, RapidPE to v0.1.1.  No longer hard-coding
+    ``getenv = True`` in HTCondor, but instead setting ``getenv`` and
+    ``environment`` options explicitly.  Modified ``condor._submit``,
+    ``condor.base_submit``, and ``condor.submit_rapidpe`` to accept an optional
+    list for ``getenv``, to pass to the ``condor_submit`` executable. 
+    Changes to include pastro from RapidPE/RIFT in the second preliminary alert.
+
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
 

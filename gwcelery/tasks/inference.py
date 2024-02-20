@@ -777,17 +777,11 @@ def _upload_tasks_rapidpe(rundir, superevent_id):
         None, None, superevent_id,
         f'Summary page for RapidPE-RIFT is available <a href={url}>here</a>',
         ('pe',))
-    pastro_tags = ("pe", "p_astro")
     to_upload = [
         (
             "p_astro.json", "RapidPE_RIFT.p_astro.json",
             "RapidPE-RIFT Pastro results",
-            pastro_tags,
-        ),
-        (
-            "p_astro.png", "RapidPE_RIFT.p_astro.png",
-            "RapidPE-RIFT Pastro results",
-            pastro_tags,
+            ("pe", "p_astro", "public"),
         ),
     ]
     tasks = []

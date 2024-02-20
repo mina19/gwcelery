@@ -179,7 +179,7 @@ def handle(alert):
     graceid = alert['uid']
     filename = alert['data'].get('filename')
     p_astro_filenames = {f'{pipeline}.p_astro.json' for pipeline in
-                         ['gstlal', 'mbta', 'pycbc', 'spiir']}
+                         ['gstlal', 'mbta', 'pycbc', 'spiir', 'RapidPE_RIFT']}
 
     if filename in p_astro_filenames:
         (

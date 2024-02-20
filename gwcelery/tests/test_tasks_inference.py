@@ -552,7 +552,6 @@ def test_dag_finished(monkeypatch, tmp_path, pipeline, host):
             os.makedirs(summary_path, exist_ok=True)
             paths = [
                 os.path.join(summary_path, "p_astro.json"),
-                os.path.join(summary_path, "p_astro.png"),
             ]
 
         else:

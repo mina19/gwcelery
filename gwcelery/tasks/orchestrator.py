@@ -10,6 +10,7 @@ import re
 from astropy.time import Time
 from celery import chain, group
 from ligo.rrt_chat import channel_creation
+from rapidpe_rift_pipe import pastro as rpe_pastro
 
 from .. import app
 from . import (alerts, bayestar, circulars, detchar, em_bright,
@@ -1008,6 +1009,8 @@ def earlywarning_preliminary_initial_update_alert(
             'less-significant', 'earlywarning', 'preliminary'}
 
     skymap_filename, em_bright_filename, p_astro_filename = filenames
+    rapidpe_pastro_filename = None
+    rapidpe_pastro_needed = True
     combined_skymap_filename = None
     combined_skymap_needed = False
     skymap_needed = (skymap_filename is None)
@@ -1019,8 +1022,9 @@ def earlywarning_preliminary_initial_update_alert(
         combined_skymap_needed = \
             {"RAVEN_ALERT", "COMBINEDSKYMAP_READY"}.issubset(set(ext_labels))
 
+    # FIXME: This if statement is always True, we should get rid of it.
     if skymap_needed or em_bright_needed or p_astro_needed or \
-            combined_skymap_needed:
+            combined_skymap_needed or rapidpe_pastro_needed:
         for message in gracedb.get_log(superevent_id):
             t = message['tag_names']
             f = message['filename']
@@ -1047,6 +1051,10 @@ def earlywarning_preliminary_initial_update_alert(
                     and f.startswith('combined-ext.') \
                     and 'fit' in f:
                 combined_skymap_filename = fv
+            if rapidpe_pastro_needed \
+                    and 'p_astro' in t \
+                    and f == 'RapidPE_RIFT.p_astro.json':
+                rapidpe_pastro_filename = fv
 
     if combined_skymap_needed:
         # for every alert, copy combined sky map over if applicable
@@ -1141,28 +1149,63 @@ def earlywarning_preliminary_initial_update_alert(
             high_profile_canvas = identity.si()
 
         download_andor_expose_group = []
+        if rapidpe_pastro_filename is None:
+            voevent_canvas = _create_voevent.si(
+                (em_bright, p_astro_dict),
+                superevent_id,
+                alert_type_voevent,
+                Significant=voevent_significance,
+                skymap_filename=skymap_filename,
+                internal=False,
+                open_alert=True,
+                raven_coinc=raven_coinc,
+                combined_skymap_filename=combined_skymap_filename
+            )
+            rapidpe_canvas = _update_rapidpe_pastro_shouldnt_run.s()
 
-        voevent_canvas = _create_voevent.si(
-            (em_bright, p_astro_dict),
-            superevent_id,
-            alert_type_voevent,
-            Significant=voevent_significance,
-            skymap_filename=skymap_filename,
-            internal=False,
-            open_alert=True,
-            raven_coinc=raven_coinc,
-            combined_skymap_filename=combined_skymap_filename
-        )
-        # kafka alerts have a field called "significant" based on
-        # https://dcc.ligo.org/LIGO-G2300151/public
-        # The alert_type value passed to alerts.send is used to
-        # set this field in the alert dictionary
-        kafka_alert_canvas = alerts.send.si(
-            (skymap, em_bright, p_astro_dict),
-            superevent,
-            alert_type,
-            raven_coinc=raven_coinc
-        )
+            # kafka alerts have a field called "significant" based on
+            # https://dcc.ligo.org/LIGO-G2300151/public
+            # The alert_type value passed to alerts.send is used to
+            # set this field in the alert dictionary
+            kafka_alert_canvas = alerts.send.si(
+                (skymap, em_bright, p_astro_dict),
+                superevent,
+                alert_type,
+                raven_coinc=raven_coinc
+            )
+        else:
+            voevent_canvas = _create_voevent.s(
+                superevent_id,
+                alert_type_voevent,
+                Significant=voevent_significance,
+                skymap_filename=skymap_filename,
+                internal=False,
+                open_alert=True,
+                raven_coinc=raven_coinc,
+                combined_skymap_filename=combined_skymap_filename
+            )
+            download_andor_expose_group += [
+                gracedb.download.si(rapidpe_pastro_filename, superevent_id)
+            ]
+
+            kafka_alert_canvas = _check_pastro_and_send_alert.s(
+                skymap,
+                em_bright,
+                superevent,
+                alert_type,
+                raven_coinc=raven_coinc
+            )
+
+            rapidpe_canvas = (
+                _update_rapidpe_pastro.s(
+                    em_bright=em_bright,
+                    pipeline_pastro=p_astro_dict)
+                |
+                _upload_rapidpe_pastro_json.s(
+                    superevent_id,
+                    rapidpe_pastro_filename
+                )
+            )
     else:
         # Download em_bright and p_astro files here for voevent
         download_andor_expose_group = [
@@ -1183,6 +1226,20 @@ def earlywarning_preliminary_initial_update_alert(
             raven_coinc=raven_coinc,
             combined_skymap_filename=combined_skymap_filename
         )
+
+        if rapidpe_pastro_filename:
+            download_andor_expose_group += [
+                    gracedb.download.si(rapidpe_pastro_filename, superevent_id)
+            ]
+
+            rapidpe_canvas = (
+                _update_rapidpe_pastro.s()
+                |
+                _upload_rapidpe_pastro_json.s(
+                    superevent_id,
+                    rapidpe_pastro_filename
+                )
+            )
 
         # The skymap has not been downloaded at this point, so we need to
         # download it before we can assemble the kafka alerts and send them
@@ -1237,7 +1294,11 @@ def earlywarning_preliminary_initial_update_alert(
     # NOTE: The following canvas structure was used to fix #480
     canvas = (
         group(download_andor_expose_group)
-        |
+    )
+    if rapidpe_pastro_filename:
+        canvas |= rapidpe_canvas
+
+    canvas |= (
         group(
             voevent_canvas
             |
@@ -1254,6 +1315,94 @@ def earlywarning_preliminary_initial_update_alert(
     )
 
     canvas.apply_async()
+
+
+@app.task(shared=False)
+def _update_rapidpe_pastro(input_list, em_bright=None, pipeline_pastro=None):
+    """
+    If p_terr from rapidpe is different from the p_terr from the most
+    recent preferred event, replaces rapidpe's p_terr with pipeline p_terr.
+    Returns a tuple of em_bright, rapidpe pastro and a
+    boolean(rapidpe_pastro_updated) indicating if rapidpe pastro has been
+    updated. If p_terr in rapidpe has been updated, the return list contains
+    the updated pastro and the rapidpe_pastro_updated is True. Else, the
+    return list contains the rapidpe pastro from the input_list and
+    rapidpe_pastro_updated is False.
+    """
+    # input_list is download_andor_expose_group in
+    # function earlywarning_preliminary_initial_update_alert
+    if pipeline_pastro is None:
+        em_bright, pipeline_pastro, rapidpe_pastro, *_ = input_list
+    else:
+        rapidpe_pastro, *_ = input_list
+    pipeline_pastro_contents = json.loads(pipeline_pastro)
+    rapidpe_pastro_contents = json.loads(rapidpe_pastro)
+
+    if (rapidpe_pastro_contents["Terrestrial"]
+            == pipeline_pastro_contents["Terrestrial"]):
+        rapidpe_pastro_updated = False
+    else:
+        rapidpe_pastro = json.dumps(
+            rpe_pastro.renormalize_pastro_with_pipeline_pterr(
+                rapidpe_pastro_contents, pipeline_pastro_contents
+            )
+        )
+        rapidpe_pastro_updated = True
+
+    return em_bright, rapidpe_pastro, rapidpe_pastro_updated
+
+
+@app.task(shared=False)
+def _update_rapidpe_pastro_shouldnt_run():
+    raise RuntimeError(
+        "The `rapidpe_canvas' was executed where it should"
+        "not have been.  A bug must have been introduced."
+    )
+
+
+@gracedb.task(shared=False)
+def _upload_rapidpe_pastro_json(
+    input_list,
+    superevent_id,
+    rapidpe_pastro_filename
+):
+    """
+    Add public tag to RapidPE_RIFT.p_astro.json if p_terr from the
+    preferred event  is same as the p_terr in RapidPE_RIFT.p_astro.json.
+    Else, uploads an updated version of RapidPE_RIFT.p_astro.json
+    with file content from  the task update_rapidpe_pastro.
+    """
+    # input_list is output from update_rapidpe_pastro
+    *return_list, rapidpe_pastro_updated = input_list
+    if rapidpe_pastro_updated is True:
+        tags = ("pe", "p_astro", "public")
+
+        upload_filename = "RapidPE_RIFT.p_astro.json"
+        description = "RapidPE-RIFT Pastro results"
+        content = input_list[1]
+        gracedb.upload(
+            content,
+            upload_filename,
+            superevent_id,
+            description,
+            tags
+        )
+    return return_list
+
+
+@app.task(shared=False)
+def _check_pastro_and_send_alert(input_classification, skymap, em_bright,
+                                 superevent, alert_type, raven_coinc=False):
+    """Wrapper for :meth:`~gwcelery.tasks.alerts.send` meant to take a
+    potentially new p-astro as input from the preceding task.
+    """
+    _, p_astro = input_classification
+    alerts.send.delay(
+        (skymap, em_bright, p_astro),
+        superevent,
+        alert_type,
+        raven_coinc=raven_coinc
+    )
 
 
 @gracedb.task(ignore_result=True, shared=False)
