@@ -13,9 +13,9 @@ Changelog
 
 -   Do not add events involving KAGRA to superevents.
 
--   Require pesummary>=1.0.2 to fix bug in postprocessing of bilby results. 
+-   Require pesummary>=1.0.2 to fix bug in postprocessing of bilby results.
 
--   Update gwpy>=3.0.8 to fix issue with lal caches being discontiguous. 
+-   Update gwpy>=3.0.8 to fix issue with lal caches being discontiguous.
 
 -   Change the concurrency of worker 32 and add a threshold memory
     limit on worker processes before being replaced with a new process.
@@ -45,12 +45,15 @@ Changelog
     ``getenv = True`` in HTCondor, but instead setting ``getenv`` and
     ``environment`` options explicitly.  Modified ``condor._submit``,
     ``condor.base_submit``, and ``condor.submit_rapidpe`` to accept an optional
-    list for ``getenv``, to pass to the ``condor_submit`` executable. 
+    list for ``getenv``, to pass to the ``condor_submit`` executable.
     Changes to include pastro from RapidPE/RIFT in the second preliminary
     notice and initial notice+circular.
 
 -   Add instruments and objid fields to the header of sky map files produced
     from posterior samples.
+
+-   Add oauth and credential path to Condor submit file so cvmfs scitoken gets
+    passed and read correctly.
 
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------

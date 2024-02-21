@@ -12,6 +12,10 @@ JobBatchName = gwcelery
 job_max_vacate_time = 20
 kill_sig = SIGKILL
 
+use_oauth_services = igwn
+igwn_oauth_permissions = read:/virgo
+environment = "BEARER_TOKEN_FILE=$$(CondorScratchDir)/.condor_creds/igwn.use"
+
 arguments = "gwcelery beat -f gwcelery-beat.log"
 description = gwcelery-beat
 queue
