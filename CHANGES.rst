@@ -4,6 +4,10 @@ Changelog
 2.1.11 (unreleased)
 -------------------
 
+-   Include p_astro ad em_bright in alert payload for burst-cwb-bbh trigger.
+
+-   Produce em_bright.json for burst-cwb-bbh trigger.
+
 -   Add acceptance check to whether dependencies have been approved by SCCB and
     check that Bilby PE summary is available.
 
@@ -308,7 +312,7 @@ Changelog
 2.1.1 "Lone Island Mountain Devil" (2023-05-29)
 -----------------------------------------------
 
--   Upgrade ligo-followup-advocate to v1.2.3
+-   Upgrade ligo-followup-advocate to v1.2.3.
 
 -   Bump ligo.em-bright to v1.1.3 to be compatible with schema of online PE
     files with spinning waveforms.

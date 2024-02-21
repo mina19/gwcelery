@@ -386,7 +386,34 @@ def handle_burst_event(alert):
     """Perform annotations for burst events that depend on pipeline-specific
     """  # noqa: E501
     graceid = alert['uid']
+    pipeline = alert['object']['pipeline'].lower()
+    search = alert['object']['search'].lower()
     priority = 0 if superevents.should_publish(alert['object']) else 1
+
+    # em_bright calculation for Burst-cWB-BBH
+    if alert['alert_type'] == 'new':
+        if (pipeline, search) in [('cwb', 'bbh')]:
+            extra_attributes = alert['object']['extra_attributes']
+            multiburst = extra_attributes['MultiBurst']
+            snr = multiburst.get('snr')
+            mchirp = multiburst.get('mchirp', 0.0)
+            # FIXME once ingestion of mchip is finalised
+            # In case mchirp is not there or zero
+            # produce em_brigth with all zero
+            if mchirp == 0.0:
+                m12 = 30.0
+            else:
+                m12 = 2**(0.2) * mchirp
+            (
+                em_bright.source_properties.si(m12, m12, 0.0, 0.0, snr)
+                |
+                gracedb.upload.s(
+                    'em_bright.json', graceid,
+                    'em bright complete', ['em_bright', 'public']
+                )
+                |
+                gracedb.create_label.si('EMBRIGHT_READY', graceid)
+            ).apply_async(priority=priority)
 
     if alert['alert_type'] != 'log':
         return
@@ -772,12 +799,25 @@ def earlywarning_preliminary_alert(event, alert, alert_type='preliminary',
     preferred_event_id = event['graceid']
     superevent_id = alert['uid']
 
-    if event['group'] == 'CBC':
+    # Define alert payloads depending on group-pipeline-search
+    # cbc-*-*         :  p_astro/em_bright
+    # burst.cwb-bbh  :  p_astro/em_bright
+    # burst-*-*       :  NO p_astro/em_bright
+    alert_group = event['group'].lower()
+    alert_pipeline = event['pipeline'].lower()
+    alert_search = event['search'].lower()
+    if alert_pipeline == 'cwb' and alert_search == 'bbh':
+        skymap_filename = alert_pipeline + '.multiorder.fits'
+        p_astro_filename = alert_pipeline + '.p_astro.json'
+        em_bright_filename = 'em_bright.json'
+    elif alert_group == 'cbc':
         skymap_filename = 'bayestar.multiorder.fits'
-        p_astro_filename = event['pipeline'].lower() + '.p_astro.json'
-    elif event['group'] == 'Burst':
+        p_astro_filename = alert_pipeline + '.p_astro.json'
+        em_bright_filename = 'em_bright.json'
+    elif alert_group == 'burst':
         skymap_filename = event['pipeline'].lower() + '.multiorder.fits'
         p_astro_filename = None
+        em_bright_filename = None
     else:
         raise NotImplementedError(
             'Valid skymap required for preliminary alert'
@@ -813,13 +853,13 @@ def earlywarning_preliminary_alert(event, alert, alert_type='preliminary',
             ),
 
             (
-                gracedb.download.si('em_bright.json', preferred_event_id)
+                gracedb.download.si(em_bright_filename, preferred_event_id)
                 |
                 group(
                     identity.s(),
 
                     gracedb.upload.s(
-                        'em_bright.json',
+                        em_bright_filename,
                         superevent_id,
                         message='Source properties copied from {}'.format(
                             preferred_event_id),
@@ -829,7 +869,7 @@ def earlywarning_preliminary_alert(event, alert, alert_type='preliminary',
                     _create_label_and_return_filename.s('EMBRIGHT_READY',
                                                         superevent_id)
                 )
-            ) if event['group'] == 'CBC' else
+            ) if em_bright_filename is not None else
             identity.s([None, None]),
 
             (
@@ -849,7 +889,7 @@ def earlywarning_preliminary_alert(event, alert, alert_type='preliminary',
                     _create_label_and_return_filename.s('PASTRO_READY',
                                                         superevent_id)
                 )
-            ) if event['group'] == 'CBC' else
+            ) if p_astro_filename is not None else
             identity.s([None, None])
         )
         |

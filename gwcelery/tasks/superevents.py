@@ -96,6 +96,11 @@ def handle(payload):
         priority = 0
         label = payload['data']['name']
         group = payload['object']['group'].lower()
+        search = payload['object']['search'].lower()
+        pipeline = payload['object']['pipeline'].lower()
+        # Special case of cWB-BBH that require the same label of CBC
+        if search == 'bbh' and pipeline == 'cwb':
+            group = 'cbc'
         if label == 'RAVEN_ALERT':
             log.info('Label %s added to %s', label, gid)
         elif label not in REQUIRED_LABELS_BY_GROUP[group]:
@@ -443,7 +448,13 @@ def is_complete(event):
 
     """
     group = event['group'].lower()
+    pipeline = event['pipeline'].lower()
+    search = event['search'].lower()
     label_set = set(event['labels'])
+    # Define the special case burst-cwb-bbh that is a CBC
+    if pipeline == 'cwb' and search == 'bbh':
+        group = 'cbc'
+
     required_labels = REQUIRED_LABELS_BY_GROUP[group]
     return required_labels.issubset(label_set)
 
@@ -490,6 +501,11 @@ def _should_publish(event, significant=False):
     the publishability criteria as a tuple for later use.
     """
     group = event['group'].lower()
+    search = event.get('search', '').lower()
+    pipeline = event.get('pipeline', '').lower()
+    # Define the special case burst-cwb-bbh that is a CBC
+    if pipeline == 'cwb' and search == 'bbh':
+        group = 'cbc'
     if not significant:
         far_threshold = app.conf['preliminary_alert_far_threshold'][group]
         trials_factor = app.conf['preliminary_alert_trials_factor'][group]

@@ -1036,6 +1036,28 @@ def test_handle_cbc_event_new_event(mock_source_properties,
         mock_p_astro.assert_not_called()
 
 
+@pytest.mark.parametrize("alert_search,alert_pipeline",
+                         [(search, pipeline)
+                          for search in ['bbh', 'allsky']
+                          for pipeline in ['cwb', 'olib', 'mly']
+                          ])
+@patch('gwcelery.tasks.gracedb.download._orig_run', mock_download)
+@patch('gwcelery.tasks.em_bright.source_properties.run')
+def test_handle_burst_event_new_event(mock_source_properties,
+                                      alert_search, alert_pipeline):
+    alert = read_json(data, 'lvalert_event_creation.json')
+    alert['object']['search'] = alert_search
+    alert['object']['pipeline'] = alert_pipeline
+    if alert_pipeline == 'cwb':
+        alert['object']['extra_attributes'] = {
+            'MultiBurst': {'snr': 10.0, 'mchirp': 0.0}}
+    orchestrator.handle_burst_event(alert)
+    if (alert_pipeline, alert_search) in [('cwb', 'bbh')]:
+        mock_source_properties.assert_called_once()
+    else:
+        mock_source_properties.assert_not_called()
+
+
 @patch(
     'gwcelery.tasks.gracedb.get_event._orig_run',
     return_value={'graceid': 'T250822', 'group': 'CBC', 'pipeline': 'gstlal',

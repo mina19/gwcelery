@@ -531,7 +531,17 @@ def test_upload_same_event():
         ['SKYMAP_READY'], True, True],
      ['Burst', 'cwb', 'AllSky', False, 1e-15, 'H1,L1',  # incomplete Burst
         [], False, False],
-     ['Burst', 'cwb', 'AllSky', True, 1e-30, 'H1,L1,V1',  # incomplete Burst
+     ['Burst', 'cwb', 'BBH', False, 1e-15, 'H1,L1',  # complete cWB-BBH
+        ['SKYMAP_READY', 'PASTRO_READY', 'EMBRIGHT_READY'], True, True],
+     ['Burst', 'cwb', 'BBH', False, 1e-15, 'H1,L1',  # incomplete cWB-BBH
+        ['SKYMAP_READY', 'PASTRO_READY'], False, False],
+     ['Burst', 'cwb', 'BBH', False, 1e-15, 'H1,L1',  # incomplete cWB-BBH
+        ['SKYMAP_READY', 'EMBRIGHT_READY'], False, False],
+     ['Burst', 'cwb', 'BBH', False, 1e-15, 'H1,L1',  # incomplete cWB-BBH
+        ['SKYMAP_READY'], False, False],
+     ['Burst', 'cwb', 'BBH', False, 1e-15, 'H1,L1',  # incomplete cWB-BBH
+        [], False, False],
+     ['Burst', 'cwb', 'BBH', True, 1e-30, 'H1,L1,V1',  # incomplete cWB-BBH
         [], False, False],
      ['CBC', 'gstlal', 'AllSky', False, 1.e-6, 'H1,L1,V1',  # incomplete ext
         ['RAVEN_ALERT'], False, False],
@@ -1111,9 +1121,9 @@ def test_burst_bbh_vs_allsky(burst_bbh_ranked_higher_than_burst_allsky):
         'gpstime': 1.0,
         'pipeline': 'CWB',
         'offline': False,
-        'far': 1e-6,
+        'far': 1e-10,
         'instruments': 'H1,L1',
-        'labels': ['SKYMAP_READY'],
+        'labels': [],
         'superevent': None,
         'superevent_neighbours': SUPEREVENTS_NEIGHBOURS,
         'extra_attributes': {
@@ -1128,7 +1138,3 @@ def test_burst_bbh_vs_allsky(burst_bbh_ranked_higher_than_burst_allsky):
     event_1 = dict(**event_dictionary, group='Burst', search='AllSky')
     event_2 = dict(**event_dictionary, group='Burst', search='BBH')
     assert superevents.keyfunc(event_1) < superevents.keyfunc(event_2)
-    # catch the unknown group case
-    event_3 = dict(**event_dictionary, group='unknown', search='BBH')
-    with pytest.raises(KeyError):
-        superevents.keyfunc(event_3)
