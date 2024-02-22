@@ -28,18 +28,23 @@ def get_toy_3d_fits_filecontents():
     table.meta['creator'] = 'BAYESTAR'
     table.meta['distmean'] = np.random.uniform(low=0.0, high=1000)
     table.meta['diststd'] = np.random.uniform(low=0.0, high=250)
-    table.meta['instruments'] = ['H1', 'V1']
+    table.meta['instruments'] = ['H1', 'L1', 'V1']
     with gzip.GzipFile(fileobj=bytesio, mode='wb') as f:
         table.write(f, format='fits')
     return bytesio.getvalue()
 
 
+def get_toy_snrs():
+    np.random.seed(1000)
+    return np.random.uniform(low=0, high=10, size=3)
+
+
 def test_gwskynet_annotation():
     outputs = json.loads(gwskynet.gwskynet_annotation(
-        get_toy_3d_fits_filecontents()))
-    expected_output = {"class_score": 0,
-                       "FAP": 1,
-                       "FNP": 0}
+        get_toy_3d_fits_filecontents(), get_toy_snrs()))
+    expected_output = {"class_score": 0.139,
+                       "FAP": 0.614,
+                       "FNP": 0.007}
     for k, v in expected_output.items():
         assert outputs[k] == pytest.approx(v, abs=1e-3)
 
@@ -161,8 +166,7 @@ def test_handle_prefer_update_cbc_superevent(mock_upload, mock_download):
     alert = {
         "data": {
             "file_version": 0,
-            "comment": ("Updated superevent parameters: "
-                        "preferred_event: TG12344 -> TG12345")
+            "comment": ("Localization copied from TG12345")
         },
         "uid": "TS12345",
         "alert_type": "log",

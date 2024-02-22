@@ -25,7 +25,7 @@ def GWSkyNet_model():
 
 
 @app.task(queue='skynet', shared=False)
-def gwskynet_annotation(filecontents):
+def gwskynet_annotation(filecontents, SNRs):
     """Perform the series of tasks necessary for GWSkyNet to
 
     Parameters
@@ -41,6 +41,12 @@ def gwskynet_annotation(filecontents):
 
     with NamedTemporaryFile(content=filecontents) as fitsfile:
         GWSkyNet_input = GWSkyNet.prepare_data(fitsfile.name)
+    # One of the inputs from BAYESTAR to GWSkyNet is the list of instruments,
+    # i.e., metadata['instruments'], which is converted to a binary array with
+    # three elements, i.e. GWSkyNet_input[2], for H1, L1 and V1.
+    # GWSkyNet 2.4.0 uses this array to indicate detector with SNR >= 4.5
+    GWSkyNet_input[2][0] = np.where(SNRs >= app.conf['gwskynet_snr_threshold'],
+                                    1, 0)
     class_score = GWSkyNet.predict(GWSkyNet_model(), GWSkyNet_input)
     FAP, FNP = GWSkyNet.get_rates(class_score)
     fap = FAP[0]
@@ -66,11 +72,18 @@ def get_cbc_event_snr(event):
         detector SNRs.
 
     """
-    snr = []
+    # GWSkyNet 2.4.0 uses this SNR array to modify one of the inputs, so
+    # snr needs to be formatted such that index 0, 1 and 2 points to H1,
+    # L1 and V1 respectively
+    snr = np.zeros(3)
     attribs = event['extra_attributes']['SingleInspiral']
     for det in attribs:
-        snr.append(det['snr'])
-    snr = np.array(snr)
+        if det['ifo'] == 'H1':
+            snr[0] = det['snr']
+        if det['ifo'] == 'L1':
+            snr[1] = det['snr']
+        if det['ifo'] == 'V1':
+            snr[2] = det['snr']
     return snr
 
 
@@ -126,10 +139,9 @@ def _should_annotate(preferred_event, new_label, new_log_comment, labels,
         # GWSkyNet annotations not applied until after initial prelim sent when
         # FAR passes alert threshold
         pass
-    elif new_log_comment.startswith('Updated superevent parameters: '
-                                    'preferred_event: '):
-        # GWSkyNet will also annotate the superevent if the preferred event has
-        # changed.
+    elif new_log_comment.startswith('Localization copied from '):
+        # GWSkyNet will also annotate the superevent if the sky map
+        # has been changed (i.e. a sky map from a new g-event has been copied)
         annotate = True
     elif manual_pref_event_change_regexp.match(new_log_comment):
         # Need to check for a different log comment if the preferred event has
@@ -157,6 +169,7 @@ def handle_cbc_superevent(alert):
     new_label = alert['data'].get('name', '')
     new_log_comment = alert['data'].get('comment', '')
     labels = alert['object'].get('labels', [])
+    SNRs = get_cbc_event_snr(preferred_event)
 
     if _should_annotate(preferred_event, new_label, new_log_comment, labels,
                         alert['alert_type']):
@@ -164,7 +177,7 @@ def handle_cbc_superevent(alert):
             gracedb.download.s(skymap_filename,
                                superevent_id)
             |
-            gwskynet_annotation.s()
+            gwskynet_annotation.s(SNRs)
             |
             _unpack_gwskynet_annotation_and_upload.s(
                 skymap_filename, superevent_id)
