@@ -95,15 +95,15 @@ def create_combined_skymap(se_id, ext_id, preferred_event=None):
             gracedb.upload.s(
                 COMBINED_SKYMAP_FILENAME_MULTIORDER,
                 ext_id, message, ['sky_loc', 'ext_coinc']
-            )
-            |
-            gracedb.create_label.si('COMBINEDSKYMAP_READY', ext_id),
+            ),
 
             skymaps.plot_allsky.s()
             |
             gracedb.upload.s(COMBINED_SKYMAP_FILENAME_PNG, ext_id,
                              message_png, ['sky_loc', 'ext_coinc'])
         )
+        |
+        gracedb.create_label.si('COMBINEDSKYMAP_READY', ext_id)
     ).delay()
 
 
