@@ -17,6 +17,8 @@ in :obj:`sys.path`, including any of the following presets:
 import getpass
 import os
 
+from igwn_alert.client import DEFAULT_SERVER as DEFAULT_IGWN_ALERT_SERVER
+
 # Celery application settings.
 
 # Task tombstones expire after 2 hours.
@@ -56,8 +58,8 @@ expose_to_public = False
 """Set to True if events meeting the public alert threshold really should be
 exposed to the public."""
 
-igwn_alert_server = None
-"""IGWN alert server: None == DEFAULT_SERVER"""
+igwn_alert_server = DEFAULT_IGWN_ALERT_SERVER
+"""IGWN alert server"""
 
 igwn_alert_noauth = False
 """IGWN alert server no-authetication"""
