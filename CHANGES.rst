@@ -1,29 +1,26 @@
 Changelog
 =========
 
-2.1.11 (unreleased)
--------------------
+2.2.1 "Sheepsquatch" (2024-02-23)
+---------------------------------
 
 -   Include p_astro ad em_bright in alert payload for burst-cwb-bbh trigger.
 
--   Produce em_bright.json for burst-cwb-bbh trigger.
+-   Produce em_bright.json for burst-cwb-bbh triggers.
 
--   Add acceptance check to whether dependencies have been approved by SCCB and
-    check that Bilby PE summary is available.
+-   Add acceptance check to if dependencies have been approved by SCCB and if
+    Bilby PE summary is available.
 
 -   Do not add events involving KAGRA to superevents.
 
 -   Require pesummary>=1.0.2 to fix bug in postprocessing of bilby results. 
 
--   Update gwpy>=3.0.8 to fix issue with lal caches being discontiguous. 
+-   Update gwpy>=3.0.8 to fix issue with discontiguous lal caches.
 
--   Change the concurrency of worker 32 and add a threshold memory
-    limit on worker processes before being replaced with a new process.
-    This is the celery setting ``max-memory-per-child``.
+-   Change the worker concurrency to 32 and set ``max-memory-per-child`` to
+    2GB.
 
--   Add documentation of the duties of the current ROTA member, who is meant
-    to actively monitor the various gwcelery instances and deal with active
-    issues.
+-   Document librarian ROTA duties.
 
 -   Make the ``dev`` configuration the default for testing.
 
@@ -41,13 +38,12 @@ Changelog
 -   Add a form to the Flask console to create BAYESTAR sky maps with selected
     detectors disabled.
 
--   Upgrade RapidPE/RIFT to v0.6.7, RapidPE to v0.1.1.  No longer hard-coding
-    ``getenv = True`` in HTCondor, but instead setting ``getenv`` and
-    ``environment`` options explicitly.  Modified ``condor._submit``,
-    ``condor.base_submit``, and ``condor.submit_rapidpe`` to accept an optional
-    list for ``getenv``, to pass to the ``condor_submit`` executable. 
-    Changes to include pastro from RapidPE/RIFT in the second preliminary
-    notice and initial notice+circular.
+-   Upgrade RapidPE/RIFT to v0.6.7, RapidPE to v0.1.1.  Don't set ``getenv =
+    True`` in HTCondor, instead set ``getenv`` and ``environment`` options
+    explicitly.  Modify ``condor._submit``, ``condor.base_submit``, and
+    ``condor.submit_rapidpe`` to accept an optional list for ``getenv``, to
+    pass to the ``condor_submit`` executable.  Include pastro from RapidPE/RIFT
+    in the second preliminary notice and initial notice+circular.
 
 -   Add instruments and objid fields to the header of sky map files produced
     from posterior samples.
