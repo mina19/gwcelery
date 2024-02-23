@@ -46,7 +46,7 @@ def handle_superevent(alert):
             )
             |
             group(
-                _get_lowest_far.si(superevent_id),
+                _get_cbc_lowest_far.si(superevent_id),
                 gracedb.get_event.s()
             )
             |
@@ -59,7 +59,7 @@ def handle_superevent(alert):
             )
             |
             group(
-                _get_lowest_far.si(superevent_id),
+                _get_cbc_lowest_far.si(superevent_id),
                 gracedb.get_event.s()
             )
             |
@@ -941,12 +941,18 @@ def earlywarning_preliminary_alert(event, alert, alert_type='preliminary',
 
 
 @gracedb.task(shared=False)
-def _get_lowest_far(superevent_id):
-    """Obtain the lowest FAR of the events in the target superevent."""
+def _get_cbc_lowest_far(superevent_id):
+    """Obtain the lowest FAR of the CBC events in the target superevent."""
     # FIXME: remove ._orig_run when this bug is fixed:
     # https://github.com/getsentry/sentry-python/issues/370
-    return min(gracedb.get_event._orig_run(gid)['far'] for gid in
-               gracedb.get_superevent._orig_run(superevent_id)["gw_events"])
+    events = [
+        gracedb.get_event._orig_run(gid) for gid in
+        gracedb.get_superevent._orig_run(superevent_id)["gw_events"]
+    ]
+    return min(
+        [e['far'] for e in events if e['group'].lower() == 'cbc'],
+        default=None
+    )
 
 
 @app.task(ignore_result=True, shared=False)
@@ -959,20 +965,20 @@ def parameter_estimation(far_event, superevent_id, pe_pipeline):
     far, event = far_event
     threshold = (app.conf['significant_alert_far_threshold']['cbc'] /
                  app.conf['significant_alert_trials_factor']['cbc'])
-    if far > threshold:
-        gracedb.upload.delay(
-            filecontents=None, filename=None,
-            graceid=superevent_id,
-            message='Parameter estimation will not start since FAR is larger '
-                    'than the PE threshold, {}  Hz.'.format(threshold),
-            tags='pe'
-        )
-    elif event['group'] != 'CBC':
+    if event['group'] != 'CBC':
         gracedb.upload.delay(
             filecontents=None, filename=None,
             graceid=superevent_id,
             message='Parameter estimation will not start since this is not '
                     'CBC but {}.'.format(event['group']),
+            tags='pe'
+        )
+    elif far > threshold:
+        gracedb.upload.delay(
+            filecontents=None, filename=None,
+            graceid=superevent_id,
+            message='Parameter estimation will not start since FAR is larger '
+                    'than the PE threshold, {}  Hz.'.format(threshold),
             tags='pe'
         )
     elif event['search'] == 'MDC':
