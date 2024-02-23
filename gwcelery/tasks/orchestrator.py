@@ -1005,6 +1005,18 @@ def parameter_estimation(far_event, superevent_id, pe_pipeline):
                     'injections not O3 replay data + MDC injections',
             tags='pe'
         )
+    elif (
+            pe_pipeline == 'rapidpe' and
+            event['search'].lower() == 'earlywarning'
+    ):
+        # Remove this if rapidpe can ingest early warning events
+        gracedb.upload.delay(
+            filecontents=None, filename=None,
+            graceid=superevent_id,
+            message='Parameter estimation by RapidPE-RIFT is disabled for'
+                    'earlywarning triggers.',
+            tags='pe'
+        )
     else:
         inference.start_pe.delay(event, superevent_id, pe_pipeline)
 

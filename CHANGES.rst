@@ -52,6 +52,8 @@ Changelog
 -   Add instruments and objid fields to the header of sky map files produced
     from posterior samples.
 
+-   Ignore EarlyWarning triggers when launching RapidPE/RIFT.
+
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
 
