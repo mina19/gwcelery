@@ -9,6 +9,12 @@ sentry_environment = 'playground'
 <https://docs.sentry.io/enriching-error-data/environments/>`_ in Sentry log
 messages."""
 
+igwn_alert_group = 'gracedb-playground'
+"""IGWN alert group."""
+
+gracedb_host = 'gracedb-playground.ligo.org'
+"""GraceDB host."""
+
 mock_events_simulate_multiple_uploads = True
 """If True, then upload each mock event several times in rapid succession with
 random jitter in order to simulate multiple pipeline uploads."""
