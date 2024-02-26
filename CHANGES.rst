@@ -48,6 +48,8 @@ Changelog
     list for ``getenv``, to pass to the ``condor_submit`` executable. 
     Changes to include pastro from RapidPE/RIFT in the second preliminary
     notice and initial notice+circular.
+    Moved ``submit_rapidpe`` to ``inference.py`` and refactored to delete
+    ``base_submit``.
 
 -   Add instruments and objid fields to the header of sky map files produced
     from posterior samples.

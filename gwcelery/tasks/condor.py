@@ -113,55 +113,14 @@ class JobFailed(subprocess.CalledProcessError):
     """Raised if an HTCondor job fails."""
 
 
-def base_submit(self, submit_file, log=None):
-    """Helper function for tasks that submit a job using HTCondor.
-
-    Parameters
-    ----------
-    submit_file : str
-        Path of the submit file.
-    log: str
-        Used internally to track job state. Caller should not set.
-
-    Raises
-    ------
-    :class:`JobAborted`
-        If the job was aborted (e.g. by running ``condor_rm``).
-    :class:`JobFailed`
-        If the job terminates and returns a nonzero exit code.
-    :class:`JobRunning`
-        If the job is still running. Causes the task to be re-queued until the
-        job is complete.
-    """
-    if log is None:
-        log = _mklog('.log')
-        try:
-            _submit(submit_file, log_xml='true', log=log)
-        except subprocess.CalledProcessError:
-            _rm_f(log)
-            raise
-        self.retry((submit_file,), dict(log=log))
-    else:
-        event = _read_last_event(log)
-        if event.get('MyType') == 'JobTerminatedEvent':
-            _rm_f(log)
-            if event['TerminatedNormally'] and event['ReturnValue'] != 0:
-                raise JobFailed(event['ReturnValue'], (submit_file,))
-        elif event.get('MyType') == 'JobAbortedEvent':
-            _rm_f(log)
-            raise JobAborted(event)
-        else:
-            raise JobRunning(event)
-
-
-submit_shared_task_kwargs = dict(
+submit_kwargs = dict(
     bind=True, autoretry_for=(JobRunning,),
-    ignore_result=True, shared=False
+    ignore_result=True, shared=False,
 )
 
 
 @app.task(
-    **submit_shared_task_kwargs,
+    **submit_kwargs,
     **app.conf['condor_retry_kwargs']
 )
 def submit(self, submit_file, log=None):
@@ -188,43 +147,26 @@ def submit(self, submit_file, log=None):
     -------
     >>> submit.s('example.sub',
     ...          accounting_group='ligo.dev.o3.cbc.explore.test')
-
     """
-    return base_submit(self, submit_file, log=log)
-
-
-@app.task(
-    **submit_shared_task_kwargs,
-    **app.conf['rapidpe_condor_retry_kwargs']
-)
-def submit_rapidpe(self, submit_file, log=None):
-    """Submit a job using HTCondor for RapidPE.
-
-    Parameters
-    ----------
-    submit_file : str
-        Path of the submit file.
-    log: str
-        Used internally to track job state. Caller should not set.
-
-    Raises
-    ------
-    :class:`JobAborted`
-        If the job was aborted (e.g. by running ``condor_rm``).
-    :class:`JobFailed`
-        If the job terminates and returns a nonzero exit code.
-    :class:`JobRunning`
-        If the job is still running. Causes the task to be re-queued until the
-        job is complete.
-
-    Example
-    -------
-    >>> submit_rapidpe.s('example.sub',
-    ...          accounting_group='ligo.dev.o3.cbc.explore.test')
-
-    """
-
-    return base_submit(self, submit_file, log=log)
+    if log is None:
+        log = _mklog('.log')
+        try:
+            _submit(submit_file, log_xml='true', log=log)
+        except subprocess.CalledProcessError:
+            _rm_f(log)
+            raise
+        self.retry((submit_file,), dict(log=log))
+    else:
+        event = _read_last_event(log)
+        if event.get('MyType') == 'JobTerminatedEvent':
+            _rm_f(log)
+            if event['TerminatedNormally'] and event['ReturnValue'] != 0:
+                raise JobFailed(event['ReturnValue'], (submit_file,))
+        elif event.get('MyType') == 'JobAbortedEvent':
+            _rm_f(log)
+            raise JobAborted(event)
+        else:
+            raise JobRunning(event)
 
 
 @app.task(bind=True, autoretry_for=(JobRunning,), default_retry_delay=1,

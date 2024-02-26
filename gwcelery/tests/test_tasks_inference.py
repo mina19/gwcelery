@@ -610,7 +610,7 @@ def test_start_pe(monkeypatch, tmp_path, pipeline):
         for event_pipeline in event_pipeline_info:
             dag_prepare_task = Mock(return_value=mock_task.s())
 
-            condor_submit = Mock(side_effect=mock_condor_submit)
+            submit_rapidpe = Mock(side_effect=mock_condor_submit)
             dag_finished = Mock()
             monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', Mock())
             monkeypatch.setattr('os.path.expanduser', Mock(
@@ -618,7 +618,8 @@ def test_start_pe(monkeypatch, tmp_path, pipeline):
             monkeypatch.setattr('gwcelery.tasks.inference.dag_prepare_task',
                                 dag_prepare_task)
             monkeypatch.setattr(
-                    'gwcelery.tasks.condor.submit_rapidpe.run', condor_submit)
+                    'gwcelery.tasks.inference.submit_rapidpe.run',
+                    submit_rapidpe)
             monkeypatch.setattr(
                     'gwcelery.tasks.inference.dag_finished.run',
                     dag_finished)
@@ -629,7 +630,7 @@ def test_start_pe(monkeypatch, tmp_path, pipeline):
                 'extra_attributes': {'CoincInspiral': {'snr': 10}}},
                 event_pipeline_info[event_pipeline]['sid'], pipeline)
             dag_prepare_task.assert_called_once()
-            condor_submit.assert_called_once()
+            submit_rapidpe.assert_called_once()
             dag_finished.assert_called_once()
 
     else:

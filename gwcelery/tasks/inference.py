@@ -884,6 +884,14 @@ def _pesummary_task(webdir, samples, **pesummary_kwargs):
     return condor.check_output.si(args, **condor_kwargs)
 
 
+# Modified version of condor.submit task with retry kwargs overridden with
+# RapidPE-specific settings.
+submit_rapidpe = app.task(
+    **condor.submit_kwargs,
+    **app.conf['rapidpe_condor_retry_kwargs'],
+)(condor.submit.run)
+
+
 @app.task(ignore_result=True, shared=False)
 def start_pe(event, superevent_id, pe_pipeline):
     """Run Parameter Estimation on a given event.
@@ -948,7 +956,7 @@ def start_pe(event, superevent_id, pe_pipeline):
         rundirs = [event_dir]
         kwargs_list = [{'event_pipeline': event["pipeline"]}]
         analyses = [pe_pipeline]
-        condor_submit_task = condor.submit_rapidpe
+        condor_submit_task = submit_rapidpe
     else:
         rundirs = [event_dir]
         kwargs_list = [{}]
