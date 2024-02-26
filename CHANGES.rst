@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.2.1 "Sheepsquatch" (2024-02-23)
+2.2.1 "Sheepsquatch" (2024-02-26)
 ---------------------------------
 
 -   Include p_astro ad em_bright in alert payload for burst-cwb-bbh trigger.
@@ -49,6 +49,8 @@ Changelog
     from posterior samples.
 
 -   Ignore EarlyWarning triggers when launching RapidPE/RIFT.
+
+-   Upgrade RapidPE/RIFT to v0.6.8.
 
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
