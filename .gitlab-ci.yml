@@ -10,6 +10,8 @@ include:
 variables:
   # Allow Celery to run as root, because everything runs as root under Docker.
   C_FORCE_ROOT: 'true'
+  # Poetry version to install
+  POETRY_VERSION: 1.8.1
 
 stages:
   - build
@@ -43,8 +45,11 @@ build:
     - !reference [".debian:base", before_script]
     - !reference [".python:pytest", before_script]
     - *install-redis
-    - curl -sSL https://install.python-poetry.org | python3 -
+    - python3 -m pip install pipx
     - export PATH="/root/.local/bin:$PATH"
+    - pipx ensurepath
+    - pipx install poetry==$POETRY_VERSION
+    - pipx inject poetry poetry-dynamic-versioning
     - poetry config virtualenvs.create false
     # Check that poetry.lock is consistent with pyproject.toml
     - poetry check --lock
@@ -129,10 +134,11 @@ sccb:
   before_script:
     # poetry-dynamic-versioning needs to be installed to properly
     # update the version information in pyproject.toml
-    - >
-      python -m pip install --upgrade pip;
-      curl -sSL https://install.python-poetry.org | python3 -;
-      python -m pip install --upgrade poetry-dynamic-versioning
+    - python -m pip install --upgrade pip
+    - python -m pip install pipx
+    - pipx ensurepath
+    - pipx install poetry==$POETRY_VERSION
+    - pipx inject poetry poetry-dynamic-versioning
   needs: []
 
 # Publish coverage
@@ -235,7 +241,10 @@ release:
       . .bashrc
       set -e
       python3.9 -m pip install --upgrade pip
-      curl -sSL https://install.python-poetry.org | python3.9 -
+      python3.9 -m pip install pipx
+      pipx ensurepath
+      pipx install poetry==$POETRY_VERSION
+      pipx inject poetry poetry-dynamic-versioning
       # FIXME: It would be simpler to use `poetry install`, but it installs the
       # project in editable mode, which is not appropriate for production
       # deployments.
