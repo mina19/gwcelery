@@ -506,12 +506,12 @@ def _should_publish(event, significant=False):
     # Define the special case burst-cwb-bbh that is a CBC
     if pipeline == 'cwb' and search == 'bbh':
         group = 'cbc'
-    if not significant:
-        far_threshold = app.conf['preliminary_alert_far_threshold'][group]
-        trials_factor = app.conf['preliminary_alert_trials_factor'][group]
-    elif EARLY_WARNING_LABEL in event['labels']:
+    if EARLY_WARNING_LABEL in event['labels']:
         far_threshold = app.conf['early_warning_alert_far_threshold']
         trials_factor = app.conf['early_warning_alert_trials_factor']
+    elif not significant:
+        far_threshold = app.conf['preliminary_alert_far_threshold'][group]
+        trials_factor = app.conf['preliminary_alert_trials_factor'][group]
     else:
         far_threshold = app.conf['significant_alert_far_threshold'][group]
         trials_factor = app.conf['significant_alert_trials_factor'][group]
