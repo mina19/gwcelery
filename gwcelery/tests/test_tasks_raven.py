@@ -86,7 +86,8 @@ def test_calculate_coincidence_far(
     mock_calc_signif.assert_called_once_with(
         'S1234', 'E4321', tl, th,
         se_dict=se, ext_dict=ext,
-        incl_sky=False, grb_search='GRB',
+        incl_sky=False, grb_search=ext['search'],
+        em_rate=app.conf['raven_ext_rates'][ext['search']],
         gracedb=gracedb.client, far_grb=None,
         far_gw_thresh=None, far_grb_thresh=None)
 
@@ -104,8 +105,9 @@ def test_calculate_coincidence_far_subgrb(mock_calc_signif):
     mock_calc_signif.assert_called_once_with(
         'S1234', 'E4321', tl, th,
         se_dict=se, ext_dict=ext,
-        incl_sky=False, grb_search='SubGRBTargeted',
+        incl_sky=False, grb_search=ext['search'],
         gracedb=gracedb.client, far_grb=ext['far'],
+        em_rate=None,
         far_gw_thresh=(
             app.conf['raven_targeted_far_thresholds']['GW']['Fermi']),
         far_grb_thresh=(
@@ -131,11 +133,12 @@ def test_calculate_spacetime_coincidence_far_fermi(
     raven.calculate_coincidence_far(se, ext, tl, th)
     mock_calc_signif.assert_called_once_with(
         'S1234', 'E4321', tl, th,
-        incl_sky=True, grb_search='GRB',
+        incl_sky=True, grb_search=ext['search'],
         se_dict=se, ext_dict=ext,
         se_fitsfile='fermi_skymap.fits.gz',
         ext_fitsfile='fermi_skymap.fits.gz',
         se_moc=True, ext_moc=False,
+        em_rate=app.conf['raven_ext_rates'][ext['search']],
         gracedb=gracedb.client, far_grb=None,
         far_gw_thresh=None, far_grb_thresh=None,
         use_preferred_event_skymap=False)
@@ -160,10 +163,11 @@ def test_calculate_spacetime_coincidence_far_swift(
     raven.calculate_coincidence_far(se, ext, tl, th)
     mock_calc_signif.assert_called_once_with(
         'S1234', 'E4321', tl, th,
-        incl_sky=True, grb_search='GRB',
+        incl_sky=True, grb_search=ext['search'],
         se_dict=se, ext_dict=ext,
         se_fitsfile='swift_skymap.multiorder.fits',
         ext_fitsfile='swift_skymap.multiorder.fits',
+        em_rate=app.conf['raven_ext_rates'][ext['search']],
         se_moc=True, ext_moc=True,
         gracedb=gracedb.client, far_grb=None,
         far_gw_thresh=None, far_grb_thresh=None,
@@ -190,10 +194,11 @@ def test_calculate_spacetime_coincidence_far_preferred(
     raven.calculate_coincidence_far(se, ext, tl, th)
     mock_calc_signif.assert_called_once_with(
         'S1234', 'E4321', tl, th,
-        incl_sky=True, grb_search='GRB',
+        incl_sky=True, grb_search=ext['search'],
         se_dict=se, ext_dict=ext,
         se_fitsfile='fermi_skymap.fits.gz',
         ext_fitsfile='fermi_skymap.fits.gz',
+        em_rate=app.conf['raven_ext_rates'][ext['search']],
         se_moc=True, ext_moc=False,
         gracedb=gracedb.client, far_grb=None,
         far_gw_thresh=None, far_grb_thresh=None,

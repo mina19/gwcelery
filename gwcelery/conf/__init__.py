@@ -395,6 +395,17 @@ raven_coincidence_windows = {'GRB_CBC': [-5, 1],
 superevents of the appropriate type are considered to be coincident if
 within time window of each other."""
 
+raven_ext_rates = {
+    'GRB': 305 / (3600 * 24 * 365),    # 305 / yr
+    'MDC': 305 / (3600 * 24 * 365),    # 305 / yr
+    'SubGRB': 370 / (3600 * 24 * 365)  # 370 / yr
+}
+"""Expected rates of astrophysical external triggers submitted for each search.
+These potentially include multiple satellites and experiments (e.g. for GRBs,
+Fermi+Swift+INTEGRAL), accounting for multiple detections of the same
+astrophysical event. For more details on methodology, see:
+https://dcc.ligo.org/T1900297."""
+
 raven_targeted_far_thresholds = {
     'GW': {
         'Fermi': preliminary_alert_far_threshold['cbc'],

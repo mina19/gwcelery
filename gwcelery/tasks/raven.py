@@ -55,6 +55,12 @@ def calculate_coincidence_far(superevent, exttrig, tl, th,
         far_gw_thresh = None
         far_grb_thresh = None
 
+    # Get rate for expected number of astrophysical external triggers if needed
+    if exttrig['search'] in {'GRB', 'SubGRB', 'MDC'}:
+        ext_rate = app.conf['raven_ext_rates'][exttrig['search']]
+    else:
+        ext_rate = None
+
     if ({'EXT_SKYMAP_READY', 'SKYMAP_READY'}.issubset(exttrig['labels']) or
             {'EXT_SKYMAP_READY', 'EM_READY'}.issubset(exttrig['labels'])):
         #  if both sky maps available, calculate spatial coinc far
@@ -76,6 +82,7 @@ def calculate_coincidence_far(superevent, exttrig, tl, th,
                    se_fitsfile=se_skymap, ext_fitsfile=ext_skymap,
                    se_moc=True, ext_moc=ext_moc,
                    incl_sky=True, gracedb=gracedb.client,
+                   em_rate=ext_rate,
                    far_grb=far_grb,
                    far_gw_thresh=far_gw_thresh,
                    far_grb_thresh=far_grb_thresh,
@@ -86,6 +93,7 @@ def calculate_coincidence_far(superevent, exttrig, tl, th,
                    se_dict=superevent, ext_dict=exttrig,
                    grb_search=exttrig['search'],
                    incl_sky=False, gracedb=gracedb.client,
+                   em_rate=ext_rate,
                    far_grb=far_grb,
                    far_gw_thresh=far_gw_thresh,
                    far_grb_thresh=far_grb_thresh)

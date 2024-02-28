@@ -56,6 +56,9 @@ Changelog
 
 -   Ignore EarlyWarning triggers when launching RapidPE/RIFT.
 
+-   Add rates of external triggers as configuration variables. This allows us
+    to make adjustments without a ligo-raven release.
+
 2.1.10 "Bunyip" (12-05-2023)
 ----------------------------
 
