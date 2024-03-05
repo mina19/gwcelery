@@ -16,6 +16,7 @@ variables:
 stages:
   - build
   - test
+  - docker
   - deploy
 
 # Build source distribution
@@ -124,6 +125,25 @@ doc:
     - !reference [".python:sphinx", before_script]
     - apt-get install -y -qq graphviz
   needs: []
+
+# Create Docker image
+docker:
+  stage: docker
+  script:
+    - IMAGE_TAG=$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+    - |
+      if [ "${CI_COMMIT_TAG:0:1}" = "v" ]
+      then
+        docker tag $IMAGE_TAG ${IMAGE_TAG%:*}:latest
+        docker push ${IMAGE_TAG%:*}:latest
+      fi
+  needs:
+    - build
+    - test/poetry/python3.9
+    - test/wheel/python3.9
 
 # SCCB request
 sccb:
