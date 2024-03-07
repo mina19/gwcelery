@@ -281,7 +281,7 @@ def _setup_dag_for_bilby(
             {
                 'sampler_kwargs': {'naccept': 60, 'nlive': 500,
                                    'npool': 24, 'sample': 'acceptance-walk'},
-                'n_parallel': 2,
+                'n_parallel': 3,
                 'request_cpus': 24,
                 'spline_calibration_nodes': 10,
                 'request_memory_generation': 8.0

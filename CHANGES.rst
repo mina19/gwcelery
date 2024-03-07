@@ -54,6 +54,9 @@ Changelog
 -   Add instruments and objid fields to the header of sky map files produced
     from posterior samples.
 
+-   Increase the number of parallel bilby jobs to increase the number of
+    posterior samples.
+
 -   Ignore EarlyWarning triggers when launching RapidPE/RIFT.
 
 -   Add rates of external triggers as configuration variables. This allows us
