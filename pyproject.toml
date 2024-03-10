@@ -99,6 +99,7 @@ scipy = ">=1.11.1"  # https://git.ligo.org/emfollow/gwcelery/-/issues/679
 safe-netrc = "*"
 sentry-sdk = {version = "*", extras = ["flask", "tornado"]}
 service-identity = "*"  # We don't actually use this package, but it silences some annoying warnings from twistd.
+tensorflow-cpu = "<2.16" # https://git.ligo.org/emfollow/gwcelery/-/issues/774
 voeventlib = ">=1.2"
 werkzeug = ">=3.0.1"  # for werkzeug.middleware.proxy_fix.ProxyFix # https://git.ligo.org/emfollow/gwcelery/-/issues/736
 zstandard = "*"  # for task compression
