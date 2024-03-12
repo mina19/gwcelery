@@ -175,36 +175,32 @@ significant_alert_far_threshold = {
 significant alerts. A threshold of negative infinity disables alerts."""
 
 significant_alert_trials_factor = {
-    'cbc': {'allsky': 6,
-            'earlywarning': 4,
-            'mdc': 6,
+    'cbc': {'allsky': 5,
+            'earlywarning': 3,
+            'mdc': 5,
             'ssm': 2},
-    'burst': {'allsky': 4,
-              'bbh': 6,
-              'imbh': 4}
+    'burst': {'allsky': 3,
+              'bbh': 5}
 }
 """Trials factor corresponding to trigger categories. The CBC AllSky and Burst
 BBH searches are treated as one group with a common trials factor. CBC AllSky
-pipelines are gstlal, pycbc, mbta, spiir, and raven. The Burst BBH pipeline is
-cwb. CBC EarlyWarning pipelines are gstlal, pycbc, mbta, and spiir. CBC SSM
-pipelines are gstlal and mbta. The Burst AllSky and IMBH searches are treated
-as one group with one trials factor. The Burst AllSky piplines are cwb, olib,
-and raven. The Burst IMBH pipeline is cwb."""
+pipelines are gstlal, pycbc, mbta, and raven. The Burst BBH pipeline is cwb.
+CBC EarlyWarning pipelines are gstlal, pycbc, and mbta. CBC SSM pipelines are
+gstlal and mbta. The Burst AllSky searches are treated as one group with one
+trials factor. The Burst AllSky piplines are cwb, olib, and raven."""
 
 preliminary_alert_trials_factor = {
-    'cbc': {'allsky': 8,
-            'earlywarning': 4,
-            'mdc': 8,
+    'cbc': {'allsky': 6,
+            'earlywarning': 3,
+            'mdc': 6,
             'ssm': 2},
-    'burst': {'allsky': 8,
-              'bbh': 8,
-              'imbh': 8}
+    'burst': {'allsky': 6,
+              'bbh': 6}
 }
 """Trials factor for less significant alert categories. The CBC AllSky, Burst
-AllSky, Burst BBH, and Burst IMBH searches are all treated as one group with a
-shared trials factor. CBC AllSky pipelines are gstlal, pycbc, mbta, and spiir.
-Burst AllSky pipelines are cwb and olib. The Burst BBH pipeline is cwb. The
-Burst IMBH pipeline is cwb."""
+AllSky, and Burst BBH searches are all treated as one group with a shared
+trials factor. CBC AllSky pipelines are gstlal, pycbc, and mbta.  Burst AllSky
+pipelines are cwb and olib. The Burst BBH pipeline is cwb."""
 
 preliminary_alert_far_threshold = {
     'cbc': {
