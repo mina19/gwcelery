@@ -1027,7 +1027,7 @@ def parameter_estimation(far_event, superevent_id, pe_pipeline):
         gracedb.upload.delay(
             filecontents=None, filename=None,
             graceid=superevent_id,
-            message='Parameter estimation by RapidPE-RIFT is disabled for'
+            message='Parameter estimation by RapidPE-RIFT is disabled for '
                     'earlywarning triggers.',
             tags='pe'
         )
