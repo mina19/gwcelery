@@ -23,6 +23,8 @@ Changelog
 -   Fix bug when creating combined sky maps in the targeted search, being
     loaded in the ring ordering rather than nested.
 
+-   Update trials factor for O4b.
+
 2.2.1 "Sheepsquatch" (2024-03-08)
 ---------------------------------
 
