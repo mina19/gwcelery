@@ -16,6 +16,8 @@ Changelog
 -   Add search field to alert threshold and trials factor configuration
     variables.
 
+-   Enable public alerts in production.
+
 2.2.1 "Sheepsquatch" (2024-03-08)
 ---------------------------------
 
