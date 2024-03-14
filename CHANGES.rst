@@ -21,7 +21,7 @@ Changelog
 2.2.1 "Sheepsquatch" (2024-03-08)
 ---------------------------------
 
--   Include p_astro ad em_bright in alert payload for burst-cwb-bbh trigger.
+-   Include p_astro and em_bright in alert payload for burst-cwb-bbh trigger.
 
 -   Produce em_bright.json for burst-cwb-bbh triggers.
 
