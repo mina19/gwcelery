@@ -455,8 +455,8 @@ https://dcc.ligo.org/T1900297."""
 
 raven_targeted_far_thresholds = {
     'GW': {
-        'Fermi': preliminary_alert_far_threshold['cbc'],
-        'Swift': preliminary_alert_far_threshold['cbc']
+        'Fermi': preliminary_alert_far_threshold['cbc']['allsky'],
+        'Swift': preliminary_alert_far_threshold['cbc']['allsky']
     },
     'GRB': {
         'Fermi': 1 / 10000,
