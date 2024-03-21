@@ -279,7 +279,7 @@ of several processes:
 7.  **External Trigger Worker**
 
     A Celery worker that is dedicated to serially process external triggers
-    from GRB alerts received from Fermi, Swift, Integral, Agile MCAL and
+    from GRB alerts received from Fermi, Swift, Integral and
     neutrino alerts received from SNEWS  and create/modify external trigger
     events in GraceDB:
 

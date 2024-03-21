@@ -42,7 +42,7 @@ def create_upload_external_event(gpstime, pipeline, ext_search):
                          weights=np.cos(thetas) / sum(np.cos(thetas)))[0]
     error = .05 if pipeline == 'Swift' else random.uniform(1, 30)
 
-    if pipeline in {'Fermi', 'Swift', 'INTEGRAL', 'AGILE'}:
+    if pipeline in {'Fermi', 'Swift', 'INTEGRAL'}:
         is_grb = True
     else:
         is_grb = False
@@ -261,8 +261,8 @@ def upload_external_event(alert, ext_search=None):
              if joint_allsky_alert else 'GRB')
     # Choose pipeline(s) based on search
     if ext_search in {'GRB', 'MDC'}:
-        pipelines = np.random.choice(['Fermi', 'Swift', 'INTEGRAL', 'AGILE'],
-                                     p=[.5, .3, .1, .1],
+        pipelines = np.random.choice(['Fermi', 'Swift', 'INTEGRAL'],
+                                     p=[.6, .3, .1,],
                                      size=num, replace=False)
     elif ext_search == 'SubGRB':
         pipelines = np.full(num, 'Fermi')

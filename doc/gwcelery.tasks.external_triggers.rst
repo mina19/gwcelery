@@ -2,7 +2,7 @@ gwcelery.tasks.external_triggers module
 ---------------------------------------
 
 This module listens to the `GCN` notices from `SNEWS`_ and the `Fermi`_,
-`Swift`_, `INTEGRAL`_, and `AGILE`_ missions, as well as Kafka alerts from
+`Swift`_, and `INTEGRAL`_ missions, as well as Kafka alerts from
 `Fermi`_ and `Swift`_. It is also responsible for carrying out tasks related to
 external trigger-gravitational wave coincidences, including looking for
 temporal coincidences, creating combined GRB-GW sky localization probability
@@ -16,7 +16,7 @@ There are two GCN, one Kafka, and two IGWN Alert message handlers in the
   each `SNEWS`_ GCN.
 
 * :meth:`~gwcelery.tasks.external_triggers.handle_grb_gcn` is called for
-  each GRB GCN such as `Fermi`_, `Swift`_, `INTEGRAL`_, and `AGILE`_ MCAL.
+  each GRB GCN such as `Fermi`_, `Swift`_, and `INTEGRAL`_.
 
 * :meth:`~gwcelery.tasks.external_triggers.handle_targeted_kafka_alert` is
   called for GRB missions involved with the targeted search, currently `Fermi`_
@@ -344,5 +344,4 @@ Tasks
 .. _`Fermi`: https://fermi.gsfc.nasa.gov/
 .. _`Swift`: https://swift.gsfc.nasa.gov/
 .. _`INTEGRAL`: https://www.cosmos.esa.int/web/integral/science-grb
-.. _`AGILE`: https://gcn.gsfc.nasa.gov/agile.html
 .. _`SNEWS`: https://snews2.org/

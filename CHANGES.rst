@@ -18,6 +18,8 @@ Changelog
 
 -   Enable public alerts in production.
 
+-   Remove AGILE from the RAVEN workflow since it has been decommissioned.
+
 2.2.1 "Sheepsquatch" (2024-03-08)
 ---------------------------------
 

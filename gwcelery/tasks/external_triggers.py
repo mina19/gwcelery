@@ -80,12 +80,10 @@ def handle_snews_gcn(payload):
              gcn.NoticeType.INTEGRAL_WAKEUP,
              gcn.NoticeType.INTEGRAL_REFINED,
              gcn.NoticeType.INTEGRAL_OFFLINE,
-             gcn.NoticeType.AGILE_MCAL_ALERT,
              queue='exttrig',
              shared=False)
 def handle_grb_gcn(payload):
-    """Handles the payload from Fermi, Swift, INTEGRAL, and AGILE MCAL
-    GCN notices.
+    """Handles the payload from Fermi, Swift, and INTEGRAL GCN notices.
 
     Filters out candidates likely to be noise. Creates external events
     from the notice if new notice, otherwise updates existing event. Then
@@ -96,7 +94,6 @@ def handle_grb_gcn(payload):
     Fermi-GBM sub: https://gcn.gsfc.nasa.gov/fermi_gbm_subthresh_archive.html
     Swift: https://gcn.gsfc.nasa.gov/swift.html
     INTEGRAL: https://gcn.gsfc.nasa.gov/integral.html
-    AGILE-MCAL: https://gcn.gsfc.nasa.gov/agile_mcal.html
 
     Parameters
     ----------
@@ -110,8 +107,7 @@ def handle_grb_gcn(payload):
 
     stream_obsv_dict = {'/SWIFT': 'Swift',
                         '/Fermi': 'Fermi',
-                        '/INTEGRAL': 'INTEGRAL',
-                        '/AGILE': 'AGILE'}
+                        '/INTEGRAL': 'INTEGRAL'}
     event_observatory = stream_obsv_dict[stream_path]
 
     ext_group = 'Test' if root.attrib['role'] == 'test' else 'External'
@@ -211,7 +207,6 @@ def handle_grb_gcn(payload):
                     'external_fermi',
                     'external_swift',
                     'external_integral',
-                    'external_agile',
                     shared=False)
 def handle_grb_igwn_alert(alert):
     """Parse an IGWN alert message related to superevents/GRB external triggers
@@ -607,8 +602,6 @@ def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid,
                  graceid,
                  superevent if 'S' in graceid else ext_event,
                  tl, th, gw_group, use_superevent_skymap=use_superevent)
-    # Swift localizations are incredibly well localized and require
-    # a different method from Fermi/Integral/AGILE
     # Create new updated combined sky map
     canvas |= external_skymaps.create_combined_skymap.si(
                   superevent['superevent_id'], ext_event['graceid'],

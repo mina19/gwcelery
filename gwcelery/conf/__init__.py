@@ -268,7 +268,6 @@ check_vector_prepost = {'gstlal': [2, 2],
                         'Swift': [2, 2],
                         'Fermi': [2, 2],
                         'INTEGRAL': [2, 2],
-                        'AGILE': [2, 2],
                         'SNEWS': [10, 10]}
 """Seconds before and after the superevent start and end times which the DQ
 vector check will include in its check. Pipeline dependent."""
@@ -285,7 +284,6 @@ uses_gatedhoft = {'gstlal': True,
                   'Swift': False,
                   'Fermi': False,
                   'INTEGRAL': False,
-                  'AGILE': False,
                   'SNEWS': False}
 """Whether or not a pipeline uses gated h(t). Determines whether or not
 the DMT-DQ_VECTOR will be analyzed for data quality."""
@@ -330,7 +328,6 @@ idq_veto = {'gstlal': False,
             'Swift': False,
             'Fermi': False,
             'INTEGRAL': False,
-            'AGILE': False,
             'SNEWS': False}
 """If true for a pipeline, iDQ values below the threshold defined in
 :obj:`~gwcelery.conf.idq_fap_thresh` will cause DQV to be labeled.

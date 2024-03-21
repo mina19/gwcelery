@@ -384,11 +384,11 @@ def test_preferred_superevent(raven_search_results, testnum):
     'new_time_far,new_space_far,superevent_id,pipeline,result',
     [[1e-4, None, 'S1', 'Fermi', True],
      [1e-4, 1e-3, 'S1', 'Swift', True],
-     [1e-4, None, 'S2', 'AGILE', False],
+     [1e-4, None, 'S2', 'INTEGRAL', False],
      [1e-4, 1e-3, 'S3', 'Fermi', True],
      [1e-4, 1e-3, 'S4', 'Fermi', False],
      [1e-8, None, 'S4', 'Swift', False],
-     [1e-4, 1e-8, 'S5', 'AGILE', True],
+     [1e-4, 1e-8, 'S5', 'INTEGRAL', True],
      [None, None, 'S1', 'SNEWS', True]])
 @patch('gwcelery.tasks.gracedb.update_superevent')
 @patch('gwcelery.tasks.gracedb.get_superevent', mock_get_superevent)

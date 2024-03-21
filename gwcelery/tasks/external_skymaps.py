@@ -41,7 +41,6 @@ NOTICE_TYPE_DICT = {
         '55': 'INTEGRAL_OFFLINE',
         '60': 'SWIFT_BAT_GRB_ALERT',
         '61': 'SWIFT_BAT_GRB_POSITION',
-        '105': 'AGILE_MCAL_ALERT',
         '110': 'FERMI_GBM_ALERT',
         '111': 'FERMI_GBM_FLT_POS',
         '112': 'FERMI_GBM_GND_POS',
@@ -662,7 +661,7 @@ def create_external_skymap(ra, dec, error, pipeline, notice_type=111):
                                         core_width, tail_width, core_weight,
                                         rounds=8)
     else:
-        # Use generic cone method for Swift, INTEGRAL, AGILE, etc.
+        # Use generic cone method for Swift, INTEGRAL, etc.
         skymap = bayestar_adaptive_grid(from_cone, ra, dec, error, rounds=8)
 
     return skymap
