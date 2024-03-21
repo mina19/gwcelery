@@ -20,6 +20,9 @@ Changelog
 
 -   Remove AGILE from the RAVEN workflow since it has been decommissioned.
 
+-   Fix bug when creating combined sky maps in the targeted search, being
+    loaded in the ring ordering rather than nested.
+
 2.2.1 "Sheepsquatch" (2024-03-08)
 ---------------------------------
 
