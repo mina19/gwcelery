@@ -100,12 +100,12 @@ def test_create_combined_skymap(mock_get_skymap_filename,
     mock_upload.assert_called()
 
 
-def _mock_read_sky_map(filename, moc=True):
+def _mock_read_sky_map(filename, moc=True, nest=True):
     if moc:
         return get_gw_moc_skymap()
     else:
         ext_sky = np.full(12, 1 / 12)
-        ext_header = {'instruments': set({'Fermi'}), 'nest': True}
+        ext_header = {'instruments': set({'Fermi'}), 'nest': nest}
         return ext_sky, ext_header
 
 

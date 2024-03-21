@@ -341,7 +341,7 @@ def combine_skymaps(skymapsbytes, ext_moc=True):
         else:
             #  Load external sky map
             ext_skymap, ext_header = fits.read_sky_map(ext_skymap_file.name,
-                                                       moc=False)
+                                                       moc=False, nest=True)
             #  Create and write combined sky map
             combined_skymap = combine_skymaps_moc_flat(gw_skymap, ext_skymap,
                                                        ext_header)
