@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.3.1 (unreleased)
--------------------
+2.3.1 "Champ" (2024-03-22)
+--------------------------
 
 -   Moved ``submit_rapidpe`` to ``inference.py`` and refactored to delete
     ``base_submit``.
