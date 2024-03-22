@@ -16,8 +16,6 @@ Changelog
 -   Add search field to alert threshold and trials factor configuration
     variables.
 
--   Enable public alerts in production.
-
 -   Fix bug when creating combined sky maps in the targeted search, being
     loaded in the ring ordering rather than nested.
 
