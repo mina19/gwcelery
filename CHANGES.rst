@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.3.2 "Champ" (unreleased)
+2.3.2 "Champ" (2024-03-22)
 --------------------------
 
 -   Enable public alerts on production.
