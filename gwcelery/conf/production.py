@@ -86,7 +86,7 @@ sentry_environment = 'production'
 <https://docs.sentry.io/enriching-error-data/environments/>`_ in Sentry log
 messages."""
 
-only_alert_for_mdc = True
+only_alert_for_mdc = False
 """If True, then only sends alerts for MDC events. Useful for times outside
 of observing runs."""
 
