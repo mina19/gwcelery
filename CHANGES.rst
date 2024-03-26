@@ -1,8 +1,20 @@
 Changelog
 =========
 
-2.3.1 (unreleased)
--------------------
+2.4.1 (unreleased)
+------------------
+
+-   Remove AGILE from the RAVEN workflow since it has been decommissioned.
+
+-   Retry email bootstep when IMAP connection is reset.
+
+2.3.2 "Champ" (2024-03-22)
+--------------------------
+
+-   Enable public alerts on production.
+
+2.3.1 "Champ" (2024-03-22)
+--------------------------
 
 -   Moved ``submit_rapidpe`` to ``inference.py`` and refactored to delete
     ``base_submit``.
@@ -16,16 +28,10 @@ Changelog
 -   Add search field to alert threshold and trials factor configuration
     variables.
 
--   Enable public alerts in production.
-
--   Remove AGILE from the RAVEN workflow since it has been decommissioned.
-
 -   Fix bug when creating combined sky maps in the targeted search, being
     loaded in the ring ordering rather than nested.
 
 -   Update trials factor for O4b.
-
--   Retry email bootstep when IMAP connection is reset.
 
 2.2.1 "Sheepsquatch" (2024-03-08)
 ---------------------------------
