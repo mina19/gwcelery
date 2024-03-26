@@ -25,6 +25,8 @@ Changelog
 
 -   Update trials factor for O4b.
 
+-   Retry email bootstep when IMAP connection is reset.
+
 2.2.1 "Sheepsquatch" (2024-03-08)
 ---------------------------------
 

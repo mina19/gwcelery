@@ -73,6 +73,8 @@ class Receiver(EmailBootStep):
                         conn.idle_done()
             except IMAPClientAbortError:
                 log.exception('IMAP connection aborted')
+            except ConnectionResetError:
+                log.exception('IMAP connection reset')
 
     def start(self, consumer):
         super().start(consumer)
