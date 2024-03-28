@@ -140,6 +140,7 @@ def test_setup_dag_for_lalinference(monkeypatch, tmp_path):
 )
 def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
     psd = b'psd'
+    bayestar = b'bayestar'
     rundir = str(tmp_path)
     event = {'gpstime': 1187008882, 'graceid': 'G1234',
              'extra_attributes': {'CoincInspiral': {'mchirp': mc}}}
@@ -167,10 +168,15 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
         with open(path_to_psd, 'rb') as f:
             assert f.read() == psd
 
+        path_to_bayestar = cmd[10]
+        assert os.path.exists(path_to_bayestar)
+        with open(path_to_bayestar, 'rb') as f:
+            assert f.read() == bayestar
+
         if mode == "fast_test":
             assert "FastTest" in cmd
 
-        path_to_settings = cmd[10]
+        path_to_settings = cmd[12]
         assert os.path.exists(path_to_settings)
         ans = {
             'summarypages_arguments': {'gracedb': event['graceid'],
@@ -226,7 +232,7 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
             inference._setup_dag_for_bilby(psd, rundir, event, sid, mode)
     else:
         path_to_dag = inference._setup_dag_for_bilby(
-            psd, rundir, event, sid, mode
+            (psd, bayestar), rundir, event, sid, mode
         )
 
         assert os.path.exists(path_to_dag)
@@ -326,7 +332,7 @@ def test_setup_dag_for_failure(monkeypatch, tmp_path, pipeline):
                 b'coinc', rundir, event, 'S1234')
         elif pipeline == 'bilby':
             inference._setup_dag_for_bilby(
-                (b'psd'), rundir, event, 'S1234', 'production')
+                (b'psd', b'bayestar'), rundir, event, 'S1234', 'production')
         elif pipeline == 'rapidpe':
             inference._setup_dag_for_rapidpe(rundir, 'S1234', event)
     if pipeline == 'bilby':
@@ -342,6 +348,7 @@ def test_setup_dag_for_failure(monkeypatch, tmp_path, pipeline):
 def test_dag_prepare_task(monkeypatch, pipeline):
     sid = 'S1234'
     coinc = b'coinc'
+    bayestar = b'bayestar'
     event = {
             'gpstime': 1187008882,
             'graceid': 'G1234',
@@ -356,14 +363,17 @@ def test_dag_prepare_task(monkeypatch, pipeline):
     def mock_download(filename, gid):
         if filename == 'coinc.xml':
             return coinc
+        elif filename == 'bayestar.multiorder.fits':
+            return bayestar
 
     def _setup_dag_for_lalinference(c, r, e, s):
         assert (c == coinc and r == rundir and e == event and s == sid)
         return path_to_dag
 
-    def _setup_dag_for_bilby(c, r, e, s, m):
-        assert c == coinc and r == rundir and e == event and s == sid and \
-            m == kwargs['bilby_mode']
+    def _setup_dag_for_bilby(c_b, r, e, s, m):
+        c, b = c_b
+        assert c == coinc and b == bayestar and r == rundir and e == event \
+            and s == sid and m == kwargs['bilby_mode']
         return path_to_dag
 
     def _setup_dag_for_rapidpe(r, s, e):

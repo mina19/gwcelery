@@ -206,14 +206,14 @@ def _setup_dag_for_lalinference(coinc, rundir, event, superevent_id):
 
 @app.task(shared=False)
 def _setup_dag_for_bilby(
-    coinc, rundir, event, superevent_id, mode="production"
+    coinc_bayestar, rundir, event, superevent_id, mode="production"
 ):
     """Create DAG for a bilby run and return the path to DAG.
 
     Parameters
     ----------
-    coinc : bytes
-        Byte contents of ``coinc.xml``. The PSD is expected to be embedded.
+    coinc_bayestar : tuple
+        Byte contents of ``coinc.xml`` and ``bayestar.multiorder.fits``.
     rundir : str
         The path to a run directory where the DAG file is created
     event : dict
@@ -243,9 +243,13 @@ def _setup_dag_for_bilby(
     with open(path_to_json, 'w') as f:
         json.dump(event, f, indent=2)
 
+    coinc, bayestar = coinc_bayestar
     path_to_psd = os.path.join(rundir, 'coinc.xml')
     with open(path_to_psd, 'wb') as f:
         f.write(coinc)
+    path_to_bayestar = os.path.join(rundir, 'bayestar.multiorder.fits')
+    with open(path_to_bayestar, 'wb') as f:
+        f.write(bayestar)
 
     path_to_webdir = os.path.join(
         app.conf['pe_results_path'], superevent_id, 'bilby', mode
@@ -254,7 +258,8 @@ def _setup_dag_for_bilby(
     path_to_settings = os.path.join(rundir, 'settings.json')
     setup_arg = ['bilby_pipe_gracedb', '--webdir', path_to_webdir,
                  '--outdir', rundir, '--json', path_to_json,
-                 '--psd-file', path_to_psd, '--settings', path_to_settings]
+                 '--psd-file', path_to_psd, '--skymap-file', path_to_bayestar,
+                 '--settings', path_to_settings]
     settings = {'summarypages_arguments': {'gracedb': event['graceid'],
                                            'no_ligo_skymap': True},
                 'accounting_user': 'soichiro.morisaki'}
@@ -471,9 +476,12 @@ def dag_prepare_task(rundir, event, superevent_id, pe_pipeline, **kwargs):
         canvas = gracedb.download.si('coinc.xml', event['graceid']) | \
             _setup_dag_for_lalinference.s(rundir, event, superevent_id)
     elif pe_pipeline == 'bilby':
-        canvas = gracedb.download.si('coinc.xml', event['graceid']) | \
-            _setup_dag_for_bilby.s(
-                rundir, event, superevent_id, kwargs['bilby_mode'])
+        canvas = group(
+            gracedb.download.si('coinc.xml', event['graceid']),
+            gracedb.download.si('bayestar.multiorder.fits', event['graceid'])
+        ) | _setup_dag_for_bilby.s(
+            rundir, event, superevent_id, kwargs['bilby_mode']
+        )
     elif pe_pipeline == 'rapidpe':
         canvas = _setup_dag_for_rapidpe.s(rundir, superevent_id, event)
         include_env = RAPIDPE_GETENV

@@ -33,6 +33,8 @@ Changelog
 
 -   Update trials factor for O4b.
 
+-   Pin bilby_pipe to bilby_pipe==1.3.1.
+
 2.2.1 "Sheepsquatch" (2024-03-08)
 ---------------------------------
 
