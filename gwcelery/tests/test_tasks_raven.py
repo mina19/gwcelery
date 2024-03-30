@@ -90,6 +90,7 @@ def test_calculate_coincidence_far(
         em_rate=app.conf['raven_ext_rates'][ext['search']],
         gracedb=gracedb.client, far_grb=None,
         far_gw_thresh=None, far_grb_thresh=None)
+    assert isinstance(app.conf['raven_ext_rates'][ext['search']], float)
 
 
 @patch('ligo.raven.search.calc_signif_gracedb')
@@ -112,6 +113,10 @@ def test_calculate_coincidence_far_subgrb(mock_calc_signif):
             app.conf['raven_targeted_far_thresholds']['GW']['Fermi']),
         far_grb_thresh=(
             app.conf['raven_targeted_far_thresholds']['GRB']['Fermi']))
+    assert isinstance(
+        app.conf['raven_targeted_far_thresholds']['GW']['Fermi'], float)
+    assert isinstance(
+        app.conf['raven_targeted_far_thresholds']['GRB']['Fermi'], float)
 
 
 @pytest.mark.parametrize('group', ['CBC', 'Burst'])  # noqa: F811
@@ -142,6 +147,7 @@ def test_calculate_spacetime_coincidence_far_fermi(
         gracedb=gracedb.client, far_grb=None,
         far_gw_thresh=None, far_grb_thresh=None,
         use_preferred_event_skymap=False)
+    assert isinstance(app.conf['raven_ext_rates'][ext['search']], float)
 
 
 @pytest.mark.parametrize('group', ['CBC', 'Burst'])  # noqa: F811
@@ -172,6 +178,7 @@ def test_calculate_spacetime_coincidence_far_swift(
         gracedb=gracedb.client, far_grb=None,
         far_gw_thresh=None, far_grb_thresh=None,
         use_preferred_event_skymap=False)
+    assert isinstance(app.conf['raven_ext_rates'][ext['search']], float)
 
 
 @pytest.mark.parametrize('group', ['CBC', 'Burst'])  # noqa: F811
@@ -203,6 +210,7 @@ def test_calculate_spacetime_coincidence_far_preferred(
         gracedb=gracedb.client, far_grb=None,
         far_gw_thresh=None, far_grb_thresh=None,
         use_preferred_event_skymap=True)
+    assert isinstance(app.conf['raven_ext_rates'][ext['search']], float)
 
 
 @patch('ligo.raven.search.calc_signif_gracedb')
