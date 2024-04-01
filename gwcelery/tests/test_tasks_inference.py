@@ -176,7 +176,7 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
             'summarypages_arguments': {'gracedb': event['graceid'],
                                        'no_ligo_skymap': True},
             'queue': 'Online_PE',
-            'accounting_user': 'soichiro.morisaki',
+            'accounting_user': 'cody.messick',
         }
         if host != 'gracedb.ligo.org':
             ans['queue'] = 'Online_PE_MDC'
