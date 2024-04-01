@@ -262,7 +262,7 @@ def _setup_dag_for_bilby(
                  '--settings', path_to_settings]
     settings = {'summarypages_arguments': {'gracedb': event['graceid'],
                                            'no_ligo_skymap': True},
-                'accounting_user': 'soichiro.morisaki'}
+                'accounting_user': 'cody.messick'}
     if app.conf['gracedb_host'] != 'gracedb.ligo.org':
         settings['queue'] = 'Online_PE_MDC'
     else:
@@ -877,7 +877,7 @@ def _pesummary_task(webdir, samples, **pesummary_kwargs):
             args += [f"--{key}", pesummary_kwargs[key]]
     condor_kwargs = dict(
         request_memory=16000, request_disk=5000, request_cpus=6,
-        accounting_group_user='soichiro.morisaki'
+        accounting_group_user='cody.messick'
     )
     if app.conf['gracedb_host'] != 'gracedb.ligo.org':
         condor_kwargs['accounting_group'] = 'ligo.dev.o4.cbc.pe.bilby'
