@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.3.3 (unreleased)
-------------------
+2.3.3 "Champ" (2024-04-01)
+--------------------------
 
 -   Change Bilby accounting group user to cody.messick as temporary workaround
     while KAGRA accounts are in flux.
