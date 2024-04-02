@@ -92,7 +92,7 @@ def _create_base_alert_dict(classification, superevent, alert_type):
     superevent_group = superevent['preferred_event_data']['group']
     superevent_search = superevent['preferred_event_data']['search']
     if superevent_group in CUSTOM_EVENT_GROUP_TO_NOTICE_GROUP_MAP and \
-            superevent_search == \
+            superevent_search in \
             CUSTOM_EVENT_GROUP_TO_NOTICE_GROUP_MAP[superevent_group]:
         alert_group_kafka = \
             CUSTOM_EVENT_GROUP_TO_NOTICE_GROUP_MAP[
