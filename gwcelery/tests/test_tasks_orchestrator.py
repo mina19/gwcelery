@@ -5,6 +5,7 @@ from unittest.mock import Mock, call, patch
 import pytest
 
 from .. import app
+from ..kafka.bootsteps import AvroBlobWrapper
 from ..tasks import orchestrator, superevents
 from ..util import read_binary, read_json
 from . import data
@@ -1254,3 +1255,172 @@ def test_blocking_labels(superevent_labels, block_by_labels):
         assert r is None  # blocked
     else:
         assert r == ('bayestar', 'em-bright', 'p-astro')  # passed
+
+
+def test_cwb_bbh_notice_is_cbc(monkeypatch):
+    """Test that cWB BBH notices list CBC as the group instead of Burst. Can be
+    removed once cWB BBH starts uploading to the CBC group on gracedb.
+    """
+    labels = ['PASTRO_READY', 'EMBRIGHT_READY', 'SKYMAP_READY']
+
+    def get_event(graceid):
+        assert graceid == 'G1234'
+        return {
+            'group': 'Burst',
+            'pipeline': 'CWB',
+            'search': 'BBH',
+            'graceid': 'G1234',
+            'offline': False,
+            'far': 1e-10,
+            'instruments': 'H1,L1',
+            'gpstime': 1234.,
+            'extra_attributes': {},
+            'labels': labels
+        }
+
+    def download(filename, graceid):
+        if '.fits' in filename:
+            return toy_3d_fits_filecontents
+        elif filename == 'em_bright.json':
+            return json.dumps({'HasNS': 0.0, 'HasRemnant': 0.0})
+        elif filename == 'psd.xml.gz':
+            return str(resources.files().joinpath('psd.xml.gz'))
+        elif filename == 'S1234-1-Preliminary.xml':
+            return b'fake VOEvent file contents'
+        elif filename == 'cwb.p_astro.json':
+            return json.dumps(
+                dict(BNS=0.94, NSBH=0.03, BBH=0.02, Terrestrial=0.01))
+        else:
+            raise ValueError
+    superevent_id = 'S1234'
+    superevent_labels = [superevents.FROZEN_LABEL]
+    alert = {
+        'alert_type': 'label_added',
+        'uid': superevent_id,
+        'data': {'name': superevents.SIGNIFICANT_LABEL},
+        'object': {
+            'superevent_id': superevent_id,
+            't_start': 1214714160,
+            't_0': 1214714162,
+            't_end': 1214714164,
+            'preferred_event': 'G1234',
+            'preferred_event_data': get_event('G1234'),
+            'category': "Production",
+            'labels': superevent_labels
+        }
+    }
+    create_initial_circular = Mock()
+    create_emcoinc_circular = Mock()
+    expose = Mock()
+    rrt_channel_creation = Mock()
+    check_high_profile = Mock()
+    annotate_fits = Mock(return_value=None)
+    # FIXME: remove logic of mocking return value
+    # when live worker testing is enabled
+    proceed_if_not_blocked_by = Mock(return_value=(
+        ('skymap', 'skymap-filename'),
+        (download('em_bright.json', 'G1234'), 'em-bright-filename'),
+        (download('cwb.p_astro.json', 'G1234'), 'p-astro-filename'))
+    )
+    gcn_send = Mock()
+    mock_upload = Mock()
+    setup_dag = Mock()
+    start_pe = Mock()
+    create_voevent = Mock(return_value='S1234-1-Preliminary.xml')
+    create_label = Mock()
+    create_tag = Mock()
+    select_preferred_event_task = Mock(return_value=get_event('G1234'))
+    update_superevent_task = Mock()
+    select_pipeline_preferred_event_task = Mock()
+    select_pipeline_preferred_event_task.return_value = {
+        'cwb': {'graceid': 'G5'}
+    }
+    add_pipeline_preferred_event_task = Mock()
+    omegascan = Mock()
+    check_vectors = Mock(return_value=get_event('G1234'))
+
+    monkeypatch.setattr('gwcelery.tasks.gcn.send.run', gcn_send)
+    monkeypatch.setattr('gwcelery.tasks.alerts._upload_notice.run',
+                        mock_upload)
+
+    # FIXME: should test skymaps.annotate_fits instead
+    monkeypatch.setattr(
+        'gwcelery.tasks.orchestrator._annotate_fits_and_return_input.run',
+        annotate_fits
+    )
+    monkeypatch.setattr(
+        'gwcelery.tasks.orchestrator._proceed_if_not_blocked_by.run',
+        proceed_if_not_blocked_by
+    )
+    monkeypatch.setattr('gwcelery.tasks.gracedb.create_tag._orig_run',
+                        create_tag)
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.add_pipeline_preferred_event._orig_run',
+        add_pipeline_preferred_event_task
+    )
+    monkeypatch.setattr('gwcelery.tasks.gracedb.download._orig_run', download)
+    monkeypatch.setattr('gwcelery.tasks.gracedb.expose._orig_run', expose)
+    monkeypatch.setattr('gwcelery.tasks.gracedb.get_event._orig_run',
+                        get_event)
+    mock_get_labels = Mock(return_value=labels)
+    monkeypatch.setattr('gwcelery.tasks.gracedb.get_labels', mock_get_labels)
+    # FIXME: should test gracedb.create_voevent instead
+    monkeypatch.setattr('gwcelery.tasks.orchestrator._create_voevent.run',
+                        create_voevent)
+    mock_get_superevent = Mock(return_value={
+        'preferred_event': 'G1234',
+        'gw_events': ['G1234'],
+        'preferred_event_data': get_event('G1234'),
+        'category': "Production",
+        't_0': 1214714162,
+        'far': 1e-10,
+        'labels': superevent_labels,
+        'superevent_id': superevent_id,
+        'em_type': None if superevent_id == 'S1234' else 'E1234',
+        'links': {'self': 'http://fake-gracedb.ligo.org/api'}
+    })
+
+    monkeypatch.setattr('gwcelery.tasks.gracedb.get_superevent._orig_run',
+                        mock_get_superevent)
+    monkeypatch.setattr('gwcelery.tasks.circulars.create_initial_circular.run',
+                        create_initial_circular)
+    monkeypatch.setattr('gwcelery.tasks.circulars.create_emcoinc_circular.run',
+                        create_emcoinc_circular)
+    monkeypatch.setattr('gwcelery.tasks.inference._setup_dag_for_bilby.run',
+                        setup_dag)
+    monkeypatch.setattr('gwcelery.tasks.inference.start_pe.run',
+                        start_pe)
+    monkeypatch.setattr('gwcelery.tasks.gracedb.create_label._orig_run',
+                        create_label)
+    monkeypatch.setattr(
+        'gwcelery.tasks.superevents.select_preferred_event.run',
+        select_preferred_event_task
+    )
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.update_superevent',
+        update_superevent_task
+    )
+    monkeypatch.setattr(
+        'gwcelery.tasks.superevents.select_pipeline_preferred_event.run',
+        select_pipeline_preferred_event_task
+    )
+    monkeypatch.setattr('gwcelery.tasks.detchar.omegascan.run', omegascan)
+    monkeypatch.setattr('gwcelery.tasks.detchar.check_vectors.run',
+                        check_vectors)
+    monkeypatch.setattr('gwcelery.tasks.orchestrator.channel_creation.'
+                        'rrt_channel_creation', rrt_channel_creation)
+    monkeypatch.setattr('gwcelery.tasks.rrt_utils.check_high_profile.run',
+                        check_high_profile)
+    monkeypatch.setattr(app.conf, 'create_mattermost_channel', True)
+
+    mock_stream = Mock()
+    mock_stream.write = Mock()
+    mock_stream.serialization_model = AvroBlobWrapper
+    monkeypatch.setitem(app.conf, 'kafka_streams', {'scimma': mock_stream})
+
+    # Run function under test
+    orchestrator.handle_superevent(alert)
+
+    mock_upload.assert_called_once()
+    alert_blob, _, _ = mock_upload.call_args[0]
+    assert alert_blob.content[0]['event']['group'] == 'CBC'
