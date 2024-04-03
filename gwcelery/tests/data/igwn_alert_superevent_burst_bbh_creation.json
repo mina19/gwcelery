@@ -16,8 +16,9 @@
         "em_events": [],
         "labels": [],
         "preferred_event_data": {
-            "group": "CBC",
-            "search": "AllSky"
+            "group": "Burst",
+            "search": "BBH",
+            "pipeline": "CWB"
         },
         "links": {
             "files": "https://gracedb-dev1.ligo.org/api/superevents/S180616h/files/",

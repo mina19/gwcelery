@@ -704,10 +704,11 @@ def test_handle_subgrb_targeted_creation(mock_raven_coincidence_search,
 @pytest.mark.parametrize('path',
                          ['igwn_alert_snews_test_creation.json',
                           'igwn_alert_snews_creation.json',
-                          'igwn_alert_superevent_creation.json'])
+                          'igwn_alert_superevent_creation.json',
+                          'igwn_alert_superevent_burst_bbh_creation.json'])
 @patch('gwcelery.tasks.raven.coincidence_search')
 def test_handle_sntrig_creation(mock_raven_coincidence_search, path):
-    """Test dispatch of an IGWN alert message for SNEWS alerts
+    """Test dispatch of an IGWN alert message for SNEWS alerts.
     This now includes both real and test SNEWS events to ensure both are
     ingested correctly, as well as a superevent.
     """
@@ -716,6 +717,7 @@ def test_handle_sntrig_creation(mock_raven_coincidence_search, path):
 
     if 'superevent' in path:
         alert['object']['preferred_event_data']['group'] = 'Burst'
+        search = alert['object']['preferred_event_data']['search']
 
     # Run function under test
     external_triggers.handle_snews_igwn_alert(alert)
@@ -725,14 +727,16 @@ def test_handle_sntrig_creation(mock_raven_coincidence_search, path):
     else:
         graceid = 'E1235'
 
-    if 'superevent' in path:
+    if 'superevent' in path and search == 'BBH':
+        mock_raven_coincidence_search.assert_not_called()
+    elif 'superevent' in path:
         mock_raven_coincidence_search.assert_called_once_with(
             'S180616h', alert['object'], group='Burst', searches=['Supernova'],
-            pipelines=['SNEWS'])
+            se_searches=['AllSky'], pipelines=['SNEWS'])
     elif 'snews' in path:
         mock_raven_coincidence_search.assert_called_once_with(
             graceid, alert['object'], group='Burst', searches=['Supernova'],
-            pipelines=['SNEWS'])
+            se_searches=['AllSky'], pipelines=['SNEWS'])
 
 
 @patch('gwcelery.tasks.gracedb.get_superevent',
@@ -946,8 +950,10 @@ def test_handle_mdc_sn_creation(mock_raven_coincidence_search,
     if 'superevent' in path:
         alert['object']['preferred_event_data']['search'] = 'MDC'
         alert['object']['preferred_event_data']['group'] = 'Burst'
+        graceid = 'S180616h'
     elif 'snews' in path:
         alert['object']['search'] = 'MDC'
+        graceid = 'E1235'
 
     # Run function under test
     external_triggers.handle_snews_igwn_alert(alert)
@@ -955,9 +961,9 @@ def test_handle_mdc_sn_creation(mock_raven_coincidence_search,
     # Check that the correct tasks were dispatched.
     if 'superevent' in path:
         mock_raven_coincidence_search.assert_called_once_with(
-            'S180616h', alert['object'], group='Burst', searches=['MDC'],
-            pipelines=['SNEWS'])
+            graceid, alert['object'], group='Burst', searches=['MDC'],
+            se_searches=['MDC'], pipelines=['SNEWS'])
     elif 'snews' in path:
         mock_raven_coincidence_search.assert_called_once_with(
-            'E1235', alert['object'], group='Burst', se_searches=['MDC'],
-            pipelines=['SNEWS'])
+            graceid, alert['object'], group='Burst', searches=['MDC'],
+            se_searches=['MDC'], pipelines=['SNEWS'])

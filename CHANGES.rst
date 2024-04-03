@@ -15,6 +15,8 @@ Changelog
 -   Don't log omegascan FloatingPointErrors to Sentry since we know that they
     come from data which is only zeros (e.g., Virgo out of observing).
 
+-   Filter Burst-BBH superevents from SNEWS coincidence searches.
+
 2.3.6 "Champ" (2024-04-30)
 --------------------------
 

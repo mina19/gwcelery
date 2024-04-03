@@ -436,22 +436,25 @@ def handle_snews_igwn_alert(alert):
             group = alert['object']['preferred_event_data']['group']
             search = alert['object']['preferred_event_data']['search']
             searches = ['MDC'] if search == 'MDC' else ['Supernova']
+            se_searches = ['MDC'] if search == 'MDC' else ['AllSky']
             # Run only on Test and Burst superevents
-            if group in {'Burst', 'Test'}:
+            if group in {'Burst', 'Test'} and search in {'MDC', 'AllSky'}:
                 raven.coincidence_search(graceid, alert['object'],
                                          group='Burst', searches=searches,
+                                         se_searches=se_searches,
                                          pipelines=['SNEWS'])
         else:
             # Run on SNEWS event, either real or test
             search = alert['object']['search']
             if search == 'MDC':
                 raven.coincidence_search(graceid, alert['object'],
-                                         group='Burst',
+                                         group='Burst', searches=['MDC'],
                                          se_searches=['MDC'],
                                          pipelines=['SNEWS'])
             elif search == 'Supernova':
                 raven.coincidence_search(graceid, alert['object'],
                                          group='Burst', searches=['Supernova'],
+                                         se_searches=['AllSky'],
                                          pipelines=['SNEWS'])
 
 
