@@ -32,13 +32,13 @@ an introduction to a few of them. For more Celery monitoring solutions, see the
 Flower
 ------
 
-Flower_ is a dashboard for monitoring Celery tasks. 
+Flower_ is a dashboard for monitoring Celery tasks.
 It provides a good first look to check if everything is running as expected.
-Any offline worker will be show in red. By clicking on a failed worker or task, 
+Any offline worker will be show in red. By clicking on a failed worker or task,
 one can get some details about the failure reason. Flower does not store the results
 persistently (Sentry is a better tool to look at historical data).
 
-The production instance is available at 
+The production instance is available at
 https://emfollow.ligo.caltech.edu/flower/.
 
 .. image:: _static/flower-screenshot.png
@@ -58,22 +58,22 @@ and uploaded instantly to Sentry_, an error monitoring and reporting platform.
 Sentry notifies GWCelery contributors by email when a new bug occurs.
 
 Sentry monitoring of the production instance of GWCelery is available
-`here <https://ligo-caltech.sentry.io/issues/?environment=production&project=1425216&referrer=sidebar>`__. 
-Other environments (i.e. playground or test) can be chosen from the top bar, as well as the 
+`here <https://ligo-caltech.sentry.io/issues/?environment=production&project=1425216&referrer=sidebar>`__.
+Other environments (i.e. playground or test) can be chosen from the top bar, as well as the
 monitoring period.
 
-By clicking on a specific issue one can get more details about the issue itself, including the 
-code snippet generating the problem. 
-On the right sidebar of the specific issue page, 
+By clicking on a specific issue one can get more details about the issue itself, including the
+code snippet generating the problem.
+On the right sidebar of the specific issue page,
 there is the possibility to automatically open a corresponding issue in the LIGO
-GitLab instance. 
+GitLab instance.
 
 .. image:: _static/sentry-screenshot.png
    :alt: Screenshot of Sentry
 
 For details about the Sentry logging configuration, see the
 :mod:`gwcelery.sentry` module or the `Celery integration module`_ in the Sentry
-SDK docs.   
+SDK docs.
 
 Nagios
 ------
@@ -84,11 +84,11 @@ Nagios
 
 The dashboard.ligo.org_  service uses Nagios_ to monitor
 and report on the health of all of the components of the low-latency analysis
-infrastructure. 
+infrastructure.
 
-The status of the host running the production instance of GWCelery can be 
+The status of the host running the production instance of GWCelery can be
 found under *Host Detail* in the left side menu (select the *emfollow* entry).
-From the host information page, the links to the GWCelery service status or 
+From the host information page, the links to the GWCelery service status or
 to the alert history and other useful monitoring pages can be found in the top
 left of the page.
 
