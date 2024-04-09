@@ -8,6 +8,19 @@ Changelog
 
 -   Retry email bootstep when IMAP connection is reset.
 
+2.3.4 "Champ" (2024-04-04)
+--------------------------
+
+-   Fix bug that sent cWB-BBH notices as malformed Burst notices.
+
+-   Change Bilby accounting group user back to to soichiro.morisaki.
+
+2.3.3 "Champ" (2024-04-01)
+--------------------------
+
+-   Change Bilby accounting group user to cody.messick as temporary workaround
+    while KAGRA accounts are in flux.
+
 2.3.2 "Champ" (2024-03-22)
 --------------------------
 
