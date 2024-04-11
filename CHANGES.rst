@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.3.5 "Champ" (unreleased)
+--------------------------
+
+-   Remove oLIB from trials factor for beginning of O4b.
+
 2.3.4 "Champ" (2024-04-04)
 --------------------------
 
