@@ -12,6 +12,9 @@ Changelog
 
 -   Update ROTA responsibilities in documentation.
 
+-   Don't log omegascan FloatingPointErrors to Sentry since we know that they
+    come from data which is only zeros (e.g., Virgo out of observing).
+
 2.3.6 "Champ" (2024-04-30)
 --------------------------
 
@@ -76,7 +79,7 @@ Changelog
 
 -   Do not add events involving KAGRA to superevents.
 
--   Require pesummary>=1.0.2 to fix bug in postprocessing of bilby results. 
+-   Require pesummary>=1.0.2 to fix bug in postprocessing of bilby results.
 
 -   Update gwpy>=3.0.8 to fix issue with discontiguous lal caches.
 

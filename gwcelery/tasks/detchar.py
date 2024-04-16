@@ -140,7 +140,9 @@ def make_omegascan(ifo, t0, durs):
             frange=(10, 4096), gps=t0,
             outseg=(t0 - before, t0 + after), logf=True)
             for before, after in durs]
-    except (IndexError, FloatingPointError, ValueError) as err:
+    except FloatingPointError:
+        pass  # don't log this; it means that Virgo is out of observing mode
+    except (IndexError, ValueError) as err:
         # data from cache can't be properly read, or data is weird
         sentry_sdk.capture_exception(err)
         fig = plt.figure(figsize=(4, 1))
