@@ -8,6 +8,9 @@ Changelog
 
 -   Retry email bootstep when IMAP connection is reset.
 
+2.3.5 "Champ" (2024-04-11)
+--------------------------
+
 -   Remove oLIB from trials factor for beginning of O4b.
 
 2.3.4 "Champ" (2024-04-04)
