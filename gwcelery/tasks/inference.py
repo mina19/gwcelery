@@ -59,9 +59,9 @@ def _find_appropriate_cal_env(trigtime, dir_name):
     """
     filename, = glob.glob(os.path.join(dir_name, '[HLV]_CalEnvs.txt'))
     calibration_index = np.atleast_1d(
-        np.recfromtxt(filename, names=['gpstime', 'filename'])
+        np.genfromtxt(filename, dtype='object', names=['gpstime', 'filename'])
     )
-    gpstimes = calibration_index['gpstime']
+    gpstimes = calibration_index['gpstime'].astype(np.int32)
     candidate_gpstimes = gpstimes < trigtime
     if np.any(candidate_gpstimes):
         idx = np.argmax(gpstimes * candidate_gpstimes)

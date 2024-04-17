@@ -27,6 +27,8 @@ Changelog
 
 -   Add a GitLab issue template to include new external pipelines to RAVEN.
 
+-   Change functions calls to prepare for NumPy 2.0 release.
+
 2.4.4 "Orabou" (2024-06-14)
 ---------------------------
 
