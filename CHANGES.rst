@@ -27,6 +27,9 @@ Changelog
 -   Add ``DQR_REQUEST`` label with a countdown for significant early-warning
     events.
 
+-   Require no spaces and specific version format for filenames when sending
+    update notices
+
 2.3.6 "Champ" (2024-04-30)
 --------------------------
 
