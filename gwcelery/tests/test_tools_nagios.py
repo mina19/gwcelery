@@ -60,6 +60,11 @@ def test_nagios(capsys, monkeypatch, request, socket_enabled, starter,
         'swift': {
             'url': 'kafka://kafka.gcn.nasa.gov/swift.bat.guano',
             'suffix': 'json'
+        },
+        'fermi_gbm_alert': {
+            'url': ('kafka://kafka.gcn.nasa.gov/'
+                    'gcn.classic.voevent.FERMI_GBM_ALERT'),
+            'suffix': 'xml'
         }
     })
     monkeypatch.setitem(app.conf, 'llhoft_glob', llhoft_path)

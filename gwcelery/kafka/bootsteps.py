@@ -10,7 +10,7 @@ from confluent_kafka.error import KafkaException
 from fastavro.schema import parse_schema
 from hop import Stream, auth
 from hop.io import list_topics
-from hop.models import AvroBlob, JSONBlob
+from hop.models import AvroBlob, JSONBlob, VOEvent
 from xdg.BaseDirectory import xdg_config_home
 
 from ..util import read_json
@@ -81,6 +81,9 @@ class KafkaBase:
             self.get_payload_content = lambda payload: payload.content[0]
         elif config['suffix'] == 'json':
             self.serialization_model = JSONBlob
+            self.get_payload_content = lambda payload: payload.content
+        elif config['suffix'] == 'xml':
+            self.serialization_model = VOEvent
             self.get_payload_content = lambda payload: payload.content
         else:
             raise NotImplementedError(

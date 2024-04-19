@@ -83,10 +83,39 @@ create_mattermost_channel = False
 """Do not create Mattermost channel."""
 
 kafka_consumer_config = {
-    'fermi': {'url': 'kafka://kafka.test.gcn.nasa.gov/'
-              'fermi.gbm.targeted.private.igwn', 'suffix': 'json'},
-    'swift': {'url': 'kafka://kafka.gcn.nasa.gov/'
-              'gcn.notices.swift.bat.guano', 'suffix': 'json'}
+    'fermi_gbm_alert': {'url': 'kafka://kafka.gcn.nasa.gov/'
+                        'gcn.classic.voevent.FERMI_GBM_ALERT',
+                        'suffix': 'xml'},
+    'fermi_gbm_flt_pos': {'url': 'kafka://kafka.gcn.nasa.gov/'
+                          'gcn.classic.voevent.FERMI_GBM_FLT_POS',
+                          'suffix': 'xml'},
+    'fermi_gbm_gnd_pos': {'url': 'kafka://kafka.gcn.nasa.gov/'
+                          'gcn.classic.voevent.FERMI_GBM_GND_POS',
+                          'suffix': 'xml'},
+    'fermi_gbm_fin_pos': {'url': 'kafka://kafka.gcn.nasa.gov/'
+                          'gcn.classic.voevent.FERMI_GBM_FIN_POS',
+                          'suffix': 'xml'},
+    'fermi_gbm_subthresh': {'url': 'kafka://kafka.gcn.nasa.gov/'
+                            'gcn.classic.voevent.FERMI_GBM_SUBTHRESH',
+                            'suffix': 'xml'},
+    'swift_bat_grb_pos_ack': {'url': 'kafka://kafka.gcn.nasa.gov/'
+                              'gcn.classic.voevent.SWIFT_BAT_GRB_POS_ACK',
+                              'suffix': 'xml'},
+    'integral_wakeup': {'url': 'kafka://kafka.gcn.nasa.gov/'
+                        'gcn.classic.voevent.INTEGRAL_WAKEUP',
+                        'suffix': 'xml'},
+    'integral_refined': {'url': 'kafka://kafka.gcn.nasa.gov/'
+                         'gcn.classic.voevent.INTEGRAL_REFINED',
+                         'suffix': 'xml'},
+    'integral_offline': {'url': 'kafka://kafka.gcn.nasa.gov/'
+                         'gcn.classic.voevent.INTEGRAL_OFFLINE',
+                         'suffix': 'xml'},
+    'snews': {'url': 'kafka://kafka.gcn.nasa.gov/gcn.classic.voevent.SNEWS',
+              'suffix': 'xml'},
+    'fermi_targeted': {'url': 'kafka://kafka.test.gcn.nasa.gov/'
+                       'fermi.gbm.targeted.private.igwn', 'suffix': 'json'},
+    'swift_targeted': {'url': 'kafka://kafka.gcn.nasa.gov/'
+                       'gcn.notices.swift.bat.guano', 'suffix': 'json'}
 }
 """Kafka consumer configuration details. The keys describe the senders of the
 messages to be consumed. The values are a dictionary of the URL to listen to

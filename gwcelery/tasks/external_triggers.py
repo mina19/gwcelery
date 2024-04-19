@@ -33,9 +33,9 @@ classification, above which we will consider a Fermi Flight Position
 notice."""
 
 
-@gcn.handler(gcn.NoticeType.SNEWS,
-             queue='exttrig',
-             shared=False)
+@alerts.handler('snews',
+                queue='exttrig',
+                shared=False)
 def handle_snews_gcn(payload):
     """Handles the GCN notice payload from SNEWS alerts.
 
@@ -71,17 +71,17 @@ def handle_snews_gcn(payload):
     ).delay()
 
 
-@gcn.handler(gcn.NoticeType.FERMI_GBM_ALERT,
-             gcn.NoticeType.FERMI_GBM_FLT_POS,
-             gcn.NoticeType.FERMI_GBM_GND_POS,
-             gcn.NoticeType.FERMI_GBM_FIN_POS,
-             gcn.NoticeType.SWIFT_BAT_GRB_POS_ACK,
-             gcn.NoticeType.FERMI_GBM_SUBTHRESH,
-             gcn.NoticeType.INTEGRAL_WAKEUP,
-             gcn.NoticeType.INTEGRAL_REFINED,
-             gcn.NoticeType.INTEGRAL_OFFLINE,
-             queue='exttrig',
-             shared=False)
+@alerts.handler('fermi_gbm_alert',
+                'fermi_gbm_flt_pos',
+                'fermi_gbm_gnd_pos',
+                'fermi_gbm_fin_pos',
+                'fermi_gbm_subthresh',
+                'swift_bat_grb_pos_ack',
+                'integral_wakeup',
+                'integral_refined',
+                'integral_offline',
+                queue='exttrig',
+                shared=False)
 def handle_grb_gcn(payload):
     """Handles the payload from Fermi, Swift, and INTEGRAL GCN notices.
 
@@ -465,8 +465,8 @@ def handle_snews_igwn_alert(alert):
                                          pipelines=['SNEWS'])
 
 
-@alerts.handler('fermi',
-                'swift')
+@alerts.handler('fermi_targeted',
+                'swift_targeted')
 def handle_targeted_kafka_alert(alert):
     """Parse an alert sent via Kafka from a MOU partner in our joint
     subthreshold targeted search.

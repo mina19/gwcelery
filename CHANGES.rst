@@ -29,6 +29,8 @@ Changelog
 
 -   Change functions calls to prepare for NumPy 2.0 release.
 
+-   Switch external event listeners to GCN Classic over Kafka.
+
 2.4.4 "Orabou" (2024-06-14)
 ---------------------------
 
