@@ -10,6 +10,8 @@ Changelog
 
 -   Add gracedb client side 409 error code to the list of retries.
 
+-   Update ROTA responsibilities in documentation.
+
 2.3.5 "Champ" (2024-04-11)
 --------------------------
 

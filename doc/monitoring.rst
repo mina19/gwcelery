@@ -13,11 +13,14 @@ There is a weeklong rotating position among gwcelery librarians involving
 active monitoring and management of gwcelery, with the following explicit
 responsibilities:
 
-1.  Handle new releases, both creation and following up on `active SCCB issues`_
+1.  Handle emergency or urgent issues identified via email, mattermost_, or
+    Sentry_. Respond to issues in a timely manner, especially when other
+    librarians may not be available
 
-2.  Check issues on Sentry_
+2.  Follow up on Nagios issues, restarting gwcelery instances if this would
+    resolve them
 
-3.  Follow up on Nagios issues
+3.  Handle new releases, both creation and following up on `active SCCB issues`_
 
 4.  Handle `active issues`_, especially in those latest milestones_
 
@@ -191,6 +194,7 @@ utilities <celery:monitoring-control>`, including the following:
 .. _stale issues: https://git.ligo.org/emfollow/gwcelery/-/issues/?sort=updated_asc&state=opened&first_page_size=100
 .. _Flower: https://flower.readthedocs.io/
 .. _dashboard.ligo.org: https://dashboard.ligo.org/
+.. _mattermost: https://chat.ligo.org/ligo/channels/emfollow
 .. _monitor.ligo.org: https://monitor.ligo.org/
 .. _Nagios: https://www.nagios.com
 .. _the format that Nagios expects: https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/pluginapi.html
