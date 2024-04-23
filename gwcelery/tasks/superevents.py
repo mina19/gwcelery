@@ -67,11 +67,9 @@ def handle(payload):
     """
     alert_type = payload['alert_type']
     gid = payload['object']['graceid']
-    alert_group = payload['object']['group'].lower()
     alert_search = payload['object']['search']
 
-    ifos = get_instruments(payload['object']) if alert_group == 'cbc' \
-        else payload['object']['instruments'].split(',')
+    ifos = get_instruments(payload['object'])
     # Ignore inclusion of events involving KAGRA; revert when policy is changed
     if "K1" in ifos:
         log.info('Skipping %s because it involves KAGRA data', gid)
@@ -341,10 +339,18 @@ def get_instruments(event):
     -------
     set
         The set of instruments that contributed to the event.
-
+        The instruments that contributed to the event are
+        generally stored in the instrument field of the G-event
+        as a comma separated list. For pipeline that
+        provide the 'SingleInspiral' use the list
+        of the detector there.
     """
-    attribs = event['extra_attributes']['SingleInspiral']
-    ifos = {single['ifo'] for single in attribs}
+    if (('extra_attributes' in event) and
+       ('SingleInspiral' in event['extra_attributes'])):
+        attribs = event['extra_attributes']['SingleInspiral']
+        ifos = {single['ifo'] for single in attribs}
+    else:
+        ifos = set(event['instruments'].split(','))
     return ifos
 
 
@@ -370,23 +376,19 @@ def get_instruments_in_ranking_statistic(event):
     the ``instruments`` key of the GraceDB event JSON structure. However, some
     pipelines (e.g. gstlal) have a distinction between which instruments
     contributed *data* and which were considered in the *ranking* of the
-    candidate. For such pipelines, we infer which pipelines contributed to the
-    ranking by counting only the SingleInspiral records for which the chi
-    squared field is non-empty.
+    candidate. All the pipeline should conform to this rule.
 
-    For PyCBC Live in the O3 configuration, an empty chi^2 field does not mean
-    that the detector did not contribute to the ranking; in fact, *all*
-    detectors listed in the SingleInspiral table contribute to the significance
-    even if the chi^2 is not computed for some of them. Hence PyCBC Live is
-    handled as a special case.
-
+    Unmodeled searches do not provide a SingleInspiral table, In such case
+    use the event information.
     """
-    if event['pipeline'].lower() == 'pycbc':
-        return set(event['instruments'].split(','))
-    else:
+    if (('extra_attributes' in event) and
+       ('SingleInspiral' in event['extra_attributes'])):
         attribs = event['extra_attributes']['SingleInspiral']
-        return {single['ifo'] for single in attribs
+        ifos = {single['ifo'] for single in attribs
                 if single.get('chisq') is not None}
+    else:
+        ifos = set(event['instruments'].split(','))
+    return ifos
 
 
 @app.task(shared=False)
