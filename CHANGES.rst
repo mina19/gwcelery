@@ -8,6 +8,8 @@ Changelog
 
 -   Retry email bootstep when IMAP connection is reset.
 
+-   Add gracedb client side 409 error code to the list of retries.
+
 2.3.5 "Champ" (2024-04-11)
 --------------------------
 

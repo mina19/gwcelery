@@ -24,14 +24,15 @@ def catch_retryable_http_errors(f):
     """Decorator to capture server-side errors that we should retry.
 
     We retry HTTP status 502 (Bad Gateway), 503 (Service Unavailable), and
-    504 (Gateway Timeout).
+    504 (Gateway Timeout). We also retry client side error codes 408 (Timeout),
+    409 (Conflicting URL), 429 (Too many requests).
     """
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
         try:
             return f(*args, **kwargs)
         except HTTPError as e:
-            if e.response.status_code in {408, 429, 502, 503, 504}:
+            if e.response.status_code in {408, 409, 429, 502, 503, 504}:
                 raise RetryableHTTPError(
                     *e.args, request=e.request, response=e.response)
             else:
