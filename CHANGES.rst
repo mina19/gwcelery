@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.3.6 (unreleased)
+------------------
+
+-   Update trials factor to account for MLy joining O4b.
+
 2.3.5 "Champ" (2024-04-11)
 --------------------------
 
