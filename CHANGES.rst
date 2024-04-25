@@ -12,6 +12,8 @@ Changelog
 
 -   Update ROTA responsibilities in documentation.
 
+-   Update trials factor to account for MLy joining O4b.
+
 2.3.5 "Champ" (2024-04-11)
 --------------------------
 
