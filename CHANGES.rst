@@ -1,10 +1,12 @@
 Changelog
 =========
 
-2.3.6 (unreleased)
-------------------
+2.3.6 "Champ" (2024-04-30)
+--------------------------
 
 -   Update trials factor to account for MLy joining O4b.
+
+-   Update ligo-skymap to 2.0.0.
 
 2.3.5 "Champ" (2024-04-11)
 --------------------------
