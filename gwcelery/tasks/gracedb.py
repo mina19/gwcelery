@@ -358,3 +358,39 @@ def add_event_to_superevent(superevent_id, graceid):
         if not (e.response.status_code == 400
                 and error_msg in e.response.content):
             raise
+
+
+@task(shared=False)
+@catch_retryable_http_errors
+def get_superevent_file_list(superevent_id):
+    """Get superevent file list from GraceDB."""
+    filelist = client.superevents[superevent_id].files.get()
+    return filelist
+
+
+@task(shared=False)
+@catch_retryable_http_errors
+def get_latest_file(superevent_id, filename):
+    """Get the lastest file provided a file name
+
+    Parameters
+    ----------
+    superevent_id : str
+        superevent uid
+
+    file_name : str
+        The filebase of a file name
+        e.g. 'bayestar.multiorder.fits' for 'bayestar.multiorder.fits,0'
+
+    Returns
+    ----------
+        The versioned filename for the inquired file
+    """
+    # Get file list for superevent
+    file_list = get_superevent_file_list(superevent_id)
+    # Loop over the keys and mark the key if key includes filename
+    keys = [key for key in file_list.keys() if filename in key]
+    if any(keys):
+        return max(keys)
+    else:
+        return None

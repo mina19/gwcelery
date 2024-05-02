@@ -39,20 +39,51 @@ def get_toy_snrs():
     return np.random.uniform(low=0, high=10, size=3)
 
 
+def get_toy_file_list():
+    toy_file_list = {"bayestar.multiorder.fits":
+                     'https://gracedb-playground.ligo.org/api/superevents/',
+                     "bayestar.multiorder.fits,0":
+                     'https://gracedb-playground.ligo.org/api/superevents/',
+                     "bayestar.multiorder.fits,1":
+                     'https://gracedb-playground.ligo.org/api/superevents/',
+                     "bayestar.multiorder.fits,2":
+                     'https://gracedb-playground.ligo.org/api/superevents/',
+                     "H1_omegascan.png":
+                     'https://gracedb-playground.ligo.org/api/superevents/',
+                     "H1_omegascan.png,0":
+                     'https://gracedb-playground.ligo.org/api/superevents/',
+                     "em_bright.json":
+                     'https://gracedb-playground.ligo.org/api/superevents/',
+                     "em_bright.json,0":
+                     'https://gracedb-playground.ligo.org/api/superevents/'}
+    return toy_file_list
+
+
+def get_toy_id_and_filename():
+    toy_id_and_filename = {"graceid": 'TS12345',
+                           "skymap_filename": 'bayestar.multiorder.fits,1'}
+    return toy_id_and_filename
+
+
 def test_gwskynet_annotation():
+    toy_id_and_filename = get_toy_id_and_filename()
     outputs = json.loads(gwskynet.gwskynet_annotation(
-        get_toy_3d_fits_filecontents(), get_toy_snrs()))
-    expected_output = {"class_score": 0.139,
-                       "FAP": 0.614,
-                       "FNP": 0.007}
+        [get_toy_3d_fits_filecontents(),
+         toy_id_and_filename["skymap_filename"]], get_toy_snrs(),
+        toy_id_and_filename["graceid"]))
+    expected_output = {"GWSkyNet_score": 0.139,
+                       "GWSkyNet_FAP": 0.614,
+                       "GWSkyNet_FNP": 0.007}
     for k, v in expected_output.items():
         assert outputs[k] == pytest.approx(v, abs=1e-3)
 
 
+@patch('gwcelery.tasks.gracedb.get_superevent_file_list',
+       return_value=get_toy_file_list())
 @patch('gwcelery.tasks.gracedb.download.run',
        return_value=get_toy_3d_fits_filecontents())
 @patch('gwcelery.tasks.gracedb.upload.run')
-def test_handle_cbc_superevent(mock_upload, mock_download):
+def test_handle_cbc_superevent(mock_upload, mock_download, mock_filelist):
     alert = {
         "data": {
             "file_version": 0,
@@ -79,9 +110,9 @@ def test_handle_cbc_superevent(mock_upload, mock_download):
             }
         }
     }
-
     gwskynet.handle_cbc_superevent(alert)
-    mock_download.assert_called_once_with('bayestar.multiorder.fits',
+    mock_filelist.assert_called_once_with('TS12345')
+    mock_download.assert_called_once_with('bayestar.multiorder.fits,2',
                                           'TS12345')
     mock_upload.assert_called_once()
 
@@ -122,10 +153,13 @@ def test_handle_extreme_high_FAR_cbc_superevent(mock_upload, mock_download):
     mock_upload.assert_not_called()
 
 
+@patch('gwcelery.tasks.gracedb.get_superevent_file_list',
+       return_value=get_toy_file_list())
 @patch('gwcelery.tasks.gracedb.download.run',
        return_value=get_toy_3d_fits_filecontents())
 @patch('gwcelery.tasks.gracedb.upload.run')
-def test_handle_high_FAR_cbc_superevent(mock_upload, mock_download):
+def test_handle_high_FAR_cbc_superevent(mock_upload, mock_download,
+                                        mock_filelist):
     alert = {
         "data": {
             "file_version": 0,
@@ -154,15 +188,19 @@ def test_handle_high_FAR_cbc_superevent(mock_upload, mock_download):
     }
 
     gwskynet.handle_cbc_superevent(alert)
-    mock_download.assert_called_once_with('bayestar.multiorder.fits',
+    mock_filelist.assert_called_once_with('TS12345')
+    mock_download.assert_called_once_with('bayestar.multiorder.fits,2',
                                           'TS12345')
     mock_upload.assert_called_once()
 
 
+@patch('gwcelery.tasks.gracedb.get_superevent_file_list',
+       return_value=get_toy_file_list())
 @patch('gwcelery.tasks.gracedb.download.run',
        return_value=get_toy_3d_fits_filecontents())
 @patch('gwcelery.tasks.gracedb.upload.run')
-def test_handle_prefer_update_cbc_superevent(mock_upload, mock_download):
+def test_handle_prefer_update_cbc_superevent(mock_upload, mock_download,
+                                             mock_filelist):
     alert = {
         "data": {
             "file_version": 0,
@@ -192,15 +230,19 @@ def test_handle_prefer_update_cbc_superevent(mock_upload, mock_download):
     }
 
     gwskynet.handle_cbc_superevent(alert)
-    mock_download.assert_called_once_with('bayestar.multiorder.fits',
+    mock_filelist.assert_called_once_with('TS12345')
+    mock_download.assert_called_once_with('bayestar.multiorder.fits,2',
                                           'TS12345')
     mock_upload.assert_called_once()
 
 
+@patch('gwcelery.tasks.gracedb.get_superevent_file_list',
+       return_value=get_toy_file_list())
 @patch('gwcelery.tasks.gracedb.download.run',
        return_value=get_toy_3d_fits_filecontents())
 @patch('gwcelery.tasks.gracedb.upload.run')
-def test_handle_man_prefer_update_cbc_superevent(mock_upload, mock_download):
+def test_handle_man_prefer_update_cbc_superevent(mock_upload, mock_download,
+                                                 mock_filelist):
     alert = {
         "data": {
             "file_version": 0,
@@ -231,7 +273,8 @@ def test_handle_man_prefer_update_cbc_superevent(mock_upload, mock_download):
     }
 
     gwskynet.handle_cbc_superevent(alert)
-    mock_download.assert_called_once_with('bayestar.multiorder.fits',
+    mock_filelist.assert_called_once_with('TS12345')
+    mock_download.assert_called_once_with('bayestar.multiorder.fits,2',
                                           'TS12345')
     mock_upload.assert_called_once()
 

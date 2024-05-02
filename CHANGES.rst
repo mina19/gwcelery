@@ -4,6 +4,10 @@ Changelog
 2.4.1 (unreleased)
 ------------------
 
+-   Add GWSkyNet 2.4.1 to avoid installing tensorflow-cpu >= 2.16.1. 
+    Clairfy the version of annotated skymaps and quantities in the uploads.
+    Add public tag to GWSkyNet's uploads.
+
 -   Remove AGILE from the RAVEN workflow since it has been decommissioned.
 
 -   Retry email bootstep when IMAP connection is reset.
