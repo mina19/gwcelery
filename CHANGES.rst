@@ -1,6 +1,13 @@
 Changelog
 =========
 
+2.3.7 (unreleased)
+------------------
+
+-   Add GWSkyNet 2.4.1 to avoid installing tensorflow-cpu >= 2.16.1. 
+    Clairfy the version of annotated skymaps and quantities in the uploads.
+    Add public tag to GWSkyNet's uploads.
+
 2.3.6 "Champ" (2024-04-30)
 --------------------------
 

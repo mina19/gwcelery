@@ -25,20 +25,27 @@ def GWSkyNet_model():
 
 
 @app.task(queue='skynet', shared=False)
-def gwskynet_annotation(filecontents, SNRs):
+def gwskynet_annotation(input_list, SNRs, superevent_id):
     """Perform the series of tasks necessary for GWSkyNet to
 
     Parameters
     ----------
-    filecontents : bytes
-            the sky map downloaded from gracedb
-    GWSkyNet_model : keras.engine.functional.Functional object
-            the GWSkyNet model used to annotate the events
+    input_list : list
+        The output of _download_and_keep_file_name that includes the
+        downloaded the skymap and the versioned file name of the skymap.
+        This list is in the form [skymap, skymap_filename].
+    snr : numpy array of floats
+        detector SNRs.
+    superevent_id : str
+        superevent uid
+    skymap_filename : str
+        versioned filename for skymap
     """
     # FIXME Remove import from function scope once importing GWSkyNet is not a
     # slow operation
     from GWSkyNet import GWSkyNet
 
+    filecontents, skymap_filename = input_list
     with NamedTemporaryFile(content=filecontents) as fitsfile:
         GWSkyNet_input = GWSkyNet.prepare_data(fitsfile.name)
     # One of the inputs from BAYESTAR to GWSkyNet is the list of instruments,
@@ -47,12 +54,16 @@ def gwskynet_annotation(filecontents, SNRs):
     # GWSkyNet 2.4.0 uses this array to indicate detector with SNR >= 4.5
     GWSkyNet_input[2][0] = np.where(SNRs >= app.conf['gwskynet_snr_threshold'],
                                     1, 0)
-    class_score = GWSkyNet.predict(GWSkyNet_model(), GWSkyNet_input)
-    FAP, FNP = GWSkyNet.get_rates(class_score)
+    gwskynet_score = GWSkyNet.predict(GWSkyNet_model(), GWSkyNet_input)
+    FAP, FNP = GWSkyNet.get_rates(gwskynet_score)
     fap = FAP[0]
     fnp = FNP[0]
-    cs = class_score[0]
-    gwskynet_output = {'class_score': cs, 'FAP': fap, 'FNP': fnp}
+    gs = gwskynet_score[0]
+    gwskynet_output = {'superevent_id': superevent_id,
+                       'file': skymap_filename,
+                       'GWSkyNet_score': gs,
+                       'GWSkyNet_FAP': fap,
+                       'GWSkyNet_FNP': fnp}
     return json.dumps(gwskynet_output)
 
 
@@ -88,24 +99,33 @@ def get_cbc_event_snr(event):
 
 
 @gracedb.task(shared=False)
-def _unpack_gwskynet_annotation_and_upload(gwskynet_output, skymap_filename,
-                                           graceid):
+def _download_and_return_file_name(filename, graceid):
+    """Wrapper around gracedb.download that returns the file name."""
+    filecontents = gracedb.download(filename, graceid)
+    return [filecontents, filename]
+
+
+@gracedb.task(shared=False)
+def _unpack_gwskynet_annotation_and_upload(gwskynet_output, graceid):
     filename = 'gwskynet.json'
     gwskynet_output_dict = json.loads(gwskynet_output)
     message = ('GWSkyNet annotation from <a href='
                '"/api/events/{graceid}/files/'
                '{skymap_filename}">'
                '{skymap_filename}</a>.'
-               ' GWSkyNet class score: {cs},'
-               ' FAP: {FAP}, FNP: {FNP}.').format(
+               ' GWSkyNet score: {cs},'
+               ' GWSkyNet FAP: {GWSkyNet_FAP},'
+               ' GWSkyNet FNP: {GWSkyNet_FNP}.').format(
                    graceid=graceid,
-                   skymap_filename=skymap_filename,
-                   cs=np.round(gwskynet_output_dict['class_score'], 3),
-                   FAP=np.round(gwskynet_output_dict['FAP'], 3),
-                   FNP=np.round(gwskynet_output_dict['FNP'], 3)
+                   skymap_filename=gwskynet_output_dict['file'],
+                   cs=np.round(gwskynet_output_dict['GWSkyNet_score'], 3),
+                   GWSkyNet_FAP=np.round(gwskynet_output_dict['GWSkyNet_FAP'],
+                                         3),
+                   GWSkyNet_FNP=np.round(gwskynet_output_dict['GWSkyNet_FNP'],
+                                         3)
                 )
     return gracedb.upload(gwskynet_output, filename, graceid, message=message,
-                          tags=['em_follow'])
+                          tags=['em_follow', 'public'])
 
 
 def _should_annotate(preferred_event, new_label, new_log_comment, labels,
@@ -164,7 +184,6 @@ def handle_cbc_superevent(alert):
         return
 
     superevent_id = alert['uid']
-    skymap_filename = 'bayestar.multiorder.fits'
     preferred_event = alert['object']['preferred_event_data']
     new_label = alert['data'].get('name', '')
     new_log_comment = alert['data'].get('comment', '')
@@ -174,11 +193,12 @@ def handle_cbc_superevent(alert):
     if _should_annotate(preferred_event, new_label, new_log_comment, labels,
                         alert['alert_type']):
         (
-            gracedb.download.s(skymap_filename,
-                               superevent_id)
+            gracedb.get_latest_file.s(superevent_id,
+                                      'bayestar.multiorder.fits')
             |
-            gwskynet_annotation.s(SNRs)
+            _download_and_return_file_name.s(superevent_id)
             |
-            _unpack_gwskynet_annotation_and_upload.s(
-                skymap_filename, superevent_id)
+            gwskynet_annotation.s(SNRs, superevent_id)
+            |
+            _unpack_gwskynet_annotation_and_upload.s(superevent_id)
         ).apply_async()

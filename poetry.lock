@@ -1881,13 +1881,13 @@ test = ["coverage[toml] (>=5.0)", "pytest (>=3.9.1)", "pytest-cov (>=2.4.0)", "p
 
 [[package]]
 name = "gwskynet"
-version = "2.4.0"
+version = "2.4.1"
 description = "GWSkyNet : a machine learning algorithm used for estimating the probabiliy that a gravitational wave candidate is of astrophysical origin"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "GWSkyNet-2.4.0-py3-none-any.whl", hash = "sha256:086b0795d84661233ed091d2d04103be577f2a3bf0b5e3de2dac44f8d074f357"},
-    {file = "GWSkyNet-2.4.0.tar.gz", hash = "sha256:64955e8e83f3bd3c932428ae3ee6812aa089df25ab1dfa16df256cf6e1bb0bd0"},
+    {file = "GWSkyNet-2.4.1-py3-none-any.whl", hash = "sha256:814d489d68d90f56ad44807bb9724cba880fdbc988e8f9f83483c30627434f9d"},
+    {file = "GWSkyNet-2.4.1.tar.gz", hash = "sha256:b591c179ec44dd8659507114ce813798826a2c30b9b90fd202cef84a60e055ce"},
 ]
 
 [package.dependencies]
@@ -1896,7 +1896,7 @@ astropy = ">=5.1.1"
 numpy = ">=1.23.2"
 reproject = ">=0.8"
 scipy = ">=1.8.0"
-tensorflow-cpu = ">=2.9.1"
+tensorflow-cpu = ">=2.9.1,<2.16.1"
 
 [[package]]
 name = "h5py"
@@ -3085,8 +3085,8 @@ files = [
 
 [package.dependencies]
 numpy = [
-    {version = ">=1.23.3", markers = "python_version > \"3.10\""},
     {version = ">=1.21.2", markers = "python_version > \"3.9\" and python_version <= \"3.10\""},
+    {version = ">=1.23.3", markers = "python_version > \"3.10\""},
     {version = ">1.20", markers = "python_version <= \"3.9\""},
 ]
 
@@ -5277,8 +5277,8 @@ files = [
 
 [package.dependencies]
 numpy = [
-    {version = ">=1.18,<2", markers = "python_version != \"3.10\" or platform_system != \"Windows\" or platform_python_implementation == \"PyPy\""},
     {version = ">=1.22.3,<2", markers = "python_version == \"3.10\" and platform_system == \"Windows\" and platform_python_implementation != \"PyPy\""},
+    {version = ">=1.18,<2", markers = "python_version != \"3.10\" or platform_system != \"Windows\" or platform_python_implementation == \"PyPy\""},
 ]
 packaging = ">=21.3"
 pandas = ">=1.0,<2.1.0 || >2.1.0"
@@ -6022,4 +6022,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.12"
-content-hash = "2126aa723c86ed41d0ccc3844d87a54e22b301537b32620f0e7bee05a6486e0b"
+content-hash = "d3956f3f1edaf718174d22d7c4c29fc8c579f3283308be36a156f23345ac62c5"
