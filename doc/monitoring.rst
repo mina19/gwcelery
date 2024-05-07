@@ -85,12 +85,12 @@ Nagios
    The GWCelery Nagios plugin is tailored to GWCelery and is not sufficiently
    general to use with other Celery applications.
 
-The dashboard.ligo.org_  service uses Nagios_ to monitor
+The dashboard.igwn.org_ service uses Nagios_ to monitor
 and report on the health of all of the components of the low-latency analysis
 infrastructure.
 
 The status of the host running the production instance of GWCelery can be
-found under *Host Detail* in the left side menu (select the *emfollow* entry).
+found under *Overview* then *Hosts* in the left side menu (select the *emfollow* entry).
 From the host information page, the links to the GWCelery service status or
 to the alert history and other useful monitoring pages can be found in the top
 left of the page.
@@ -193,7 +193,7 @@ utilities <celery:monitoring-control>`, including the following:
 .. _milestones: https://git.ligo.org/groups/emfollow/-/milestones?search_title=GWCelery&state=&sort=
 .. _stale issues: https://git.ligo.org/emfollow/gwcelery/-/issues/?sort=updated_asc&state=opened&first_page_size=100
 .. _Flower: https://flower.readthedocs.io/
-.. _dashboard.ligo.org: https://dashboard.ligo.org/
+.. _dashboard.igwn.org: https://dashboard.igwn.org/
 .. _mattermost: https://chat.ligo.org/ligo/channels/emfollow
 .. _monitor.ligo.org: https://monitor.ligo.org/
 .. _Nagios: https://www.nagios.com
