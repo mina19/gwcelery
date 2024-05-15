@@ -269,16 +269,17 @@ def mock_get_superevent(superevent_id):
 
 @pytest.mark.parametrize(
     'raven_search_results,graceid,tl,th,group',
-    [[[{'graceid': 'E1', 'pipeline': 'GRB'}], 'S1', -5, 1, 'CBC'],
+    [[[{'graceid': 'E1', 'search': 'GRB'}], 'S1', -5, 1, 'CBC'],
      [[{'superevent_id': 'S10', 'far': 1, 'preferred_event': 'G1'}],
         'E2', -1, 5, 'CBC'],
-     [[{'graceid': 'E3', 'pipeline': 'GRB'},
-       {'graceid': 'E4', 'pipeline': 'GRB'}], 'S2', -600, 60, 'Burst'],
+     [[{'graceid': 'E3', 'search': 'GRB'},
+       {'graceid': 'E4', 'search': 'GRB'}], 'S2', -600, 60, 'Burst'],
      [[{'superevent_id': 'S11', 'far': 1, 'preferred_event': 'G2'},
        {'superevent_id': 'S12', 'far': .001, 'preferred_event': 'G3'}],
         'E5', -1, 5, 'CBC'],
      [[], 'S13', -1, 5, 'CBC'],
-     [[{'graceid': 'E4', 'pipeline': 'GRB'}], 'S14', -1, 5, 'CBC'],
+     [[{'graceid': 'E4', 'search': 'GRB'}], 'S14', -1, 5, 'CBC'],
+     [[{'graceid': 'E5', 'search': 'SubGRBTargeted'}], 'S14', -1, 5, 'CBC'],
      [[{'superevent_id': 'S12', 'far': .001, 'preferred_event': 'G3'}],
         'T4', -10, 10, 'Burst'],
      [[{'superevent_id': 'MS13', 'far': 1, 'preferred_event': 'M3'}],
@@ -306,7 +307,11 @@ def test_raven_pipeline(mock_create_label,
                     'superevent': None if graceid != 'E6' else 'S14'}
 
     for result in raven_search_results:
-        result['labels'] = []
+        # Check if is an external event and is SubGRBTargeted
+        if result.get('graceid') and result['search'] == 'SubGRBTargeted':
+            result['labels'] = 'NOT_GRB'
+        else:
+            result['labels'] = []
     if 'S' not in graceid:
         alert_object['group'] = 'External'
         if 'T' in graceid:
@@ -359,7 +364,10 @@ def test_raven_pipeline(mock_create_label,
 
         mock_calculate_coincidence_far.assert_has_calls(coinc_calls,
                                                         any_order=True)
-        mock_create_label.assert_has_calls(label_calls, any_order=True)
+        if result.get('graceid') and result['search'] == 'SubGRBTargeted':
+            mock_create_label.assert_not_called()
+        else:
+            mock_create_label.assert_has_calls(label_calls, any_order=True)
     else:
         mock_trigger_raven_alert.assert_not_called()
         mock_calculate_coincidence_far.assert_not_called()

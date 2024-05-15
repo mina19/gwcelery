@@ -274,6 +274,20 @@ def raven_pipeline(raven_search_results, gracedb_id, alert_object, tl, th,
                 and ext_event['superevent'] != superevent['superevent_id']:
             return
 
+        # Always check publishing conditions and apply EM_COINC to external
+        # event so we can re-run the analysis if NOT_GRB is removed
+        group_canvas = \
+            trigger_raven_alert.s(superevent, gracedb_id, ext_event, gw_group),
+
+        # If the external event is not likely astrophysical and part of the
+        # targeted search, don't alert observers or redo calculations.
+        # This is to prevent large influxes of EM_COINC alerts that will never
+        # really be considered now or in the future
+        if 'NOT_GRB' not in ext_event['labels'] and \
+                ext_event['search'] != 'SubGRBTargeted':
+            group_canvas += gracedb.create_label.si('EM_COINC', superevent_id),
+            group_canvas += gracedb.create_label.si('EM_COINC', exttrig_id),
+
         canvas = (
             gracedb.add_event_to_superevent.si(superevent_id, exttrig_id)
             |
@@ -282,10 +296,7 @@ def raven_pipeline(raven_search_results, gracedb_id, alert_object, tl, th,
                 use_superevent_skymap=use_superevent_skymap
             )
             |
-            group(gracedb.create_label.si('EM_COINC', superevent_id),
-                  gracedb.create_label.si('EM_COINC', exttrig_id),
-                  trigger_raven_alert.s(superevent, gracedb_id,
-                                        ext_event, gw_group))
+            group(group_canvas)
         )
         canvas.delay()
 
