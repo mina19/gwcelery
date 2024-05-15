@@ -1109,8 +1109,7 @@ def earlywarning_preliminary_initial_update_alert(
                     and f.endswith('.json'):
                 em_bright_filename = fv
             if p_astro_needed \
-                    and {'public'}.issubset(t) \
-                    and 'p_astro' in t \
+                    and {'p_astro', 'public'}.issubset(t) \
                     and f.endswith('.json'):
                 p_astro_filename = fv
             if combined_skymap_needed \
@@ -1119,7 +1118,7 @@ def earlywarning_preliminary_initial_update_alert(
                     and 'fit' in f:
                 combined_skymap_filename = fv
             if rapidpe_pastro_needed \
-                    and 'p_astro' in t \
+                    and {'p_astro', 'public'}.issubset(t) \
                     and f == 'RapidPE_RIFT.p_astro.json':
                 rapidpe_pastro_filename = fv
 
