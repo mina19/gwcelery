@@ -917,6 +917,17 @@ def earlywarning_preliminary_alert(event, alert, alert_type='preliminary',
         # presence of adv action or significant event blocks EW alert
         # presence of adv action or significant event or EW event blocks
         # less significant alert
+        if alert_type == 'earlywarning':
+            # Launch DQR for significant early warning events after a timeout.
+            # If a full BW significant trigger arrives before the end of the
+            # timeout, the latter will apply the label instead, and this call
+            # is a noop.
+            gracedb.create_label.si(
+                'DQR_REQUEST',
+                superevent_id
+            ).apply_async(
+                countdown=app.conf['superevent_clean_up_timeout'] + 100
+            )
         blocking_labels = (
             {'ADVOK', 'ADVNO'} if alert_type == 'preliminary'
             else

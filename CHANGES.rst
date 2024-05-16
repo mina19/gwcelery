@@ -24,6 +24,9 @@ Changelog
 -   Don't apply EM_COINC if external event is SubGRBTargeted and vetoed by
     NOT_GRB.
 
+-   Add ``DQR_REQUEST`` label with a countdown for significant early-warning
+    events.
+
 2.3.6 "Champ" (2024-04-30)
 --------------------------
 

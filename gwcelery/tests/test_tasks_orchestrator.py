@@ -306,6 +306,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             create_tag.assert_not_called()
             create_initial_circular.assert_not_called()
             check_high_profile.assert_not_called()
+            create_label.assert_not_called()
         else:
             annotate_fits.assert_called_once()
             update_superevent_task.assert_called_once_with(
@@ -321,7 +322,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
             )
             assert call('GCN_PRELIM_SENT', superevent_id) \
                 not in create_label.call_args_list
-
+            create_label.assert_has_calls([call('DQR_REQUEST', 'S1234')])
     elif alert_label == superevents.FROZEN_LABEL:
         if (superevents.SIGNIFICANT_LABEL in superevent_labels) or \
                 (superevents.EARLY_WARNING_LABEL in superevent_labels):
