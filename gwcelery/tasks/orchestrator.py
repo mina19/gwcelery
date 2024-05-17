@@ -925,9 +925,7 @@ def earlywarning_preliminary_alert(event, alert, alert_type='preliminary',
             gracedb.create_label.si(
                 'DQR_REQUEST',
                 superevent_id
-            ).apply_async(
-                countdown=app.conf['superevent_clean_up_timeout'] + 100
-            )
+            ).apply_async(countdown=600)
         blocking_labels = (
             {'ADVOK', 'ADVNO'} if alert_type == 'preliminary'
             else
