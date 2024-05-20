@@ -7,6 +7,12 @@ Changelog
 -   Switch to using ``igwn-alert`` client's listener, since most of functionality
     used in our implementation is now present in the upstream client.
 
+-   Drop support for Python 3.9 according to Numpy, Astropy, and ligo.skymap
+    version support policies. Astropy 6.1.0 has already dropped Python 3.9, and
+    ligo.skymap 2.0.1 has as well.
+
+-   Switch from Python 3.9 to Python 3.11 for production deployments.
+
 2.4.4 "Orabou" (2024-06-14)
 ---------------------------
 

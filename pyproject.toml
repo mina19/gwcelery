@@ -17,7 +17,6 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Topic :: Internet",
@@ -51,7 +50,7 @@ include = [
 "Bug Tracker" = "https://git.ligo.org/emfollow/gwcelery/issues"
 
 [tool.poetry.dependencies]
-python = "^3.9,<3.12"
+python = "^3.10,<3.12"
 adc-streaming = ">=2.3.0"  # https://github.com/astronomy-commons/adc-streaming/pull/62
 astropy = ">=4.3.1,!=5.3"  # https://github.com/astropy/astropy/issues/11879, https://github.com/gwpy/gwpy/issues/1629
 bilby = ">=2.2.2"

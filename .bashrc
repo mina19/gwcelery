@@ -7,7 +7,7 @@ if [ -f /etc/bashrc ]; then
 fi
 
 # Add user site directory to the PATH. On Linux, this is usuall ~/.local/bin.
-export PATH="$(python3.9 -m site --user-base)/bin${PATH+:${PATH}}"
+export PATH="$(python3.11 -m site --user-base)/bin${PATH+:${PATH}}"
 
 # Disable OpenMP, MKL, and OpenBLAS threading by default.
 # In this environment, it will be enabled selectively by processes that use it.

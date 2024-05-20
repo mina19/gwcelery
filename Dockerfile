@@ -1,5 +1,5 @@
 # build stage: build wheel + extract dependencies
-FROM python:3.9 as build
+FROM python:3.11 as build
 
 ENV PIP_DEFAULT_TIMEOUT=100
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -19,7 +19,7 @@ RUN poetry export -f requirements.txt -o requirements.txt
 RUN poetry build -f wheel
 
 # install stage: install gwcelery + dependencies
-FROM python:3.9 as install
+FROM python:3.11 as install
 
 ENV PIP_DEFAULT_TIMEOUT=100
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -47,7 +47,7 @@ RUN pip install -r requirements.txt
 RUN pip install --no-deps *.whl
 
 # final stage: installed app
-FROM python:3.9-slim as app
+FROM python:3.11-slim as app
 
 COPY --from=install /opt/venv /opt/venv
 

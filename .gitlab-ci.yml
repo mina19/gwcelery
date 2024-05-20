@@ -56,9 +56,6 @@ build:
     - poetry check --lock
     - poetry install -E test
   needs: []
-test/poetry/python3.9:
-  extends: .test-poetry
-  image: python:3.9
 test/poetry/python3.10:
   extends: .test-poetry
   image: python:3.10
@@ -78,9 +75,6 @@ test/poetry/python3.11:
     - *install-redis
   needs:
     - build
-test/wheel/python3.9:
-  extends: .test-wheel
-  image: python:3.9
 test/wheel/python3.10:
   extends: .test-wheel
   image: python:3.10
@@ -170,7 +164,7 @@ pages:
   only:
     - main
   needs:
-    - test/poetry/python3.9
+    - test/poetry/python3.10
 
 # Upload package to PyPI.
 # Place your PyPI API token in the repository's GitLab CI secrets.
@@ -257,16 +251,16 @@ release:
       ssh -T $REMOTE_HOST bash <<EOF
       . .bashrc
       set -e
-      python3.9 -m pip install --upgrade pip
-      python3.9 -m pip install pipx
+      python3.11 -m ensurepip --upgrade
+      python3.11 -m pip install pipx
       pipx ensurepath
       pipx install poetry==$POETRY_VERSION
       pipx inject poetry poetry-dynamic-versioning
       # FIXME: It would be simpler to use `poetry install`, but it installs the
       # project in editable mode, which is not appropriate for production
       # deployments.
-      python3.9 -m pip install --no-deps -r <(poetry export --with dev)
-      python3.9 -m pip install --no-deps .
+      python3.11 -m pip install --no-deps -r <(poetry export --with dev)
+      python3.11 -m pip install --no-deps .
       # FIXME: remove pip uninstall temporary directories left behind due to
       # bug with pip on NFS. See https://github.com/pypa/pip/issues/6327
       chmod -R ug+rwx .local/lib/python*/site-packages/~* || true
