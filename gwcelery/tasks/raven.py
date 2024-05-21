@@ -323,7 +323,7 @@ def preferred_superevent(raven_search_results):
     return [raven_search_results[idx]]
 
 
-@app.task(shared=False)
+@app.task(queue='exttrig', shared=False)
 def update_coinc_far(coinc_far_dict, superevent, ext_event):
     """Update joint info in superevent based on the current preferred
     coincidence. In order of priority, the determing conditions are the

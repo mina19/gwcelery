@@ -30,6 +30,8 @@ Changelog
 -   Require no spaces and specific version format for filenames when sending
     update notices
 
+-   Serialize changing of preferred external event.
+
 2.3.6 "Champ" (2024-04-30)
 --------------------------
 
