@@ -8,6 +8,8 @@ Changelog
     Clairfy the version of annotated skymaps and quantities in the uploads.
     Add public tag to GWSkyNet's uploads.
 
+-   Remove MLy from trials factor.
+
 2.3.6 "Champ" (2024-04-30)
 --------------------------
 
