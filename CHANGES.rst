@@ -34,6 +34,8 @@ Changelog
 
 -   Update Nagios URL and screenshot in the documentation.
 
+-   Remove MLy from trials factor.
+
 2.3.6 "Champ" (2024-04-30)
 --------------------------
 
