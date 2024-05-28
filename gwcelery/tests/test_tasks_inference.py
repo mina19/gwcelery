@@ -183,6 +183,7 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
                                        'no_ligo_skymap': True},
             'queue': 'Online_PE',
             'accounting_user': 'soichiro.morisaki',
+            'tukey_roll_off': 1.0
         }
         if host != 'gracedb.ligo.org':
             ans['queue'] = 'Online_PE_MDC'

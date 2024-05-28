@@ -36,6 +36,8 @@ Changelog
 
 -   Remove MLy from trials factor.
 
+-   Increase window roll off to 1s to reduce biases due to windowing in bilby.
+
 2.3.6 "Champ" (2024-04-30)
 --------------------------
 

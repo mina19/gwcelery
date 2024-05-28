@@ -262,7 +262,8 @@ def _setup_dag_for_bilby(
                  '--settings', path_to_settings]
     settings = {'summarypages_arguments': {'gracedb': event['graceid'],
                                            'no_ligo_skymap': True},
-                'accounting_user': 'soichiro.morisaki'}
+                'accounting_user': 'soichiro.morisaki',
+                'tukey_roll_off': 1.0}
     if app.conf['gracedb_host'] != 'gracedb.ligo.org':
         settings['queue'] = 'Online_PE_MDC'
     else:
