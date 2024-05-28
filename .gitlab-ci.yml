@@ -128,7 +128,7 @@ doc:
 
 # Create Docker image
 docker:
-  stage: docker
+  stage: build
   script:
     - IMAGE_TAG=$CI_REGISTRY_IMAGE:${CI_COMMIT_REF_NAME/\//-} # Replace "/" in release branch names with "-"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -140,10 +140,7 @@ docker:
         docker tag $IMAGE_TAG ${IMAGE_TAG%:*}:latest
         docker push ${IMAGE_TAG%:*}:latest
       fi
-  needs:
-    - build
-    - test/poetry/python3.9
-    - test/wheel/python3.9
+  needs: []
 
 # SCCB request
 sccb:
