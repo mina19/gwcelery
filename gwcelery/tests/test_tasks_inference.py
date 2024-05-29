@@ -135,7 +135,7 @@ def test_setup_dag_for_lalinference(monkeypatch, tmp_path):
     product(
         ['gracedb-playground.ligo.org', 'gracedb.ligo.org'],
         ['production', 'fast_test'],
-        [30, 10, 3, 2, 1, 0.1]
+        [30, 20, 15, 10, 3, 2, 1, 0.1]
     )
 )
 def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
@@ -207,8 +207,16 @@ def test_setup_dag_for_bilby(monkeypatch, tmp_path, host, mode, mc):
                 assert 'low_q_phenompv2_roq' in cmd
             else:
                 assert 'phenomxphm_roq' in cmd
-                ans['request_memory_generation'] = 36.0
-                ans['request_memory'] = 16.0
+                if mc > 16:
+                    ans['request_memory_generation'] = 36.0
+                else:
+                    ans['request_memory_generation'] = 50.0
+                if mc > 25:
+                    ans['request_memory'] = 16.0
+                elif mc > 16:
+                    ans['request_memory'] = 24.0
+                else:
+                    ans['request_memory'] = 36.0
         elif mode == 'fast_test' and mc < 3.9:
             ans['request_memory_generation'] = 8.0
         with open(path_to_settings, 'r') as f:

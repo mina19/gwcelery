@@ -308,8 +308,16 @@ def _setup_dag_for_bilby(
             likelihood_mode = 'low_q_phenompv2_roq'
         else:
             likelihood_mode = 'phenomxphm_roq'
-            settings['request_memory_generation'] = 36.0
-            settings['request_memory'] = 16.0
+            if trigger_chirp_mass > 16:
+                settings['request_memory_generation'] = 36.0
+            else:
+                settings['request_memory_generation'] = 50.0
+            if trigger_chirp_mass > 25:
+                settings['request_memory'] = 16.0
+            elif trigger_chirp_mass > 16:
+                settings['request_memory'] = 24.0
+            else:
+                settings['request_memory'] = 36.0
         setup_arg += ['--cbc-likelihood-mode', likelihood_mode]
     elif mode == 'fast_test':
         setup_arg += ["--sampler-kwargs", "FastTest"]
