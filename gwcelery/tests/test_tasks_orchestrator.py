@@ -1143,41 +1143,22 @@ def test_only_mdc_alerts_switch(mock_alert, mock_upload, mock_download,
 
 
 @pytest.mark.parametrize(
-    'far,event,pe_pipeline',
-    [[1, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'AllSky'}, 'bilby'],
-     [1e-30, {'gpstime': 1187008882, 'group': 'Burst', 'search': 'AllSky'},
-         'bilby'],
-     [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'MDC'},
-         'bilby'],
-     [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'AllSky',
-              'pipeline': 'gstlal', 'offline': True}, 'bilby'],
-     [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
-              'search': 'AllSky', 'pipeline': 'gstlal'}, 'bilby'],
-     [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
-              'search': 'AllSky', 'pipeline': 'pycbc'}, 'bilby'],
-     [1, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'AllSky',
-          'extra_attributes': {'CoincInspiral': {'snr': 10}}},
-        'rapidpe'],
-     [1e-30, {'gpstime': 1187008882, 'group': 'Burst', 'search': 'AllSky',
-              'extra_attributes': {'CoincInspiral': {'snr': 10}}},
-        'rapidpe'],
-     [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'MDC',
-              'extra_attributes': {'CoincInspiral': {'snr': 10}}},
-        'rapidpe'],
-     [1e-30, {'gpstime': 1187008882, 'group': 'CBC', 'search': 'AllSky',
-              'pipeline': 'gstlal', 'offline': True,
-              'extra_attributes': {'CoincInspiral': {'snr': 10}}
-              }, 'rapidpe'],
-     [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
-              'search': 'AllSky', 'pipeline': 'gstlal',
-              'extra_attributes': {'CoincInspiral': {'snr': 10}}
-              }, 'rapidpe'],
-     [1e-30, {'gpstime': 1187008882, 'group': 'CBC',
-              'search': 'AllSky', 'pipeline': 'pycbc',
-              'extra_attributes': {'CoincInspiral': {'snr': 10}}
-              }, 'rapidpe']]
+    'far_event,pe_pipeline,pe_required',
+    [
+        [(1e-30, {'search': 'AllSky'}), 'bilby', True],  # significant CBC
+        [(1e-30, {'search': 'AllSky'}), 'rapidpe', True],  # another pipeline
+        [(1, {'search': 'AllSky'}), 'bilby', False],  # low significance
+        [None, 'bilby', False],  # No CBC triggers
+        [(1e-30, {'search': 'wormhole'}), 'bilby', False],  # unknown search
+        [(1e-30, {'search': 'MDC'}), 'bilby', False],  # MDC upload
+        [(1e-30, {'search': 'offline'}), 'bilby', False],  # Offline upload
+        [(1e-30, {'search': 'earlywarning'}), 'rapidpe', False],
+        # rapidpe + earlywarning
+    ]
 )
-def test_parameter_estimation(monkeypatch, far, event, pe_pipeline):
+def test_parameter_estimation(
+    monkeypatch, far_event, pe_pipeline, pe_required
+):
     superevent_id = 'S1234'
     mock_upload = Mock()
     mock_start_pe = Mock()
@@ -1185,23 +1166,17 @@ def test_parameter_estimation(monkeypatch, far, event, pe_pipeline):
     monkeypatch.setattr('gwcelery.tasks.inference.start_pe.run', mock_start_pe)
 
     orchestrator.parameter_estimation.delay(
-        far_event=(far, event), superevent_id=superevent_id,
+        far_event=far_event, superevent_id=superevent_id,
         pe_pipeline=pe_pipeline)
 
-    group = event['group'].lower()
-    search = event['search'].lower()
-    threshold = (app.conf['significant_alert_far_threshold'][group][search] /
-                 app.conf['significant_alert_trials_factor'][group][search])
-    if (
-        far <= threshold and event['group'] == 'CBC' and
-        event['search'] != 'MDC' and
-        not event.get('offline', False)
-    ):
+    if pe_required:
+        _, event = far_event
         mock_start_pe.assert_any_call(
             event, superevent_id, pe_pipeline)
         assert mock_start_pe.call_count == 1
     else:
         mock_upload.assert_called_once()
+        assert mock_start_pe.call_count == 0
 
 
 @pytest.mark.parametrize(
@@ -1234,6 +1209,90 @@ def test_mbta_disabled_on_playground(
         assert mock_start_pe.call_count == 1
     else:
         mock_upload.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    'gevents_dict,preferred_event_id,answer_far,answer_event_id',
+    [
+        [
+            {
+                "G1": {"group": "cbc", "search": "allsky", "far": 1e-10}
+            },
+            "G1",
+            1e-10,
+            "G1"
+        ],  # one CBC trigger
+        [
+            {
+                "G1": {"group": "cbc", "search": "allsky", "far": 1},
+                "G2": {"group": "cbc", "search": "allsky", "far": 1e-10},
+                "G3": {"group": "cbc", "search": "allsky", "far": 1e-5}
+            },
+            "G2",
+            1e-10,
+            "G2"
+        ],  # multiple CBC triggers
+        [
+            {
+                "G1": {"group": "cbc", "search": "allsky", "far": 1e-10},
+                "G2": {"group": "burst", "search": "bbh", "far": 1e-12}
+            },
+            "G1",
+            1e-12,
+            "G1"
+        ],  # significant CBC + significant Burst-BBH
+        [
+            {
+                "G1": {"group": "cbc", "search": "allsky", "far": 1e-10},
+                "G2": {"group": "burst", "search": "allsky", "far": 1e-12}
+            },
+            "G1",
+            1e-10,
+            "G1"
+        ],  # significant CBC + significant unmodeled Burst
+        [
+            {
+                "G1": {"group": "burst", "search": "bbh", "far": 1e-12},
+                "G2": {"group": "cbc", "search": "allsky", "far": 1},
+                "G3": {"group": "cbc", "search": "allsky", "far": 1e-5},
+                "G4": {"group": "cbc", "search": "allsky", "far": 1e-3},
+            },
+            "G1",
+            1e-12,
+            "G3"
+        ],  # low-significance CBC + significant Burst-BBH
+        [
+            {
+                "G1": {"group": "burst", "search": "allsky", "far": 1e-10},
+            },
+            "G1",
+            None,
+            None
+        ],  # only a cWB trigger
+    ]
+)
+def test_get_pe_far_and_event(
+    monkeypatch, gevents_dict, preferred_event_id, answer_far, answer_event_id
+):
+    superevent = {}
+    superevent["gw_events"] = list(gevents_dict.keys())
+    superevent["preferred_event_data"] = gevents_dict[preferred_event_id]
+
+    def _get_event(graceid):
+        return gevents_dict[graceid]
+
+    monkeypatch.setattr(
+        'gwcelery.tasks.gracedb.get_event._orig_run',
+        _get_event
+    )
+
+    ans = orchestrator._get_pe_far_and_event(superevent)
+    if answer_event_id is None:
+        assert ans is None
+    else:
+        far, event = ans
+        assert far == answer_far
+        assert event == gevents_dict[answer_event_id]
 
 
 @pytest.mark.parametrize(

@@ -40,6 +40,9 @@ Changelog
 
 -   Increase request memory of PE with IMRPhenomXPHM waveform model.
 
+-   Enable parameter estimation on burst-BBH triggers associated with
+    low-significance CBC triggers.
+
 2.3.6 "Champ" (2024-04-30)
 --------------------------
 

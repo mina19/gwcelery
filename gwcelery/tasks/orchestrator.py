@@ -41,27 +41,21 @@ def handle_superevent(alert):
             app.conf['rapidpe_timeout'], 0
         )
         (
-            _get_preferred_event.si(superevent_id).set(
+            gracedb.get_superevent.si(superevent_id).set(
                 countdown=timeout
             )
             |
-            group(
-                _get_cbc_lowest_far.si(superevent_id),
-                gracedb.get_event.s()
-            )
+            _get_pe_far_and_event.s()
             |
             parameter_estimation.s(superevent_id, 'rapidpe')
         ).apply_async()
 
         (
-            _get_preferred_event.si(superevent_id).set(
+            gracedb.get_superevent.si(superevent_id).set(
                 countdown=app.conf['pe_timeout']
             )
             |
-            group(
-                _get_cbc_lowest_far.si(superevent_id),
-                gracedb.get_event.s()
-            )
+            _get_pe_far_and_event.s()
             |
             parameter_estimation.s(superevent_id, 'bilby')
         ).apply_async()
@@ -549,19 +543,6 @@ def _update_if_dqok(event, superevent_id):
 
 
 @gracedb.task(shared=False)
-def _get_preferred_event(superevent_id):
-    """Determine preferred event for a superevent by querying GraceDB.
-
-    This works just like :func:`gwcelery.tasks.gracedb.get_superevent`, except
-    that it returns only the preferred event, and not the entire GraceDB JSON
-    response.
-    """
-    # FIXME: remove ._orig_run when this bug is fixed:
-    # https://github.com/getsentry/sentry-python/issues/370
-    return gracedb.get_superevent._orig_run(superevent_id)['preferred_event']
-
-
-@gracedb.task(shared=False)
 def _create_voevent(classification, *args, **kwargs):
     r"""Create a VOEvent record from an EM bright JSON file.
 
@@ -950,18 +931,33 @@ def earlywarning_preliminary_alert(event, alert, alert_type='preliminary',
 
 
 @gracedb.task(shared=False)
-def _get_cbc_lowest_far(superevent_id):
-    """Obtain the lowest FAR of the CBC events in the target superevent."""
+def _get_pe_far_and_event(superevent):
+    """Return FAR and event input to PE workflow.
+
+    The input FAR is the lowest FAR among CBC and Burst-BBH triggers.
+    The input event is the preferred event if it is a CBC trigger, otherwise
+    the CBC trigger with the lowest FAR is returned.
+    """
     # FIXME: remove ._orig_run when this bug is fixed:
     # https://github.com/getsentry/sentry-python/issues/370
     events = [
-        gracedb.get_event._orig_run(gid) for gid in
-        gracedb.get_superevent._orig_run(superevent_id)["gw_events"]
+        gracedb.get_event._orig_run(gid) for gid in superevent['gw_events']
     ]
-    return min(
-        [e['far'] for e in events if e['group'].lower() == 'cbc'],
-        default=None
-    )
+    events = [
+        e for e in events if e['group'].lower() == 'cbc' or (
+            e['group'].lower() == 'burst' and
+            e.get('search', 'None').lower() == 'bbh'
+        )
+    ]
+    events.sort(key=lambda e: e['far'])
+    preferred_event = superevent['preferred_event_data']
+
+    if preferred_event['group'].lower() == 'cbc':
+        return events[0]['far'], preferred_event
+    for e in events:
+        if e['group'].lower() == 'cbc':
+            return events[0]['far'], e
+    return None
 
 
 @app.task(ignore_result=True, shared=False)
@@ -971,8 +967,16 @@ def parameter_estimation(far_event, superevent_id, pe_pipeline):
     not mock uploads. For those which do not pass these criteria, this task
     uploads messages explaining why parameter estimation is not started.
     """
+    if far_event is None:
+        gracedb.upload.delay(
+            filecontents=None, filename=None,
+            graceid=superevent_id,
+            message='Parameter estimation will not start since no CBC triggers'
+                    ' are found.',
+            tags='pe'
+        )
+        return
     far, event = far_event
-    group = event['group'].lower()
     search = event['search'].lower()
     if search in app.conf['significant_alert_far_threshold']['cbc']:
         threshold = (
@@ -982,15 +986,7 @@ def parameter_estimation(far_event, superevent_id, pe_pipeline):
     else:
         # Fallback in case an event is uploaded to an unlisted search
         threshold = -1 * float('inf')
-    if group != 'cbc':
-        gracedb.upload.delay(
-            filecontents=None, filename=None,
-            graceid=superevent_id,
-            message='Parameter estimation will not start since this is not '
-                    'CBC but {}.'.format(event['group']),
-            tags='pe'
-        )
-    elif far > threshold:
+    if far > threshold:
         gracedb.upload.delay(
             filecontents=None, filename=None,
             graceid=superevent_id,
@@ -1028,10 +1024,7 @@ def parameter_estimation(far_event, superevent_id, pe_pipeline):
                     'injections not O3 replay data + MDC injections',
             tags='pe'
         )
-    elif (
-            pe_pipeline == 'rapidpe' and
-            event['search'].lower() == 'earlywarning'
-    ):
+    elif pe_pipeline == 'rapidpe' and search == 'earlywarning':
         # Remove this if rapidpe can ingest early warning events
         gracedb.upload.delay(
             filecontents=None, filename=None,
