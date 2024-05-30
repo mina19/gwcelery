@@ -1,20 +1,37 @@
 Changelog
 =========
 
-2.4.1 (unreleased)
+2.4.2 (unreleased)
 ------------------
+
+-   No changes yet.
+
+2.4.1 "Orabou" (2024-05-30)
+---------------------------
 
 -   Add GWSkyNet 2.4.1 to avoid installing tensorflow-cpu >= 2.16.1.
     Clairfy the version of annotated skymaps and quantities in the uploads.
     Add public tag to GWSkyNet's uploads.
+
+-   Reduce Burst trials by one removing MLy from trials factor count.
+
+-   Add ``DQR_REQUEST`` label with a countdown for significant early-warning
+    events.
+
+-   Increase tukey window roll off to 1s to reduce biases due to windowing in bilby.
+
+-   Increase request memory for online PE with IMRPhenomXPHM waveform model.
+
+-   Enable parameter estimation on burst-BBH triggers associated with
+    low-significance CBC triggers.
+
+-   Update ROTA responsibilities in documentation.
 
 -   Remove AGILE from the RAVEN workflow since it has been decommissioned.
 
 -   Retry email bootstep when IMAP connection is reset.
 
 -   Add gracedb client side 409 error code to the list of retries.
-
--   Update ROTA responsibilities in documentation.
 
 -   Don't log omegascan FloatingPointErrors to Sentry since we know that they
     come from data which is only zeros (e.g., Virgo out of observing).
@@ -24,24 +41,12 @@ Changelog
 -   Don't apply EM_COINC if external event is SubGRBTargeted and vetoed by
     NOT_GRB.
 
--   Add ``DQR_REQUEST`` label with a countdown for significant early-warning
-    events.
-
 -   Require no spaces and specific version format for filenames when sending
     update notices
 
 -   Serialize changing of preferred external event.
 
 -   Update Nagios URL and screenshot in the documentation.
-
--   Remove MLy from trials factor.
-
--   Increase window roll off to 1s to reduce biases due to windowing in bilby.
-
--   Increase request memory of PE with IMRPhenomXPHM waveform model.
-
--   Enable parameter estimation on burst-BBH triggers associated with
-    low-significance CBC triggers.
 
 2.3.6 "Champ" (2024-04-30)
 --------------------------
