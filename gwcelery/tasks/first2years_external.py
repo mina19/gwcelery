@@ -138,7 +138,7 @@ def create_upload_external_event(gpstime, pipeline, ext_search):
         return event
 
 
-def _offset_time(gpstime, group, pipeline, ext_search):
+def _offset_time(gpstime, group, pipeline, ext_search, se_search):
     """Offsets the given GPS time by applying a random number within a time
     window, determine by the search being done.
 
@@ -152,6 +152,8 @@ def _offset_time(gpstime, group, pipeline, ext_search):
         Pipeline field for external event
     ext_search : str
         Search field for external event
+    se_search : list
+        Search field for superevent
 
     Returns
     -------
@@ -160,7 +162,8 @@ def _offset_time(gpstime, group, pipeline, ext_search):
         search window
 
     """
-    tl, th = raven._time_window('S1', group, [pipeline], [ext_search])
+    tl, th = raven._time_window('S1', group, [pipeline],
+                                [ext_search], [se_search])
     return gpstime + random.uniform(tl, th)
 
 
@@ -235,10 +238,10 @@ def upload_external_event(alert, ext_search=None):
     is_gracedb_playground = app.conf['gracedb_host'] \
         == 'gracedb-playground.ligo.org'
     joint_mdc_alert = se_search == 'MDC' and _is_joint_mdc(alert['uid'], 'MDC')
-    joint_allsky_alert = se_search == 'AllSky' and \
+    joint_o3replay_alert = se_search in {'AllSky', 'BBH'} and \
         _is_joint_mdc(alert['uid'], 'AllSky') and is_gracedb_playground and \
         group in {'CBC', 'Burst'}
-    if not (joint_mdc_alert or joint_allsky_alert):
+    if not (joint_mdc_alert or joint_o3replay_alert):
         return
 
     # Potentially upload 1, 2, or 3 GRB events
@@ -258,7 +261,7 @@ def upload_external_event(alert, ext_search=None):
         ext_search = \
             (np.random.choice(['GRB', 'SubGRB', 'SubGRBTargeted'],
                               p=[.6, .1, .3])
-             if joint_allsky_alert else 'GRB')
+             if joint_o3replay_alert else 'GRB')
     # Choose pipeline(s) based on search
     if ext_search in {'GRB', 'MDC'}:
         pipelines = np.random.choice(['Fermi', 'Swift', 'INTEGRAL'],
@@ -274,7 +277,8 @@ def upload_external_event(alert, ext_search=None):
     events = []
     for pipeline in pipelines:
         gpstime = float(alert['object']['t_0'])
-        new_time = _offset_time(gpstime, group, pipeline, ext_search)
+        new_time = _offset_time(gpstime, group, pipeline,
+                                ext_search, se_search)
 
         # Choose external grb pipeline to simulate
         ext_event = create_upload_external_event(

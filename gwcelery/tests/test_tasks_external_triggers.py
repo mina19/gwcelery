@@ -339,7 +339,8 @@ def test_handle_create_skymap_label_from_superevent(mock_create_label,
            'superevent_id': 'S1234',
            'preferred_event': 'G1234',
            'preferred_event_data':
-               {'group': 'CBC'}
+               {'group': 'CBC',
+                'search': 'AllSky'}
                     })
 def test_handle_skymaps_ready(mock_get_superevent,
                               mock_create_combined_skymap,
@@ -366,7 +367,8 @@ def test_handle_skymaps_ready(mock_get_superevent,
     mock_raven_pipeline.assert_called_once_with([{'superevent_id': 'S1234',
                                                   'preferred_event': 'G1234',
                                                   'preferred_event_data':
-                                                      {'group': 'CBC'}}],
+                                                      {'group': 'CBC',
+                                                       'search': 'AllSky'}}],
                                                 'E1212', alert['object'],
                                                 -5, 1, 'CBC',
                                                 use_superevent_skymap=False)
@@ -436,7 +438,8 @@ def _mock_get_superevent(graceid):
     return {'superevent_id': 'S1',
             'preferred_event': 'G1',
             'preferred_event_data':
-                {'group': 'CBC'},
+                {'group': 'CBC',
+                 'search': 'AllSky'},
             'em_events': ['E1', 'E2', 'E3'],
             'em_type': 'E1',
             'far': 1e-5,
@@ -542,7 +545,8 @@ def test_preferred_event_coinc_far_calculation(
                    "em_events": ["E1", "E2"],
                    "preferred_event": 'G1',
                    "em_type": 'E1',
-                   "preferred_event_data": {"group": "CBC"}},
+                   "preferred_event_data": {"group": "CBC",
+                                            "search": "AllSky"}},
         "data": {"comment": comment, "filename": ""}
     }
 
@@ -781,8 +785,8 @@ def test_handle_superevent_burst_creation(mock_raven_coincidence_search,
     # Run function under test
     external_triggers.handle_grb_igwn_alert(alert)
 
+    # Check that the correct tasks were dispatched.
     if search == 'AllSky':
-        # Check that the correct tasks were dispatched.
         mock_raven_coincidence_search.assert_has_calls([
             call('S180616h', alert['object'], group='Burst',
                  searches=['GRB'], se_searches=['AllSky']),
@@ -790,6 +794,14 @@ def test_handle_superevent_burst_creation(mock_raven_coincidence_search,
                  pipelines=['Fermi'], searches=['SubGRBTargeted']),
             call('S180616h', alert['object'], group='Burst',
                  pipelines=['Swift'], searches=['SubGRBTargeted'])])
+    elif search == 'BBH':
+        mock_raven_coincidence_search.assert_has_calls([
+            call('S180616h', alert['object'], group='Burst',
+                 searches=['GRB'], se_searches=['BBH']),
+            call('S180616h', alert['object'], group='Burst',
+                 pipelines=['Fermi'], searches=['SubGRB', 'SubGRBTargeted']),
+            call('S180616h', alert['object'], group='Burst',
+                 pipelines=['Swift'], searches=['SubGRB', 'SubGRBTargeted'])])
     else:
         mock_raven_coincidence_search.assert_not_called()
 

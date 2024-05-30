@@ -9,7 +9,7 @@ from .test_tasks_skymaps import toy_fits_filecontents  # noqa: F401
 
 @pytest.mark.live_worker
 @pytest.mark.parametrize(
-    'group,gracedb_id,pipelines,ext_search,se_search,tl,th',
+    'group,gracedb_id,pipelines,se_search,ext_search,tl,th',
     [['CBC', 'S1', ['Fermi', 'Swift'], [], ['GRB'], -1, 5],
      ['Burst', 'S2', ['Fermi', 'Swift'], [], ['GRB'], -60, 600],
      ['Burst', 'S3', ['SNEWS'], ['Supernova'], [], -10, 10],
@@ -17,9 +17,10 @@ from .test_tasks_skymaps import toy_fits_filecontents  # noqa: F401
      ['CBC', 'MS4', ['Fermi'], ['MDC'], [], -1, 5],
      ['CBC', 'E1', ['Fermi'], [], ['GRB'], -5, 1],
      ['CBC', 'M1', ['Fermi'], [], ['MDC'], -5, 1],
-     ['CBC', 'E1', ['Fermi'], ['SubGRB'], [], -11, 1],
-     ['Burst', 'E1', ['Swift'], ['SubGRBTargeted'], [], -20, 10],
-     [None, 'E1', ['Swift'], ['SubGRBTargeted'], [], -20, 10]])
+     ['CBC', 'E1', ['Fermi'], [], ['SubGRB'], -11, 1],
+     ['Burst', 'E1', ['Swift'], [], ['SubGRBTargeted'], -20, 10],
+     ['Burst', 'E1', ['Swift'], ['BBH'], [], -5, 1],
+     [None, 'E1', ['Swift'], [], ['SubGRBTargeted'], -20, 10]])
 @patch('gwcelery.tasks.gracedb.create_label')
 @patch('gwcelery.tasks.raven.raven_pipeline.s')
 @patch('gwcelery.tasks.raven.search.si', return_value=[{'superevent_id': 'S5',
@@ -29,7 +30,7 @@ def test_coincidence_search(mock_calculate_coincidence_far,
                             mock_search, mock_raven_pipeline,
                             mock_create_label,
                             group, gracedb_id, pipelines,
-                            ext_search, se_search, tl, th):
+                            se_search, ext_search, tl, th):
     """Test that correct time windows are used for each RAVEN search."""
     alert_object = {'superevent_id': gracedb_id}
     if 'E' in gracedb_id:
@@ -48,7 +49,7 @@ def test_coincidence_search(mock_calculate_coincidence_far,
     'group,search', [['CBC', 'SubGRBTargeted'], ['Test', 'GRB']])
 def test_raven_window_errors(group, search):
     with pytest.raises(ValueError):
-        raven._time_window('S1', group, ['INTEGRAL'], [search])
+        raven._time_window('S1', group, ['INTEGRAL'], [search], [])
 
 
 @pytest.mark.parametrize(
@@ -532,8 +533,13 @@ def _mock_get_event(graceid):
                 "preferred_event": "G000003",
                 "preferred_event_data": {"group": "Burst", "search": "AllSky"},
                 "far": 1e-6}
+    elif graceid == "S9988":
+        return {"superevent_id": "S9988",
+                "preferred_event": "G000003",
+                "preferred_event_data": {"group": "Burst", "search": "BBH"},
+                "far": 1e-7}
     elif graceid == "S9999":
-        return {"superevent_id": "S9876",
+        return {"superevent_id": "S9999",
                 "preferred_event": "G000003",
                 "preferred_event_data": {"group": "Burst", "search": "AllSky"},
                 "far": -1e-6}
@@ -545,7 +551,7 @@ def _mock_get_event(graceid):
     elif graceid == "MS1111":
         return {"superevent_id": "MS1111",
                 "preferred_event": "M000004",
-                "preferred_event_data": {"group": "CBC", "search": "AllSky"},
+                "preferred_event_data": {"group": "CBC", "search": "MDC"},
                 "far": 1e-9}
     elif graceid == 'E1':
         return {"graceid": "E1",
@@ -625,6 +631,9 @@ def _mock_get_coinc_far(graceid):
     elif graceid == "S9876":
         return {"temporal_coinc_far": 1e-07,
                 "spatiotemporal_coinc_far": 1e-13}
+    elif graceid == "S9988":
+        return {"temporal_coinc_far": 1e-09,
+                "spatiotemporal_coinc_far": 1e-14}
     elif graceid == "MS1111":
         return {"temporal_coinc_far": 1e-09,
                 "spatiotemporal_coinc_far": 1e-10}
@@ -650,6 +659,7 @@ def _return_coinc_far_dict(coinc_far_dict, *args):
      ['S5678', 'E1', 'CBC', False],
      ['S5678', 'E7', 'CBC', False],
      ['E1', 'S9876', 'CBC', True],
+     ['E1', 'S9988', 'Burst', True],
      ['E1', 'S2468', 'CBC', False],
      ['E2', 'S5678', 'CBC', False],
      ['E3', 'S8642', 'Burst', False],

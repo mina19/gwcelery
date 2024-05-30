@@ -262,25 +262,32 @@ def handle_grb_igwn_alert(alert):
                 raven.coincidence_search(graceid, alert['object'],
                                          group='Burst', se_searches=['AllSky'])
 
-                # launch standard CBC-GRB search
+                # launch standard CBC-GRB search and similar BBH search
                 raven.coincidence_search(graceid, alert['object'],
                                          group='CBC', searches=['GRB'])
+                raven.coincidence_search(graceid, alert['object'],
+                                         group='Burst', searches=['GRB'],
+                                         se_searches=['BBH'])
         elif 'S' in graceid:
             # launch standard GRB search based on group
             gw_group = alert['object']['preferred_event_data']['group']
             search = alert['object']['preferred_event_data']['search']
+            CBC_like = gw_group == 'CBC' or search == 'BBH'
 
             # launch search with MDC events and exit
-            if alert['object']['preferred_event_data']['search'] == 'MDC':
+            if search == 'MDC':
                 raven.coincidence_search(graceid, alert['object'],
                                          group=gw_group, searches=['MDC'])
                 return
-            # Don't run search for BBH or IMBH Burst search
-            elif gw_group == 'Burst' and search.lower() != 'allsky':
+            # Don't run search for IMBH Burst search
+            elif gw_group == 'Burst' and \
+                    search.lower() not in {'allsky', 'bbh'}:
                 return
 
-            se_searches = [] if gw_group == 'CBC' else ['AllSky']
-            searches = (['SubGRB', 'SubGRBTargeted'] if gw_group == 'CBC' else
+            # Keep empty if CBC (field not needed), otherwise use AllSky or BBH
+            se_searches = ([] if gw_group == 'CBC' else
+                           [alert['object']['preferred_event_data']['search']])
+            searches = (['SubGRB', 'SubGRBTargeted'] if CBC_like else
                         ['SubGRBTargeted'])
             # launch standard GRB search
             raven.coincidence_search(graceid, alert['object'],
@@ -592,9 +599,9 @@ def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid,
 
     """
     gw_group = superevent['preferred_event_data']['group']
-    tl, th = raven._time_window(graceid, gw_group,
-                                [ext_event['pipeline']],
-                                [ext_event['search']])
+    tl, th = raven._time_window(
+        graceid, gw_group, [ext_event['pipeline']], [ext_event['search']],
+        [superevent['preferred_event_data']['search']])
     # FIXME: both overlap integral and combined sky map could be
     # done by the same function since they are so similar
     use_superevent = (use_superevent_skymap

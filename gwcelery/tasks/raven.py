@@ -121,7 +121,7 @@ def coincidence_search(gracedb_id, alert_object, group=None, pipelines=[],
         List of superevent searches
 
     """
-    tl, th = _time_window(gracedb_id, group, pipelines, searches)
+    tl, th = _time_window(gracedb_id, group, pipelines, searches, se_searches)
 
     (
         search.si(gracedb_id, alert_object, tl, th, group, pipelines,
@@ -131,7 +131,7 @@ def coincidence_search(gracedb_id, alert_object, group=None, pipelines=[],
     ).delay()
 
 
-def _time_window(gracedb_id, group, pipelines, searches):
+def _time_window(gracedb_id, group, pipelines, searches, se_searches):
     """Determine the time window to use given the parameters of the search.
 
     Parameters
@@ -172,7 +172,7 @@ def _time_window(gracedb_id, group, pipelines, searches):
         else:
             raise ValueError('Specify Fermi or Swift as pipeline when ' +
                              'launching subthreshold search')
-    elif group == 'CBC':
+    elif group == 'CBC' or 'BBH' in se_searches:
         tl, th = tl_cbc, th_cbc
     elif group == 'Burst':
         tl, th = tl_burst, th_burst

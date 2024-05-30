@@ -503,7 +503,7 @@ def send_mock_event():
 @gracedb.task(shared=False)
 def _create_upload_external_event(gpstime):
     new_time = first2years_external._offset_time(
-        gpstime, 'CBC', 'Fermi', 'GRB')
+        gpstime, 'CBC', 'Fermi', 'GRB', 'MDC')
 
     ext_event = first2years_external.create_upload_external_event(
                     new_time, 'Fermi', 'MDC')
