@@ -13,6 +13,8 @@ Changelog
 
 -   Switch from Python 3.9 to Python 3.11 for production deployments.
 
+-   Update ligo.skymap to version 2.0.1.
+
 2.4.4 "Orabou" (2024-06-14)
 ---------------------------
 
