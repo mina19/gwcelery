@@ -32,7 +32,7 @@ def catch_retryable_http_errors(f):
         try:
             return f(*args, **kwargs)
         except HTTPError as e:
-            if e.response.status_code in {408, 409, 429, 502, 503, 504}:
+            if e.response.status_code in {408, 409, 429, 500, 502, 503, 504}:
                 raise RetryableHTTPError(
                     *e.args, request=e.request, response=e.response)
             else:

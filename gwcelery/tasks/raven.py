@@ -10,7 +10,7 @@ from .core import identity
 log = get_task_logger(__name__)
 
 
-@app.task(shared=False)
+@gracedb.task(shared=False)
 def calculate_coincidence_far(superevent, exttrig, tl, th,
                               use_superevent_skymap=None):
     """Compute coincidence FAR for external trigger and superevent coincidence
@@ -186,7 +186,7 @@ def _time_window(gracedb_id, group, pipelines, searches):
     return tl, th
 
 
-@app.task(shared=False)
+@gracedb.task(shared=False)
 def search(gracedb_id, alert_object, tl=-5, th=5, group=None,
            pipelines=[], searches=[], se_searches=[]):
     """Perform ligo-raven search to look for coincidences. This function
