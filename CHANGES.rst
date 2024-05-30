@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.4.1rc1 "Orabou" (2024-05-30)
-------------------------------
+2.4.1 "Orabou" (2024-05-30)
+---------------------------
 
 -   Add GWSkyNet 2.4.1 to avoid installing tensorflow-cpu >= 2.16.1.
     Clairfy the version of annotated skymaps and quantities in the uploads.
