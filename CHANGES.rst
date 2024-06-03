@@ -7,6 +7,8 @@ Changelog
 -   Switch to using ``igwn-alert`` client's listener, since most of functionality
     used in our implementation is now present in the upstream client.
 
+-   Bump bilby_pipe to 1.3.2 to fix calibration file lookups
+
 2.4.1 "Orabou" (2024-05-30)
 ---------------------------
 
