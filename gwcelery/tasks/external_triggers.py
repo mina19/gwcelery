@@ -255,7 +255,7 @@ def handle_grb_igwn_alert(alert):
                 raven.coincidence_search(
                     graceid, alert['object'],
                     searches=['SubGRB', 'SubGRBTargeted'],
-                    se_searches=['AllSky'],
+                    se_searches=['AllSky', 'BBH'],
                     pipelines=[alert['object']['pipeline']])
             else:
                 # launch standard Burst-GRB search

@@ -9,6 +9,8 @@ Changelog
 
 -   Bump bilby_pipe to 1.3.2 to fix calibration file lookups
 
+-   Add search with subthreshold GRB events for CWB-BBH GW Superevents.
+
 2.4.1 "Orabou" (2024-05-30)
 ---------------------------
 
