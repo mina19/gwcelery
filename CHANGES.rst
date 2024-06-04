@@ -1,8 +1,13 @@
 Changelog
 =========
 
-2.4.2 (unreleased)
+2.4.3 (unreleased)
 ------------------
+
+-   No changes yet.
+
+2.4.2 "Orabou" (2024-06-04)
+---------------------------
 
 -   Switch to using ``igwn-alert`` client's listener, since most of functionality
     used in our implementation is now present in the upstream client.
