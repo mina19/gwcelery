@@ -4,7 +4,7 @@ Changelog
 2.4.3 (unreleased)
 ------------------
 
--   No changes yet.
+-   Update to ``ligo-followup-advocate`` v1.2.9.
 
 2.4.2 "Orabou" (2024-06-04)
 ---------------------------
