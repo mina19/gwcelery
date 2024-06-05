@@ -1,10 +1,18 @@
 Changelog
 =========
 
-2.4.3 (unreleased)
+2.4.4 (unreleased)
 ------------------
 
+-   No changes yet.
+
+2.4.3 "Orabou" (2024-06-05)
+---------------------------
+
 -   Update to ``ligo-followup-advocate`` v1.2.9.
+
+-   Revert to custom IGWN alert that was in use until long-term
+    stability with the new client is demonstrated.
 
 2.4.2 "Orabou" (2024-06-04)
 ---------------------------
