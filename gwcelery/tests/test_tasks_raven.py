@@ -281,6 +281,7 @@ def mock_get_superevent(superevent_id):
      [[], 'S13', -1, 5, 'CBC'],
      [[{'graceid': 'E4', 'search': 'GRB'}], 'S14', -1, 5, 'CBC'],
      [[{'graceid': 'E5', 'search': 'SubGRBTargeted'}], 'S14', -1, 5, 'CBC'],
+     [[{'graceid': 'E7', 'search': 'SubGRBTargeted'}], 'S14', -1, 5, 'CBC'],
      [[{'superevent_id': 'S12', 'far': .001, 'preferred_event': 'G3'}],
         'T4', -10, 10, 'Burst'],
      [[{'superevent_id': 'MS13', 'far': 1, 'preferred_event': 'M3'}],
@@ -308,8 +309,10 @@ def test_raven_pipeline(mock_create_label,
                     'superevent': None if graceid != 'E6' else 'S14'}
 
     for result in raven_search_results:
-        # Check if is an external event and is SubGRBTargeted
-        if result.get('graceid') and result['search'] == 'SubGRBTargeted':
+        # Check if is an external event and is SubGRBTargeted, picking one
+        # to be low-significance
+        if result.get('graceid') and result['search'] == 'SubGRBTargeted' and \
+                result['graceid'] == 'E5':
             result['labels'] = 'NOT_GRB'
         else:
             result['labels'] = []
@@ -365,7 +368,8 @@ def test_raven_pipeline(mock_create_label,
 
         mock_calculate_coincidence_far.assert_has_calls(coinc_calls,
                                                         any_order=True)
-        if result.get('graceid') and result['search'] == 'SubGRBTargeted':
+        if result.get('graceid') and result['search'] == 'SubGRBTargeted' and \
+                result['graceid'] == 'E5':
             mock_create_label.assert_not_called()
         else:
             mock_create_label.assert_has_calls(label_calls, any_order=True)
