@@ -283,7 +283,7 @@ def raven_pipeline(raven_search_results, gracedb_id, alert_object, tl, th,
         # targeted search, don't alert observers or redo calculations.
         # This is to prevent large influxes of EM_COINC alerts that will never
         # really be considered now or in the future
-        if 'NOT_GRB' not in ext_event['labels'] and \
+        if 'NOT_GRB' not in ext_event['labels'] or \
                 ext_event['search'] != 'SubGRBTargeted':
             group_canvas += gracedb.create_label.si('EM_COINC', superevent_id),
             group_canvas += gracedb.create_label.si('EM_COINC', exttrig_id),
