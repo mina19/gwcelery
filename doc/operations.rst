@@ -9,7 +9,8 @@ Preliminary steps
 
 #. In order to perform some of the operations listed below, you need to be able to login to
    the ``emfollow.ligo.caltech.edu`` machine. To be granted permission, please send an e-mail to
-   the low-latency chairs ``listed in the EM-follow wiki <https://wiki.ligo.org/Bursts/EMFollow/WebHome>`_`.
+   the low-latency chairs `listed in the EM-follow wiki <https://wiki.ligo.org/Bursts/EMFollow/WebHome>`_.
+   See the `list of users who can access the shared account <https://ldg.ligo.org/ldg/sharedaccounts/emfollow/>`_.
 
 #. Some critical operations, like manually restarting GWCelery or removing HTCondor jobs,
    require you to login to that machine as the privileged user ``emfollow``. These operations are
@@ -23,7 +24,7 @@ Monitor the pipeline
 --------------------
 
 Different tools are available to monitor the *production* instance of GWCelery. They are described
-in the :doc:`monitoring` section.
+in the :doc:`Monitoring <./monitoring>` section.
 
 In particular, to monitor the GWCelery application we suggest to use:
 
@@ -36,7 +37,7 @@ In particular, to monitor the GWCelery application we suggest to use:
 
 To monitor the ``emfollow.ligo.caltech.edu`` machine:
 
-#. `Nagios <https://dashboard.ligo.org/icinga/>`_ to check if the host is up and running.
+#. `Nagios <https://dashboard.igwn.org/>`_ to check if the host is up and running.
 
 #. `Ganglia <https://ldas-gridmon.ligo.caltech.edu/ganglia/?c=Servers&h=emfollow.ldas.cit>`_ to monitor metrics
    such as CPU, memory or network utilization.
