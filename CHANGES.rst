@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.4.4 "Orabou" (2024-06-14)
+---------------------------
+
+-   Fix bug in ``raven.py`` that prevented ``EM_COINC`` being applied for targeted
+    subthreshold GRBs.
+
 2.4.3 "Orabou" (2024-06-05)
 ---------------------------
 
