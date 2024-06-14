@@ -1,11 +1,17 @@
 Changelog
 =========
 
-2.4.4 (unreleased)
+2.5.0 (unreleased)
 ------------------
 
 -   Switch to using ``igwn-alert`` client's listener, since most of functionality
     used in our implementation is now present in the upstream client.
+
+2.4.4 "Orabou" (2024-06-14)
+---------------------------
+
+-   Fix bug in ``raven.py`` that prevented ``EM_COINC`` being applied for targeted
+    subthreshold GRBs.
 
 2.4.3 "Orabou" (2024-06-05)
 ---------------------------
