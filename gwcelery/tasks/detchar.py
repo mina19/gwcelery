@@ -18,6 +18,7 @@ import getpass
 import glob
 import io
 import json
+import math
 import socket
 import time
 
@@ -129,7 +130,9 @@ def make_omegascan(ifo, t0, durs):
     durs = np.array(durs)
     longest_before, longest_after = durs[:, 0].max(), durs[:, 1].max()
     # Add extra data buffer to avoid whitening window issues
-    long_start, long_end = t0 - longest_before - 2, t0 + longest_after + 2
+    # Use integer times to avoid passing too much precision to gwpy
+    long_start = math.floor(t0 - longest_before - 2)
+    long_end = math.ceil(t0 + longest_after + 2)
     cache = create_cache(ifo, long_start, long_end)
     strain_name = app.conf['strain_channel_names'][ifo]
     try:

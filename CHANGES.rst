@@ -15,6 +15,9 @@ Changelog
 
 -   Update ligo.skymap to version 2.0.1.
 
+-   Use integer times for creating caches for omegascans, since too much precision
+    results in problems in loading in TimeSeries.
+
 2.4.4 "Orabou" (2024-06-14)
 ---------------------------
 
