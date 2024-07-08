@@ -18,6 +18,8 @@ Changelog
 -   Use integer times for creating caches for omegascans, since too much precision
     results in problems in loading in TimeSeries.
 
+-   Update to ``ligo-followup-advocate`` v1.2.10.
+
 2.4.4 "Orabou" (2024-06-14)
 ---------------------------
 
