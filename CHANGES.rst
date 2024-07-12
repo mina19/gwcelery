@@ -4,6 +4,8 @@ Changelog
 2.5.0 (unreleased)
 ------------------
 
+-   Update ``ligo-rrt-chat``` to v0.1.5
+
 -   Switch to using ``igwn-alert`` client's listener, since most of functionality
     used in our implementation is now present in the upstream client.
 

@@ -112,7 +112,7 @@ pytest-celery = {version="<1.0.0", optional=true} # https://git.ligo.org/emfollo
 pytest-cov = {version="*", optional=true}
 pytest-flask = {version="*", optional=true}
 pytest-socket = {version="*", optional=true}
-ligo-rrt-chat = ">=0.1.1"
+ligo-rrt-chat = ">=0.1.5"  # https://git.ligo.org/computing/sccb/-/issues/1562"
 hpmoc = ">=1.0.0"
 gwskynet = "^2.3.0"
 
