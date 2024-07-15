@@ -11,7 +11,7 @@ variables:
   # Allow Celery to run as root, because everything runs as root under Docker.
   C_FORCE_ROOT: 'true'
   # Poetry version to install
-  POETRY_VERSION: 1.8.1
+  POETRY_VERSION: 1.8.3
 
 stages:
   - build
