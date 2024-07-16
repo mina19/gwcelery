@@ -25,6 +25,8 @@ Changelog
 -   Fix bug where FloatingPointErrors in omegascanning would not create the fig
     variable, which is later referenced.
 
+-   Add a GitLab issue template to include new external pipelines to RAVEN.
+
 2.4.4 "Orabou" (2024-06-14)
 ---------------------------
 
