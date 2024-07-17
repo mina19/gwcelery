@@ -22,6 +22,9 @@ Changelog
 
 -   Update to ``ligo-followup-advocate`` v1.2.10.
 
+-   Fix bug where FloatingPointErrors in omegascanning would not create the fig
+    variable, which is later referenced.
+
 2.4.4 "Orabou" (2024-06-14)
 ---------------------------
 
