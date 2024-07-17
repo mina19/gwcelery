@@ -296,7 +296,6 @@ def handle_cbc_event(alert):
     graceid = alert['uid']
     pipeline = alert['object']['pipeline'].lower()
     search = alert['object']['search'].lower()
-    pipeline_search = (pipeline, search)
 
     # no annotations for events used in VT analysis
     if search == superevents.VT_SEARCH_NAME.lower():
@@ -327,7 +326,7 @@ def handle_cbc_event(alert):
 
         (
             em_bright.source_properties.si(mass1, mass2, chi1, chi2, snr,
-                                           pipeline_search=pipeline_search)
+                                           pipeline=pipeline, search=search)
             |
             gracedb.upload.s(
                 'em_bright.json', graceid,
