@@ -16,9 +16,17 @@ from . import gracedb, igwn_alert
 
 log = get_task_logger(__name__)
 
-REQUIRED_LABELS_BY_GROUP = {
-    'cbc': {'PASTRO_READY', 'EMBRIGHT_READY', 'SKYMAP_READY'},
-    'burst': {'SKYMAP_READY'}
+REQUIRED_LABELS_BY_GROUP_SEARCH = {
+    'cbc': {
+        'allsky': {'PASTRO_READY', 'EMBRIGHT_READY', 'SKYMAP_READY'},
+        'earlywarning': {'PASTRO_READY', 'EMBRIGHT_READY', 'SKYMAP_READY'},
+        'mdc': {'PASTRO_READY', 'EMBRIGHT_READY', 'SKYMAP_READY'},
+        'bbh': {'PASTRO_READY', 'EMBRIGHT_READY', 'SKYMAP_READY'},  # required by cwb-bbh # noqa: E501
+        'ssm': {'EMBRIGHT_READY', 'SKYMAP_READY'}
+    },
+    'burst': {
+        'allsky': {'SKYMAP_READY'}
+    }
 }
 """These labels should be present on an event to consider it to
 be complete.
@@ -38,10 +46,6 @@ early warning event."""
 EARLY_WARNING_SEARCH_NAME = 'EarlyWarning'
 """Search name for Early Warning searches. Only significant events
 result in consideration by the superevent manager."""
-
-SUBSOLAR_SEARCH_NAME = 'SSM'
-"""Search name for subsolar mass search. These are ignored by
-the superevent manager."""
 
 READY_LABEL = 'EM_READY'
 """This label indicates that a preferred event has been assigned and it
@@ -101,7 +105,7 @@ def handle(payload):
             group = 'cbc'
         if label == 'RAVEN_ALERT':
             log.info('Label %s added to %s', label, gid)
-        elif label not in REQUIRED_LABELS_BY_GROUP[group]:
+        elif label not in REQUIRED_LABELS_BY_GROUP_SEARCH[group][search]:
             return
         elif not is_complete(payload['object']):
             log.info("Ignoring since %s has %s labels. "
@@ -436,10 +440,10 @@ def select_preferred_event(events):
 def is_complete(event):
     """
     Determine if a G event is complete in the sense of the event
-    has its data products complete i.e. has PASTRO_READY, SKYMAP_READY,
-    EMBRIGHT_READY for CBC events and the SKYMAP_READY label for the
-    Burst events. Test events are not processed by low-latency infrastructure
-    and are always labeled complete.
+    has its data products complete i.e. labels mentioned under
+    :data:`REQUIRED_LABELS_BY_GROUP_SEARCH`. Test events are not
+    processed by low-latency infrastructure and are always labeled
+    complete.
 
     Parameters
     ----------
@@ -457,7 +461,7 @@ def is_complete(event):
     if pipeline == 'cwb' and search == 'bbh':
         group = 'cbc'
 
-    required_labels = REQUIRED_LABELS_BY_GROUP[group]
+    required_labels = REQUIRED_LABELS_BY_GROUP_SEARCH[group][search]
     return required_labels.issubset(label_set)
 
 
