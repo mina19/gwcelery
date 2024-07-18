@@ -288,26 +288,38 @@ def test_get_external_skymap_404(search):
 @pytest.mark.parametrize('search', ['GRB', 'SubGRB', 'FromURL'])
 @patch('gwcelery.tasks.gracedb.upload.run')
 @patch('gwcelery.tasks.skymaps.plot_allsky.run')
-@patch('gwcelery.tasks.external_skymaps.get_external_skymap.run')
-@patch('gwcelery.tasks.external_skymaps.external_trigger_heasarc.run')
-def test_get_upload_external_skymap(mock_external_trigger_heasarc,
+@patch('gwcelery.tasks.external_skymaps.get_external_skymap',
+       return_value=read_binary(data, 'swift_skymap.multiorder.fits'))
+@patch('gwcelery.tasks.external_skymaps.external_trigger_heasarc',
+       return_value='https:/foo.bar')
+@patch('gwcelery.tasks.external_skymaps.is_skymap_moc', return_value=True)
+def test_get_upload_external_skymap(mock_is_skymap_moc,
+                                    mock_external_trigger_heasarc,
                                     mock_get_external_skymap,
                                     mock_plot_allsky,
                                     mock_upload,
                                     search):
     """Test that an external sky map is grabbed and uploaded."""
     event = {'graceid': 'E12345', 'search': search}
+    filename_base = \
+        ('external_from_url' if search == 'FromURL'
+         else external_skymaps.FERMI_OFFICIAL_SKYMAP_FILENAME)
+    filename = filename_base + '.multiorder.fits'
     external_skymaps.get_upload_external_skymap(event)
     if search == 'GRB':
         mock_external_trigger_heasarc.assert_called_once()
     mock_get_external_skymap.assert_called_once()
     mock_upload.assert_called()
+    assert filename == mock_upload.call_args_list[0][0][1]
 
 
 @patch('gwcelery.tasks.gracedb.upload.run')
 @patch('gwcelery.tasks.skymaps.plot_allsky.run')
-@patch('gwcelery.tasks.external_skymaps.get_external_skymap.run')
-def test_get_upload_external_skymap_subgrb(mock_get_external_skymap,
+@patch('gwcelery.tasks.external_skymaps.get_external_skymap',
+       return_value=read_binary(data, 'fermi_skymap.fits.gz'))
+@patch('gwcelery.tasks.external_skymaps.is_skymap_moc', return_value=False)
+def test_get_upload_external_skymap_subgrb(mock_is_skymap_moc,
+                                           mock_get_external_skymap,
                                            mock_plot_allsky,
                                            mock_upload):
     """Test that an external sky map is grabbed and uploaded."""
@@ -317,7 +329,20 @@ def test_get_upload_external_skymap_subgrb(mock_get_external_skymap,
         ('https://gcn.gsfc.nasa.gov/notices_gbm_sub/' +
          'gbm_subthresh_604671025.728000_healpix.fits'))
     mock_get_external_skymap.assert_called_once()
-    mock_upload.assert_called()
+    assert 'glg_healpix_all_bn_v00.fits.gz' == \
+        mock_upload.call_args_list[0][0][1]
+
+
+@pytest.mark.parametrize('is_moc', [True, False])
+def test_is_moc_skymap(is_moc):
+    # If moc, grab multiordered sky map
+    if is_moc:
+        skymapbytes = read_binary(data, 'swift_skymap.multiorder.fits')
+    # If not, grab flattened sky map
+    else:
+        skymapbytes = read_binary(data, 'fermi_skymap.fits.gz')
+    result = external_skymaps.is_skymap_moc(skymapbytes)
+    assert result == is_moc
 
 
 @pytest.mark.parametrize('ra,dec,error',
@@ -425,16 +450,19 @@ def test_plot_overlap_integral(mock_upload,
         mock_upload.assert_not_called()
 
 
+@pytest.mark.parametrize('kafka_packet', ['kafka_alert_fermi.json',
+                                          'kafka_alert_swift_wskymap.json'])
 @patch('gwcelery.tasks.gracedb.upload.run')
 @patch('gwcelery.tasks.skymaps.plot_allsky.run')
 @patch('gwcelery.tasks.gracedb.create_label.run')
 def test_read_upload_skymap_from_base64(mock_create_label, mock_plot_allsky,
-                                        mock_gracedb_upload):
+                                        mock_gracedb_upload, kafka_packet):
+    pipeline = ('Fermi' if 'fermi' in kafka_packet else 'Swift')
     skymapb64 = read_json(
-                    data, 'kafka_alert_fermi.json'
+                    data, kafka_packet
                 )['healpix_file']
     event = {'graceid': 'E1234',
-             'pipeline': 'Fermi',
+             'pipeline': pipeline,
              'extra_attributes': {
                  'GRB': {
                      'ra': 14.5,
@@ -444,3 +472,6 @@ def test_read_upload_skymap_from_base64(mock_create_label, mock_plot_allsky,
     mock_gracedb_upload.assert_called()
     mock_plot_allsky.assert_called_once()
     mock_create_label.assert_called_with('EXT_SKYMAP_READY', event['graceid'])
+
+    filename = '{}_skymap.multiorder.fits'.format(pipeline.lower())
+    assert filename == mock_gracedb_upload.call_args_list[0][0][1]

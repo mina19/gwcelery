@@ -13,6 +13,7 @@ import lxml.etree
 import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from astropy.io.fits import getheader
 from celery import group
 from hpmoc import PartialUniqSkymap
 from hpmoc.utils import reraster, uniq_intersection
@@ -156,6 +157,12 @@ def get_skymap_filename(graceid, is_gw):
                     "combined-ext." not in filename:
                 return fv
     raise ValueError('No skymap available for {0} yet.'.format(graceid))
+
+
+def is_skymap_moc(skymap_bytes):
+    with NamedTemporaryFile(content=skymap_bytes) as skymap_file:
+        # If ordering is EXPLICIT, should be multiordered (MOC)
+        return getheader(skymap_file.name, ext=1)['INDXSCHM'] == 'EXPLICIT'
 
 
 @app.task(shared=False)
@@ -441,10 +448,14 @@ def read_upload_skymap_from_base64(event, skymap_str):
     graceid = event['graceid']
     ra = event['extra_attributes']['GRB']['ra']
     dec = event['extra_attributes']['GRB']['dec']
-    skymap_filename = event['pipeline'].lower() + '_skymap.fits.gz'
 
     # Decode base64 encoded string to bytes string
     skymap_data = b64decode(skymap_str)
+
+    # Determine filename based on whether is multiordered or flattened
+    skymap_filename = event['pipeline'].lower() + '_skymap.'
+    skymap_filename += ('multiorder.fits' if is_skymap_moc(skymap_data)
+                        else 'fits.gz')
 
     message = (
         'Mollweide projection of <a href="/api/events/{graceid}/files/'
@@ -495,17 +506,16 @@ def get_upload_external_skymap(event, skymap_link=None):
     search = event['search']
 
     if search == 'GRB':
-        external_skymap_canvas = (
-            external_trigger_heasarc.si(graceid)
-            |
-            get_external_skymap.s(search)
-        )
+        skymap_data = \
+            get_external_skymap(external_trigger_heasarc(graceid), search)
     elif search in {'SubGRB', 'SubGRBTargeted', 'FromURL'}:
-        external_skymap_canvas = get_external_skymap.si(skymap_link, search)
+        skymap_data = get_external_skymap(skymap_link, search)
 
-    skymap_filename = \
+    skymap_filename_base = \
         ('external_from_url' if search == 'FromURL'
          else FERMI_OFFICIAL_SKYMAP_FILENAME)
+    skymap_filename = skymap_filename_base + \
+        ('.multiorder.fits' if is_skymap_moc(skymap_data) else '.fits.gz')
 
     fits_message = \
         ('Downloaded from {}.'.format(skymap_link) if search == 'FromURL'
@@ -513,21 +523,20 @@ def get_upload_external_skymap(event, skymap_link=None):
     png_message = (
         'Mollweide projection of <a href="/api/events/{graceid}/files/'
         '{filename}">{filename}</a>').format(
-            graceid=graceid, filename=skymap_filename + '.fits.gz')
+            graceid=graceid, filename=skymap_filename)
 
     (
-        external_skymap_canvas
-        |
         group(
-            gracedb.upload.s(
-                skymap_filename + '.fits.gz',
+            gracedb.upload.si(
+                skymap_data,
+                skymap_filename,
                 graceid,
                 fits_message,
                 ['sky_loc']),
 
-            skymaps.plot_allsky.s()
+            skymaps.plot_allsky.si(skymap_data)
             |
-            gracedb.upload.s(skymap_filename + '.png',
+            gracedb.upload.s(skymap_filename_base + '.png',
                              graceid,
                              png_message,
                              ['sky_loc'])

@@ -13,6 +13,9 @@ Changelog
     is prioritized, whether the space-time joint FAR is better, and whether
     the temporal joint FAR is better.
 
+-   Check whether MOC to assign proper filename when downloading external
+    sky maps.
+
 2.5.1 "Cactus cat" (2024-08-20)
 -------------------------------
 
