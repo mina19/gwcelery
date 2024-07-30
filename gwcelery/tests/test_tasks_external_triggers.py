@@ -89,6 +89,31 @@ def test_handle_create_grb_event(mock_create_event,
                   }
          },
         gcn_type_dict[pipeline], time_dict[pipeline])
+    # If Fermi FINAL notice, check we try to grab sky map from HEASARC
+    if pipeline == 'Fermi':
+        mock_get_upload_external_skymap.assert_called_once_with(
+            {'graceid': 'E1',
+             'gpstime': 1,
+             'instruments': '',
+             'pipeline': 'Fermi',
+             'search': 'GRB',
+             'extra_attributes': {
+                 'GRB': {
+                     'trigger_duration': 1,
+                     'trigger_id': 123,
+                     'ra': 0.0,
+                     'dec': 0.0,
+                     'error_radius': 10.0
+                        }
+             },
+             'links': {
+                 'self': 'https://gracedb.ligo.org/events/E356793/'
+                      }
+             },
+            None
+        )
+    else:
+        mock_get_upload_external_skymap.assert_not_called()
 
 
 @patch('gwcelery.tasks.gracedb.get_events.run', return_value=[])
@@ -161,7 +186,7 @@ def test_handle_noise_fermi_event(mock_check_vectors,
                                               group='External',
                                               labels=['NOT_GRB'])
     mock_check_vectors.assert_called_once()
-    mock_get_upload_external_skymap.assert_called_once()
+    mock_get_upload_external_skymap.assert_not_called()
 
 
 @patch('gwcelery.tasks.external_skymaps.create_external_skymap')
@@ -192,7 +217,7 @@ def test_handle_initial_fermi_event(mock_check_vectors,
                                               group='External',
                                               labels=['NOT_GRB'])
     mock_check_vectors.assert_called_once()
-    mock_get_upload_external_skymap.assert_called_once()
+    mock_get_upload_external_skymap.assert_not_called()
     mock_create_external_skymap.assert_not_called()
 
 

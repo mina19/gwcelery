@@ -384,8 +384,8 @@ def external_trigger_heasarc(external_id):
         external_id))
 
 
-@app.task(autoretry_for=(gracedb.RetryableHTTPError,), retry_backoff=10,
-          max_retries=14)
+@app.task(autoretry_for=(gracedb.RetryableHTTPError,), retry_backoff=30,
+          max_retries=8)
 def get_external_skymap(link, search):
     """Download the Fermi sky map FITS file and return the contents as a byte
     array. If GRB, will construct a HEASARC url, while if SubGRB, will use the

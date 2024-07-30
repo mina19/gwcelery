@@ -16,6 +16,12 @@ Changelog
 -   Check whether MOC to assign proper filename when downloading external
     sky maps.
 
+-   Launch Fermi sky map requests only after ten minutes following the FINAL
+    notice. This more closely matches the availability of these sky maps and
+    prevents a significant number of failed calls, both retryable and those
+    that will fail due to no sky map being available (e.g. after a FLIGHT notice
+    with no FINAL notice) compared to the previous method.
+
 2.5.1 "Cactus cat" (2024-08-20)
 -------------------------------
 
