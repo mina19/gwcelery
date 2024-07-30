@@ -7,7 +7,7 @@ set -e
 source "$HOME/.bashrc"
 
 kinit_keytab() {
-    local principal="$(klist -k "${KERBEROS_KEYTAB}" | tail -n 1 | sed 's/.*\s//')"
+    local principal="$(klist -k "$1" | tail -n 1 | sed 's/.*\s//')"
     kinit "${principal}" -k -t "$1"
 }
 
