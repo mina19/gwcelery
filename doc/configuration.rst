@@ -73,10 +73,19 @@ Note that one user can be specified multiple times. ``hop auth`` must have
 information about each user specified in this file. Every Kafka producer and
 consumer configuration key must have an entry in this file.
 
+.. rubric:: CVMFS read token
+
+You must provide a valid credential for reading frames
+from CVMFS for :mod:`detchar <gwcelery.tasks.detchar>` checks.
+This is necessary if the data are no longer in the low-latency cache stored in ``/dev/shm``.
+You can `obtain a robot certificate`_ in the form of a  `SciToken`_ keytab.
+The keytab should be stored in the ``${HOME}`` directory, and named ``read-cvmfs.keytab``.
+
 .. _`LSC DataGrid Client`: https://www.lsc-group.phys.uwm.edu/lscdatagrid/doc/installclient.html
 .. _`obtain a robot certificate`: https://robots.ligo.org
 .. _`SCiMMA Auth portal`: https://my.hop.scimma.org/
 .. _`auth.toml`: https://hop-client.readthedocs.io/en/latest/user/auth.html#configuration
+.. _`SciToken`: https://computing.docs.ligo.org/guide/auth/scitokens/
 
 .. _redis-configuration:
 

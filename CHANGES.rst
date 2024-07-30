@@ -31,6 +31,9 @@ Changelog
 
 -   Switch external event listeners to GCN Classic over Kafka.
 
+-   Move CVMFS auth token retrieval from our crontab to renew-cert.sh to fix a race
+    condition that caused authenticated GraceDB operations to fail in production.
+
 2.4.4 "Orabou" (2024-06-14)
 ---------------------------
 

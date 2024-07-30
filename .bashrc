@@ -48,3 +48,6 @@ emfollow-dev)
     export CELERY_CONFIG_MODULE="gwcelery.conf.dev"
     ;;
 esac
+
+# HTGETTOKENOPTS for passing through to condor
+export HTGETTOKENOPTS="--vaultserver vault.ligo.org --issuer igwn --role read-cvmfs-${USER} --credkey read-cvmfs-${USER}/robot/${USER}.ligo.caltech.edu --nooidc"

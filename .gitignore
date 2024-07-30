@@ -50,3 +50,4 @@ public_html
 .vim
 .viminfo
 .Xauthority
+read-cvmfs.keytab
