@@ -107,22 +107,19 @@ def em_bright_posterior_samples(posterior_file_content):
     from ligo.em_bright import em_bright
     with NamedTemporaryFile(content=posterior_file_content) as samplefile:
         filename = samplefile.name
-        r = em_bright.source_classification_pe(
+        has_ns, has_remnant, has_massgap = em_bright.source_classification_pe(
             filename, num_eos_draws=10000, eos_seed=0
         )
-        has_ssm, has_ns, has_remnant, has_massgap = r
     data = json.dumps({
         'HasNS': has_ns,
         'HasRemnant': has_remnant,
-        'HasMassGap': has_massgap,
-        'HasSSM': has_ssm
+        'HasMassGap': has_massgap
     })
     return data
 
 
 @app.task(shared=False, queue='em-bright')
-def source_properties(mass1, mass2, spin1z, spin2z, snr,
-                      pipeline='gstlal', search='allsky'):
+def source_properties(mass1, mass2, spin1z, spin2z, snr):
     """Returns the probability of having a NS component, the probability of
     having non-zero disk mass, and the probability of any component being the
     lower mass gap for the detected event.
@@ -139,48 +136,26 @@ def source_properties(mass1, mass2, spin1z, spin2z, snr,
          Dimensionless secondary aligned spin component
     snr : float
         Signal to noise ratio
-    pipeline_search : tuple
-        The pipeline and the search as a tuple. This is used
-        to select the appropriate classifiers in ``ligo.em-bright``
-        for ``SSM`` search only. This is unused for ``AllSky``
-        searches.
 
     Returns
     -------
     str
         JSON formatted string storing ``HasNS``, ``HasRemnant``,
-        ``HasMassGap`` probabilities for ``AllSky`` searches, and
-        ``HasSSM``, ``HasNS``, ``HasMassGap`` probabilities for
-        ``SSM`` searches.
+        and `HasMassGap`` probabilities
 
     Examples
     --------
     >>> em_bright.source_properties(2.0, 1.0, 0.0, 0.0, 10.)
-    '{"HasNS": 1.0, "HasRemnant": 1.0, "HasMassGap": 0.0}'
-    >>> em_bright.source_properties(2.0, 1.0, 0.0, 0.0, 10.,
-    ... pipeline='gstlal', search='ssm')
-    '{"HasSSM": 0.52, "HasNS": 0.9199999999999999, "HasMassGap": 0.08}'
+    '{"HasNS": 1.0, "HasRemnant": 1.0, "HasMassGap"}'
     """
     from ligo.em_bright import em_bright
-    if search == 'ssm':
-        chirp_mass = (mass1 * mass2) ** (3. / 5.)
-        chirp_mass /= (mass1 + mass2) ** (1. / 5.)
-        p_ssm, p_ns, p_mg = em_bright.source_classification_ssm(
-            mass1, mass2, spin1z, spin2z, chirp_mass,
-            snr, pipeline
-        )
-        data = json.dumps({
-            'HasSSM': p_ssm,
-            'HasNS': p_ns,
-            'HasMassGap': p_mg,
-        })
-    else:
-        p_ns, p_em, p_mg = em_bright.source_classification(
-            mass1, mass2, spin1z, spin2z, snr
-        )
-        data = json.dumps({
-            'HasNS': p_ns,
-            'HasRemnant': p_em,
-            'HasMassGap': p_mg,
-        })
+    p_ns, p_em, p_mg = em_bright.source_classification(
+        mass1, mass2, spin1z, spin2z, snr
+    )
+
+    data = json.dumps({
+        'HasNS': p_ns,
+        'HasRemnant': p_em,
+        'HasMassGap': p_mg
+    })
     return data
