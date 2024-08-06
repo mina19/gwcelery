@@ -80,7 +80,7 @@
                     </div>
                     <div class="form-group col-md">
                         <label for=event_id>Preferred event ID</label>
-                        <input required name=event_id class="form-control typeahead" data-typeahead-url-template="{{ url_for('typeahead_event_id', superevent_id='SUPEREVENT_ID') }}">
+                        <input required name=event_id pattern="(G|M|T)\d+" class="form-control typeahead" data-typeahead-url-template="{{ url_for('typeahead_event_id', superevent_id='SUPEREVENT_ID') }}">
                     </div>
                     <div class="form-group col-md">
                         <label for=submit-button class=w-100>&nbsp;</label>
@@ -237,7 +237,7 @@
                 <div class="form-row">
                     <div class="cform-group">
                         <label class="sr-only" for=ext_event_id>External event ID</label>
-                        <input required name=ext_event_id class="form-control typeahead" placeholder="External event ID">
+                        <input required name=ext_event_id pattern="(E|M|T)\d+" class="form-control typeahead" placeholder="External event ID">
                     </div>
                     <div class="form-group">
                         <label for=submit-button>&nbsp;</label>
@@ -265,7 +265,7 @@
                     </div>
                     <div class="form-group col-md">
                         <label for=event_id>Preferred event ID</label>
-                        <input required name=event_id class="form-control typeahead" data-typeahead-url-template="{{ url_for('typeahead_event_id', superevent_id='SUPEREVENT_ID') }}">
+                        <input required name=event_id pattern="(G|M|T)\d+" class="form-control typeahead" data-typeahead-url-template="{{ url_for('typeahead_event_id', superevent_id='SUPEREVENT_ID') }}">
                     </div>
                     <div class="form-group col-md">
                         <label for=submit-button class=w-100>&nbsp;</label>
@@ -318,7 +318,7 @@
                     </div>
                     <div class="form-group col-md">
                         <label for=event_id>Preferred event ID</label>
-                        <input required name=event_id class="form-control typeahead" data-typeahead-url-template="{{ url_for('typeahead_event_id', superevent_id='SUPEREVENT_ID') }}">
+                        <input required name=event_id pattern="(G|M|T)\d+" class="form-control typeahead" data-typeahead-url-template="{{ url_for('typeahead_event_id', superevent_id='SUPEREVENT_ID') }}">
                     </div>
                     <div class="form-group col-md">
                         <label for=submit-button class=w-100>&nbsp;</label>
@@ -372,11 +372,11 @@
                     </div>
                     <div class="form-group col-md">
                         <label for=ext_id>External event ID</label>
-                        <input required name=ext_id class="form-control typeahead">
+                        <input required name=ext_id pattern="(E|M|T)\d+" class="form-control typeahead">
                     </div>
                     <div class="form-group col-md">
                         <label for=event_id>Preferred event ID</label>
-                        <input required name=event_id class="form-control typeahead" data-typeahead-url-template="{{ url_for('typeahead_event_id', superevent_id='SUPEREVENT_ID') }}">
+                        <input required name=event_id pattern="(G|M|T)\d+" class="form-control typeahead" data-typeahead-url-template="{{ url_for('typeahead_event_id', superevent_id='SUPEREVENT_ID') }}">
                     </div>
                     <div class="form-group col-md">
                         <label for=submit-button class=w-100>&nbsp;</label>
@@ -421,7 +421,7 @@
                 <div class="form-row">
                     <div class="form-group col-md">
                         <label for=ext_id>External event ID</label>
-                        <input required name=ext_id class="form-control typeahead">
+                        <input required name=ext_id pattern="(E|M|T)\d+" class="form-control typeahead">
                     </div>
                     <div class="form-group col-md">
                         <label for=skymap_url>Skymap URL</label>
@@ -561,7 +561,7 @@
                 <div class="form-row">
                     <div class="form-group col-md">
                         <label for=event_id>Event ID</label>
-                        <input required name=event_id class="form-control">
+                        <input required name=event_id pattern="(G|M|T)\d+" class="form-control">
                     </div>
                     <div class="form-group col-md">
                         <label for=submit-button class=w-100>&nbsp;</label>
@@ -589,11 +589,11 @@
                     </div>
                     <div class="form-group col-md">
                         <label for=event_id>Event ID</label>
-                        <input required name=event_id class="form-control typeahead" data-typeahead-url-template="{{ url_for('typeahead_event_id', superevent_id='SUPEREVENT_ID') }}">
+                        <input required name=event_id pattern="(G|E|M|T)\d+" class="form-control typeahead" data-typeahead-url-template="{{ url_for('typeahead_event_id', superevent_id='SUPEREVENT_ID') }}">
                     </div>
                     <div class="form-group col-md">
                         <label for=skymap_filename>Sky Map File</label>
-                        <input required name=skymap_filename class="form-control event-dependent typeahead" data-typeahead-url-template="{{ url_for('typeahead_skymap_filename', superevent_id='EVENT_ID', filename='TERM') }}">
+                        <input required name=skymap_filename pattern="\S+,\d+$" class="form-control event-dependent typeahead" data-typeahead-url-template="{{ url_for('typeahead_skymap_filename', superevent_id='EVENT_ID', filename='TERM') }}">
                     </div>
                     <div class="form-group col-md">
                         <label for=submit-button class=w-100>&nbsp;</label>
