@@ -34,6 +34,8 @@ Changelog
 -   Move CVMFS auth token retrieval from our crontab to renew-cert.sh to fix a race
     condition that caused authenticated GraceDB operations to fail in production.
 
+-   Require specific format for superevent ID in dashboard.
+
 2.4.4 "Orabou" (2024-06-14)
 ---------------------------
 
