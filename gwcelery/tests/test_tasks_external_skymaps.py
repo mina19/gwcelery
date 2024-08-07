@@ -150,6 +150,8 @@ def test_create_combined_skymap_moc_flat(missing_header_values, instrument):
         del gw_sky['DISTSIGMA']
         gw_sky.meta.pop('instruments')
         gw_sky.meta.pop('HISTORY')
+    # Combining the sky map overwrites original, keep copy for comparison
+    gw_sky_original = gw_sky.copy()
     ext_sky = np.full(12, 1 / 12)
     if instrument:
         ext_header = {'instruments': set({instrument}), 'nest': True}
@@ -157,12 +159,36 @@ def test_create_combined_skymap_moc_flat(missing_header_values, instrument):
         ext_header = {'nest': True}
     combined_sky = external_skymaps.combine_skymaps_moc_flat(gw_sky, ext_sky,
                                                              ext_header)
-    assert all(combined_sky['PROBDENSITY'] == gw_sky['PROBDENSITY'])
+    assert all(combined_sky['PROBDENSITY'] == gw_sky_original['PROBDENSITY'])
     if missing_header_values:
         assert 'instruments' not in combined_sky.meta
     else:
         assert ('Fermi' in combined_sky.meta['instruments'] if instrument else
                 'external instrument' in combined_sky.meta['instruments'])
+
+
+def test_create_combined_skymap_moc_flat_negative_values():
+    """Test using our internal MOC-flat sky map combination using an external
+    skymap with a negative value. This value is removed and the sky map
+    normalized without this.
+    """
+    # Run function under test
+    gw_sky = get_gw_moc_skymap()
+    # Combining the sky map overwrites original, keep copy for comparison
+    gw_sky_original = gw_sky.copy()
+    ext_sky = np.full(12, 1 / 12)
+    # Turn one non-zero pixel negative to check we catch this later
+    ext_sky[-1] = -1 / 12
+    ext_header = {'instruments': set({'Fermi'}), 'nest': True}
+    combined_sky = external_skymaps.combine_skymaps_moc_flat(gw_sky, ext_sky,
+                                                             ext_header)
+    # Assert missing pixel has no probability
+    assert combined_sky['PROBDENSITY'][-1] == 0.
+    # Since one pixel is removed from external sky map, correct normalization
+    # of other pixels: sum(0 .. 11) / sum(0 .. 10) = 66/55 = 6/5
+    assert all(np.isclose(combined_sky['PROBDENSITY'][:-1],
+                          6 / 5 * gw_sky_original['PROBDENSITY'][:-1]))
+    assert ('Fermi' in combined_sky.meta['instruments'])
 
 
 @pytest.mark.parametrize('missing_header_values,instrument',

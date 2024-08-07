@@ -283,6 +283,9 @@ def combine_skymaps_moc_flat(gw_sky, ext_sky, ext_header):
     ext_ind = ah.lonlat_to_healpix(
         ra_gw, dec_gw, ext_nside,
         order='nested' if ext_header['nest'] else 'ring')
+    #  Fix any negative values and normalize
+    ext_sky[ext_sky < 0.] = 0.
+    ext_sky /= np.sum(ext_sky)
     #  Reweight GW prob density by external sky map probabilities
     gw_sky['PROBDENSITY'] *= ext_sky[ext_ind]
     gw_sky['PROBDENSITY'] /= \

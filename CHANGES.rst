@@ -22,6 +22,10 @@ Changelog
     that will fail due to no sky map being available (e.g. after a FLIGHT notice
     with no FINAL notice) compared to the previous method.
 
+-   When creating combined sky maps, set any negative values in the flattened
+    external sky map to zero. This at least prevents erroneous results when
+    we receive a sky map with these invalid values.
+
 2.5.1 "Cactus cat" (2024-08-20)
 -------------------------------
 
