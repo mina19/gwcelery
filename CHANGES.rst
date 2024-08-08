@@ -1,33 +1,29 @@
 Changelog
 =========
 
-2.5.0 (unreleased)
-------------------
+2.5.0 "Cactus cat" (2024-08-08)
+-------------------------------
 
--   Update ``ligo-rrt-chat``` to v0.1.5
+-   Update ``ligo-rrt-chat``` to v0.1.5, ``ligo-followup-advocate`` to v1.2.10, and
+    ``ligo.skymap`` to v2.0.1.
+
+-   Change functions calls to prepare for NumPy 2.0 release.
+
+-   Drop support for Python 3.9 and switch from Python 3.9 to Python 3.11 for
+    deployments for all tiers. This is to remain up to date with version support
+    policies of Numpy, Astropy, and ligo.skymap, some of which have already
+    dropped support for Python 3.9.
+
+-   Add a GitLab issue template to include new external pipelines to RAVEN.
 
 -   Switch to using ``igwn-alert`` client's listener, since most of functionality
     used in our implementation is now present in the upstream client.
 
--   Drop support for Python 3.9 according to Numpy, Astropy, and ligo.skymap
-    version support policies. Astropy 6.1.0 has already dropped Python 3.9, and
-    ligo.skymap 2.0.1 has as well.
-
--   Switch from Python 3.9 to Python 3.11 for production deployments.
-
--   Update ligo.skymap to version 2.0.1.
-
 -   Use integer times for creating caches for omegascans, since too much precision
     results in problems in loading in TimeSeries.
 
--   Update to ``ligo-followup-advocate`` v1.2.10.
-
--   Fix bug where FloatingPointErrors in omegascanning would not create the fig
+-   Fix bug where FloatingPointErrors in omegascans would not create the fig
     variable, which is later referenced.
-
--   Add a GitLab issue template to include new external pipelines to RAVEN.
-
--   Change functions calls to prepare for NumPy 2.0 release.
 
 -   Switch external event listeners to GCN Classic over Kafka.
 
