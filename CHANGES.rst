@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.5.1 (unreleased)
+------------------
+
+-   Enabled SSM triggers and HasSSM source property
+
 2.5.0 "Cactus cat" (2024-08-08)
 -------------------------------
 
