@@ -187,7 +187,7 @@ significant_alert_far_threshold = {
         'allsky': 1 / (30 * 86400),
         'earlywarning': 1 / (30 * 86400),
         'mdc': 1 / (30 * 86400),
-        'ssm': -1 * float('inf')  # SSM public alerts disabled until approved
+        'ssm': 1 / (365 * 86400),
     },
     'burst': {
         'allsky': 1 / (365 * 86400),
@@ -197,7 +197,7 @@ significant_alert_far_threshold = {
         'allsky': 1 / (30 * 86400),
         'bbh': 1 / (30 * 86400),
         'earlywarning': 1 / (30 * 86400),
-        'ssm': 1 / (30 * 86400)
+        'ssm': 1 / (365 * 86400)
     }
 }
 """Group and search specific maximum false alarm rate to consider sending
