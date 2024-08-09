@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.5.1rc1 "Cactus cat" (2024-08-09)
+----------------------------------
+
+-   Enable SSM alerts and HasSSM source property.
+    This adds !1473.
+
 2.5.0 "Cactus cat" (2024-08-08)
 -------------------------------
 
