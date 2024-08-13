@@ -491,6 +491,23 @@ and Swift. Since we only listen to CBC low significance alerts, we use that
 FAR threshold for now. Note that Swift current listens to events with the
 threshold before and Fermi after trials factors."""
 
+external_search_preference = {
+    'Supernova': 2,
+    'GRB': 1,
+    'FRB': 1,
+    'HEN': 1,
+    'SubGRB': 0,
+    'SubGRBTargeted': 0
+}
+"""Group/search preference for individual candidates. This is
+used by :meth:`gwcelery.tasks.raven.keyfunc` to sort
+candidates for the preferred external event. We first prefer coincidences with
+SNEWS Supernova since their significance is so high (far<1/100 yrs). Next, we
+prefer events significant enough to be publishable on their own, which
+includes gamma-ray bursts, high energy neutrinos, and fast radio bursts.
+Lastly we prefer lower significance subthreshold events, some of which are not
+publishable on their own."""
+
 mock_events_simulate_multiple_uploads = False
 """If True, then upload each mock event several times in rapid succession with
 random jitter in order to simulate multiple pipeline uploads."""

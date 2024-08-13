@@ -1,4 +1,4 @@
-from unittest.mock import call, patch
+from unittest.mock import Mock, call, patch
 
 import pytest
 
@@ -265,7 +265,7 @@ def mock_get_superevent(superevent_id):
             'space_coinc_far': old_space_far,
             'superevent_id': superevent_id,
             'labels': [],
-            'em_type': None}
+            'em_type': 'E101' if superevent_id != 'S101' else None}
 
 
 @pytest.mark.parametrize(
@@ -402,28 +402,42 @@ def test_preferred_superevent(raven_search_results, testnum):
 
 
 @pytest.mark.parametrize(
-    'new_time_far,new_space_far,superevent_id,pipeline,result',
-    [[1e-4, None, 'S1', 'Fermi', True],
-     [1e-4, 1e-3, 'S1', 'Swift', True],
-     [1e-4, None, 'S2', 'INTEGRAL', False],
-     [1e-4, 1e-3, 'S3', 'Fermi', True],
-     [1e-4, 1e-3, 'S4', 'Fermi', False],
-     [1e-8, None, 'S4', 'Swift', False],
-     [1e-4, 1e-8, 'S5', 'INTEGRAL', True],
-     [None, None, 'S1', 'SNEWS', True]])
-@patch('gwcelery.tasks.gracedb.update_superevent')
-@patch('gwcelery.tasks.gracedb.get_superevent', mock_get_superevent)
-def test_update_superevent(mock_update_superevent,
+    'new_time_far,new_space_far,superevent_id,search,result',
+    [[1e-4, None, 'S1', 'GRB', True],
+     [1e-4, 1e-3, 'S1', 'GRB', True],
+     [1e-4, None, 'S2', 'GRB', False],
+     [1e-4, 1e-3, 'S3', 'GRB', True],
+     [1e-4, 1e-3, 'S4', 'GRB', False],
+     [1e-8, None, 'S4', 'GRB', False],
+     [1e-4, 1e-8, 'S5', 'GRB', True],
+     [1e-10, 1e-15, 'S5', 'SubGRB', False],
+     [1e-10, 1e-15, 'S5', 'SubGRBTargeted', False],
+     [None, None, 'S1', 'Supernova', True]])
+def test_update_superevent(monkeypatch,
                            new_time_far, new_space_far,
                            superevent_id,
-                           pipeline, result):
+                           search, result):
     """This function tests that new coincidences update the superevent when
     they have a superior joint FAR or are a SNEWS event.
     """
+
+    def _mock_get_ext_event(graceid):
+        return {'graceid': graceid,
+                'pipeline': 'Fermi',
+                'search': search if graceid == 'E100' else 'GRB',
+                'labels': []}
+
+    mock_update_superevent = Mock()
+    monkeypatch.setattr('gwcelery.tasks.gracedb.update_superevent',
+                        mock_update_superevent)
+    monkeypatch.setattr('gwcelery.tasks.gracedb.get_superevent',
+                        mock_get_superevent)
+    monkeypatch.setattr('gwcelery.tasks.gracedb.get_event',
+                        _mock_get_ext_event)
+
     superevent = {'superevent_id': superevent_id,
                   'labels': []}
-    ext_event = {'graceid': 'E100',
-                 'pipeline': pipeline}
+    ext_event = _mock_get_ext_event('E100')
     coinc_far_dict = {'temporal_coinc_far': new_time_far,
                       'spatiotemporal_coinc_far': new_space_far}
     raven.update_coinc_far(coinc_far_dict, superevent, ext_event)
@@ -448,6 +462,9 @@ def mock_get_event(graceid):
             pipeline, search, labels = 'Fermi', 'GRB', []
         elif graceid == "E5":
             pipeline, search, labels = 'Fermi', 'GRB', ['RAVEN_ALERT']
+        elif graceid == "E6":
+            pipeline, search, labels = \
+                'Fermi', 'GRB', ['NOT_GRB', 'RAVEN_ALERT']
         return {'superevent_id': graceid.replace('E', 'S'),
                 'graceid': graceid,
                 'pipeline': pipeline,
@@ -472,7 +489,9 @@ def mock_get_event(graceid):
      # RAVEN_ALERT should supersede subthreshold joint candidate
      ['S4', 'E4', 'E5', True],
      # Subthreshold joint candidate should not overwrite RAVEN_ALERT
-     ['S5', 'E5', 'E4', False]]
+     ['S5', 'E5', 'E4', False],
+     # New real event should supercede old NOT_GRB with an alert
+     ['S6', 'E6', 'E1', True]]
 )
 @patch('gwcelery.tasks.gracedb.update_superevent')
 @patch('gwcelery.tasks.gracedb.get_event', mock_get_event)

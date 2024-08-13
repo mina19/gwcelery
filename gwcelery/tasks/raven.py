@@ -329,13 +329,15 @@ def update_coinc_far(coinc_far_dict, superevent, ext_event):
     coincidence. In order of priority, the determing conditions are the
     following:
 
-    * A SNEWS coincidence is preferred over GRB.
     * Likely astrophysical external candidates are preferred over likely
       non-astrophysical candidates.
     * Candidates that pass publishing thresholds are preferred over those
       that do not.
-    * A spacetime joint FAR over a time-only joint FAR.
-    * Lower joint FARs are preferred over higher joint FARs.
+    * A SNEWS coincidence is preferred, then GRB/FRB/HEN, then subthreshold.
+    * A lower spacetime joint FAR is preferred over a higher spacetime joint
+      FAR.
+    * A lower temporal joint FAR is preferred over a higher temporal joint
+      FAR.
 
     Parameters
     ----------
@@ -349,70 +351,92 @@ def update_coinc_far(coinc_far_dict, superevent, ext_event):
 
     Returns
     -------
-    joint_far : dict
+    coinc_far_far : dict
         Dictionary containing joint false alarm rate passed to the function
         as an initial argument
 
     """
     #  Get graceids
     superevent_id = superevent['superevent_id']
-    ext_id = ext_event['graceid']
 
     #  Get the latest info to prevent race condition
     superevent_latest = gracedb.get_superevent(superevent_id)
 
-    #  Joint FAR isn't computed for SNEWS coincidence
-    #  Choose SNEWS coincidence over any other type of coincidence
-    if ext_event['pipeline'] == 'SNEWS':
-        gracedb.update_superevent(superevent_id, em_type=ext_id,
-                                  time_coinc_far=None,
-                                  space_coinc_far=None)
-        return coinc_far_dict
-
-    #  Load needed variables
-    infty = float('inf')
-    new_time_far = coinc_far_dict['temporal_coinc_far']
-    new_space_far = coinc_far_dict['spatiotemporal_coinc_far']
-    #  Map None to infinity to make logic easier
-    new_space_far_f = new_space_far if new_space_far else infty
-    old_time_far = superevent_latest['time_coinc_far']
-    old_time_far_f = old_time_far if old_time_far else infty
-    old_space_far = superevent_latest['space_coinc_far']
-    old_space_far_f = old_space_far if old_space_far else infty
-    is_far_improved = (new_space_far_f < old_space_far_f or
-                       (new_time_far < old_time_far_f and
-                        old_space_far_f == infty))
-
     if superevent_latest['em_type']:
         #  If previous preferred external event, load to compare
         emtype_event = gracedb.get_event(superevent_latest['em_type'])
-        #  Don't overwrite SNEWS with GRB event
-        snews_to_grb = \
-            (emtype_event['pipeline'] == 'SNEWS' and
-             ext_event['pipeline'] != 'SNEWS')
-        #  Determine which events are likely real or not
-        is_old_grb_real, is_new_grb_real = \
-            ('NOT_GRB' not in emtype_event['labels'],
-             'NOT_GRB' not in ext_event['labels'])
-        is_old_raven_alert, is_new_raven_alert = \
-            ('RAVEN_ALERT' in emtype_event['labels'],
-             'RAVEN_ALERT' in ext_event['labels'])
-        #  Use new event only if it is better old event information
-        is_event_improved = ((is_new_grb_real and not is_old_grb_real) or
-                             (is_new_raven_alert and not is_old_raven_alert))
-        #  if both real or both not, use FAR to differentiate
-        if is_old_grb_real == is_new_grb_real \
-                and is_old_raven_alert == is_new_raven_alert:
-            is_event_improved = is_far_improved
-    else:
-        snews_to_grb = False
-        is_event_improved = is_far_improved
 
-    if is_event_improved and not snews_to_grb:
-        gracedb.update_superevent(superevent_id, em_type=ext_id,
-                                  time_coinc_far=new_time_far,
-                                  space_coinc_far=new_space_far)
+        #  Load old joint FAR as dictionary
+        coinc_far_old = {
+            'temporal_coinc_far': superevent_latest['time_coinc_far'],
+            'spatiotemporal_coinc_far': superevent_latest['space_coinc_far']
+        }
+
+        events_fars = [(emtype_event, coinc_far_old),
+                       (ext_event, coinc_far_dict)]
+
+        preferred_event_far = max(events_fars, key=keyfunc)
+    else:
+        preferred_event_far = (ext_event, coinc_far_dict)
+
+    # If preferred event is the new one, update the superevent
+    if preferred_event_far == (ext_event, coinc_far_dict):
+        gracedb.update_superevent(
+            superevent_id,
+            em_type=ext_event['graceid'],
+            time_coinc_far=coinc_far_dict['temporal_coinc_far'],
+            space_coinc_far=coinc_far_dict['spatiotemporal_coinc_far'])
     return coinc_far_dict
+
+
+def keyfunc(event_far):
+    """Key function for selection of the preferred event.
+
+    Return a value suitable for identifying the preferred event. Given events
+    ``a`` and ``b``, ``a`` is preferred over ``b`` if
+    ``keyfunc(a) > keyfunc(b)``, else ``b`` is preferred.
+
+    Parameters
+    ----------
+    event_far : tuple
+        Tuple of event dictionary and coinc far dictionary from RAVEN.
+
+    Returns
+    -------
+    key : tuple
+        The comparison key.
+
+    Notes
+    -----
+    Tuples are compared lexicographically in Python: they are compared
+    element-wise until an unequal pair of elements is found.
+    """
+
+    # Unpack input
+    event, coinc_far = event_far
+    # Prefer external event that is not vetoed by likely being
+    # non-astrophysical
+    likely_real = 'NOT_GRB' not in event['labels']
+    # Prefer external event that has passed publishing threshold
+    previous_alert = 'RAVEN_ALERT' in event['labels']
+    # Prefer higher threshold searches first
+    search_rank = app.conf['external_search_preference'].get(
+        event['search'], -1)
+    # Map so more significant FAR is a larger number
+    spacetime_far = coinc_far['spatiotemporal_coinc_far']
+    spacetime_rank = \
+        -spacetime_far if spacetime_far is not None else -float('inf')
+    temporal_far = coinc_far['temporal_coinc_far']
+    temporal_rank = \
+        -temporal_far if temporal_far is not None else -float('inf')
+
+    return (
+        likely_real,
+        previous_alert,
+        search_rank,
+        spacetime_rank,
+        temporal_rank
+    )
 
 
 @app.task(shared=False)

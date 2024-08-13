@@ -8,6 +8,13 @@ Changelog
 
 -   Enabled SSM triggers and HasSSM source property
 
+-   Rework determining the preferred external event using a keyfunc method
+    similar to the superevent manager. This now prioritizes, in order, by
+    whether there exists a previous event, whether the event is likely real,
+    whether this event has passed publishing threshold, whether the search
+    is prioritized, whether the space-time joint FAR is better, and whether
+    the temporal joint FAR is better.
+
 2.5.0 "Cactus cat" (2024-08-08)
 -------------------------------
 
