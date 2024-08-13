@@ -204,32 +204,33 @@ significant_alert_far_threshold = {
 significant alerts. A threshold of negative infinity disables alerts."""
 
 significant_alert_trials_factor = {
-    'cbc': {'allsky': 5,
-            'earlywarning': 3,
-            'mdc': 5,
+    'cbc': {'allsky': 6,
+            'earlywarning': 4,
+            'mdc': 6,
             'ssm': 2},
-    'burst': {'allsky': 2,
-              'bbh': 5}
+    'burst': {'allsky': 3,
+              'bbh': 6}
 }
 """Trials factor corresponding to trigger categories. The CBC AllSky and Burst
 BBH searches are treated as one group with a common trials factor. CBC AllSky
-pipelines are gstlal, pycbc, mbta, and raven. The Burst BBH pipeline is cwb.
-CBC EarlyWarning pipelines are gstlal, pycbc, and mbta. CBC SSM pipelines are
-gstlal and mbta. The Burst AllSky searches are treated as one group with one
-trials factor. The Burst AllSky piplines are cwb, and raven."""
+pipelines are gstlal, pycbc, mbta, spiir, and raven. The Burst BBH pipeline
+is cwb. CBC EarlyWarning pipelines are gstlal, pycbc, mbta, and spiir.
+CBC SSM pipelines are gstlal and mbta.
+The Burst AllSky searches are treated as one group with one
+trials factor. The Burst AllSky piplines are cwb, mly, and raven."""
 
 preliminary_alert_trials_factor = {
-    'cbc': {'allsky': 5,
-            'earlywarning': 3,
-            'mdc': 5,
+    'cbc': {'allsky': 7,
+            'earlywarning': 4,
+            'mdc': 4,
             'ssm': 2},
-    'burst': {'allsky': 5,
-              'bbh': 5}
+    'burst': {'allsky': 7,
+              'bbh': 7}
 }
 """Trials factor for less significant alert categories. The CBC AllSky, Burst
 AllSky, and Burst BBH searches are all treated as one group with a shared
-trials factor. CBC AllSky pipelines are gstlal, pycbc, and mbta.  Burst AllSky
-pipeline is cwb. The Burst BBH pipeline is cwb."""
+trials factor. CBC AllSky pipelines are gstlal, pycbc, mbta, and spiir.
+Burst AllSky pipelines are cwb, and mly. The Burst BBH pipelines is cwb."""
 
 preliminary_alert_far_threshold = {
     'cbc': {
