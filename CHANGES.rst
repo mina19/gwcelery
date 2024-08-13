@@ -4,6 +4,8 @@ Changelog
 2.5.1 (unreleased)
 ------------------
 
+-   Update trials factor to account for MLy and SPIIR joining O4b.
+
 -   Enabled SSM triggers and HasSSM source property
 
 2.5.0 "Cactus cat" (2024-08-08)
