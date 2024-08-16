@@ -879,6 +879,12 @@ def _pesummary_task(webdir, samples, **pesummary_kwargs):
     ]
     for key in pesummary_kwargs:
         if key in ["psd", "calibration"]:
+            # these values can be none if calibration envelopes
+            # or PSD files aren't passed to bilby_pipe
+            # see https://git.ligo.org/emfollow/gwcelery/-/issues/852
+            # and related issues
+            if pesummary_kwargs[key] is None:
+                continue
             args += [f"--{key}"]
             for ifo in pesummary_kwargs[key]:
                 args += [f'{ifo}:{pesummary_kwargs[key][ifo]}']
