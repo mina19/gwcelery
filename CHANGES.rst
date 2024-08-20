@@ -1,12 +1,12 @@
 Changelog
 =========
 
-2.5.1rc2 "Cactus cat" (2024-08-20)
-----------------------------------
+2.5.1 "Cactus cat" (2024-08-20)
+-------------------------------
 
 -   Update trials factor to account for MLy and SPIIR joining O4b.
 
--   Bugfix related to pesummary task failing due to recently changed
+-   Fix bug related to pesummary task failing due to recently changed
     naming convention of calibration filenames.
 
 2.5.0 "Cactus cat" (2024-08-08)
