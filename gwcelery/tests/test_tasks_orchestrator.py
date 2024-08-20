@@ -116,8 +116,7 @@ def test_handle_superevent(monkeypatch, toy_3d_fits_filecontents,  # noqa: F811
         if '.fits' in filename:
             return toy_3d_fits_filecontents
         elif filename == 'em_bright.json' and group == 'CBC':
-            return json.dumps({'HasNS': 0.0, 'HasRemnant': 0.0,
-                               'HasMassGap': 0.0})
+            return json.dumps({'HasNS': 0.0, 'HasRemnant': 0.0})
         elif filename == 'psd.xml.gz':
             return str(resources.files().joinpath('psd.xml.gz'))
         elif filename == 'S1234-1-Preliminary.xml':
@@ -483,8 +482,7 @@ def test_update_rapidpe_pastro(
             "bayestar.multiorder.fits": resources.read_binary(
                 data, "MS220722v_bayestar.multiorder.fits"
             ),
-            "em_bright.json": json.dumps({"HasNS": 0.0, "HasRemnant": 0.0,
-                                          "HasMassGap": 0.0}),
+            "em_bright.json": json.dumps({"HasNS": 0.0, "HasRemnant": 0.0}),
             f"{pipeline}.p_astro.json": pipeline_pastro_dict_initial,
             "S1234-1-Preliminary.xml": b"fake VOEvent file contents",
         }
@@ -785,8 +783,7 @@ def superevent_initial_alert_download(filename, graceid):
     if filename == 'S1234-Initial-1.xml':
         return 'contents of S1234-Initial-1.xml'
     elif filename == 'em_bright.json,0':
-        return json.dumps({'HasNS': 0.0, 'HasRemnant': 0.0,
-                           'HasMassGap': 0.0})
+        return json.dumps({'HasNS': 0.0, 'HasRemnant': 0.0})
     elif filename == 'p_astro.json,0':
         return b'{"BNS": 0.94, "NSBH": 0.03, "BBH": 0.02, "Terrestrial": 0.01}'
     elif filename == 'foobar.multiorder.fits,0':
@@ -887,7 +884,7 @@ def test_handle_superevent_initial_alert(mock_create_initial_circular,
         superevent_id, 'initial', BBH=0.02, BNS=0.94, NSBH=0.03, ProbHasNS=0.0,
         ProbHasRemnant=0.0, Terrestrial=0.01, internal=False, open_alert=True,
         skymap_filename='foobar.multiorder.fits,0', skymap_type='foobar',
-        raven_coinc='RAVEN_ALERT' in labels, HasMassGap=0.0,
+        raven_coinc='RAVEN_ALERT' in labels,
         Significant=1,  # this field is true for initial alerts
         combined_skymap_filename=(combined_skymap_filename if
                                   combined_skymap_needed else None))
@@ -1044,6 +1041,8 @@ def test_handle_cbc_event_new_event(mock_source_properties,
         mock_source_properties.assert_not_called()
         mock_p_astro.assert_not_called()
         mock_localize.assert_not_called()
+    elif alert_search == 'ssm':  # FIXME: remove once implementation is ready
+        mock_source_properties.assert_not_called()
     elif (alert_pipeline, alert_search) in pipelines_stock_p_astro:
         mock_p_astro.assert_called_once()
     else:
@@ -1343,8 +1342,7 @@ def test_cwb_bbh_notice_is_cbc(monkeypatch):
         if '.fits' in filename:
             return toy_3d_fits_filecontents
         elif filename == 'em_bright.json':
-            return json.dumps({'HasNS': 0.0, 'HasRemnant': 0.0,
-                               'HasMassGap': 0.0})
+            return json.dumps({'HasNS': 0.0, 'HasRemnant': 0.0})
         elif filename == 'psd.xml.gz':
             return str(resources.files().joinpath('psd.xml.gz'))
         elif filename == 'S1234-1-Preliminary.xml':

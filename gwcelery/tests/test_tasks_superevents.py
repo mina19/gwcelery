@@ -484,26 +484,17 @@ def test_do_not_send_low_signif_alerts(search):
         assert_not_called_with(p2, superevents.FROZEN_LABEL, 'S100')
 
 
-@pytest.mark.parametrize('labels,search',
-                         [[['EMBRIGHT_READY', 'PASTRO_READY'], 'AllSky'],
-                          [['EMBRIGHT_READY', 'PASTRO_READY'], 'SSM'],
-                          [['EMBRIGHT_READY', 'SKYMAP_READY'], 'SSM'],
-                          [['SKYMAP_READY', 'EMBRIGHT_READY', 'PASTRO_READY'],
-                           'AllSky']])
-def test_is_complete(labels, search):
+@pytest.mark.parametrize('labels',
+                         [['EMBRIGHT_READY', 'PASTRO_READY'],
+                          ['SKYMAP_READY', 'EMBRIGHT_READY', 'PASTRO_READY']])
+def test_is_complete(labels):
     mock_event_dict = _mock_event('G000002')
     mock_event_dict['labels'] = labels
-    mock_event_dict['search'] = search
     result = superevents.is_complete(mock_event_dict)
-    if search.lower() == 'allsky':
-        if len(labels) == 2:
-            assert result is False
-        elif len(labels) == 3:
-            assert result is True
-    elif search.lower() == 'ssm':
-        assert result == (set(labels).intersection(
-            {'EMBRIGHT_READY', 'SKYMAP_READY'}
-        ) == {'EMBRIGHT_READY', 'SKYMAP_READY'})
+    if len(labels) == 2:
+        assert result is False
+    elif len(labels) == 3:
+        assert result is True
 
 
 @pytest.mark.parametrize(
@@ -669,11 +660,7 @@ def test_upload_same_event():
         False, False],
      ['CBC', 'gstlal', 'SSM', False, 2.e-6, 'H1,L1,V1',  # SSM search
         ['PASTRO_READY', 'SKYMAP_READY', 'EMBRIGHT_READY'],
-        False, False],
-     ['CBC', 'gstlal', 'SSM', False, 1.e-10, 'H1,L1,V1',  # significant SSM
-        ['SKYMAP_READY', 'EMBRIGHT_READY'], True, True],
-     ['CBC', 'gstlal', 'SSM', False, 1.e-10, 'H1,L1,V1',  # significant SSM
-        ['SKYMAP_READY'], False, False]])
+        False, False]])
 def test_should_publish(group, pipeline, search, offline, far, instruments,
                         labels, expected_result,
                         expected_result_less_significant):

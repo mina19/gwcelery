@@ -324,17 +324,19 @@ def handle_cbc_event(alert):
         chi1 = extra_attributes['SingleInspiral'][0]['spin1z']
         chi2 = extra_attributes['SingleInspiral'][0]['spin2z']
 
-        (
-            em_bright.source_properties.si(mass1, mass2, chi1, chi2, snr,
-                                           pipeline=pipeline, search=search)
-            |
-            gracedb.upload.s(
-                'em_bright.json', graceid,
-                'em bright complete', ['em_bright', 'public']
-            )
-            |
-            gracedb.create_label.si('EMBRIGHT_READY', graceid)
-        ).apply_async(priority=priority)
+        # FIXME: remove conditional when em-bright implementation exists
+        searches_without_em_bright = [superevents.SUBSOLAR_SEARCH_NAME.lower()]
+        if search not in searches_without_em_bright:
+            (
+                em_bright.source_properties.si(mass1, mass2, chi1, chi2, snr)
+                |
+                gracedb.upload.s(
+                    'em_bright.json', graceid,
+                    'em bright complete', ['em_bright', 'public']
+                )
+                |
+                gracedb.create_label.si('EMBRIGHT_READY', graceid)
+            ).apply_async(priority=priority)
 
         # p_astro calculation for pipelines that does not provide a
         # stock p_astro (upload pipeline.p_astro.json)
