@@ -1,10 +1,8 @@
 Changelog
 =========
 
-2.5.1 (unreleased)
+2.5.2 (unreleased)
 ------------------
-
--   Update trials factor to account for MLy and SPIIR joining O4b.
 
 -   Enabled SSM triggers and HasSSM source property
 
@@ -14,6 +12,14 @@ Changelog
     whether this event has passed publishing threshold, whether the search
     is prioritized, whether the space-time joint FAR is better, and whether
     the temporal joint FAR is better.
+
+2.5.1 "Cactus cat" (2024-08-20)
+-------------------------------
+
+-   Update trials factor to account for MLy and SPIIR joining O4b.
+
+-   Fix bug related to pesummary task failing due to recently changed
+    naming convention of calibration filenames.
 
 2.5.0 "Cactus cat" (2024-08-08)
 -------------------------------
