@@ -56,7 +56,7 @@ astropy = ">=4.3.1,!=5.3"  # https://github.com/astropy/astropy/issues/11879, ht
 bilby = ">=2.2.2"
 bilby_pipe = ">=1.3.2"  # https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests/602
 celery = {version = ">=5.1, <5.4", extras = ["redis"]}  # https://git.ligo.org/emfollow/gwcelery/-/issues/804
-ciecplib = {version = "*", extras = ["kerberos"]}  # for renew-cert.sh
+ciecplib = {version = ">=0.8.1", extras = ["kerberos"]}  # for renew-cert.sh, https://git.ligo.org/computing/software/ciecplib/-/issues/145
 click = ">=7"
 comet = "*"
 confluent-kafka = ">=1.9.2"
