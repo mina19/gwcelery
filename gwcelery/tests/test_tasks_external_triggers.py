@@ -1009,3 +1009,35 @@ def test_handle_mdc_sn_creation(mock_raven_coincidence_search,
         mock_raven_coincidence_search.assert_called_once_with(
             graceid, alert['object'], group='Burst', searches=['MDC'],
             se_searches=['MDC'], pipelines=['SNEWS'])
+
+
+@pytest.mark.parametrize(
+    'kafka_path,voevent_path,search',
+    [['kafka_alert_fermi.json',
+      'fermi_subgrbtargeted_template.xml',
+      'SubGRBTargeted'],
+     ['kafka_alert_swift.json',
+      'swift_subgrbtargeted_template.xml',
+      'SubGRBTargeted'],
+     ['kafka_alert_svom_wakeup.json',
+      'svom_grb_template.xml',
+      'GRB'],
+     ['kafka_alert_einteinprobe.json',
+      'einsteinprobe_grb_template.xml',
+      'GRB']])
+def test_kafka_to_voevent(kafka_path, voevent_path, search):
+
+    voevent_text = read_binary(data, voevent_path)
+    alert = read_json(data, kafka_path)
+
+    voevent_result, pipeline, time, id = \
+        external_triggers._kafka_to_voevent(alert, search)
+
+    assert voevent_result == voevent_text
+
+
+def test_kafka_to_voevent_empty():
+    """Test that giving a file with no pipeline/instrument info gives a
+    ValueError."""
+    with pytest.raises(ValueError):
+        external_triggers._kafka_to_voevent({}, 'GRB')

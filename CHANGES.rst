@@ -45,7 +45,6 @@ Changelog
 -   Don't download p-astro file for SSM alert canvas, since they are not required
     by policy.
 
-<<<<<<< HEAD
 -   Automatically rotate and compress log files to avoid running out of disk
     space. Logs are rotated and compressed once per week and deleted after one
     month.
@@ -66,6 +65,10 @@ Changelog
 
 -   Drop support for Python 3.10, conforming to
     `SPEC 0 — Minimum Supported Dependencies <https://scientific-python.org/specs/spec-0000/>`_.
+
+-   Reorganize RAVEN workflow to generalize IGWN alert sky map handler and
+    kafka JSON to VOEvent converter to be used by multiple pipelines in the
+    future.
 
 2.5.2 "Cactus cat" (2024-11-18)
 -------------------------------

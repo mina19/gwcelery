@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<voe:VOEvent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:voe="http://www.ivoa.net/xml/VOEvent/v2.0" xsi:schemaLocation="http://www.ivoa.net/xml/VOEvent/v2.0 http://www.ivoa.net/xml/VOEvent/VOEvent-v2.0.xsd" version="2.0" role="test" ivorn="ivo://lvk.internal/einsteinprobe#grb-2024-08-01T09:07:13.799Z">
+  <Who>
+    <Description>VOEvent created with voevent-parse, version 1.0.3. See https://github.com/timstaley/voevent-parse for details.</Description>
+    <AuthorIVORN>ivo://eintseinprobe</AuthorIVORN>
+    <Date>2024-08-01T09:07:13.799Z</Date>
+    <Author>
+      <shortName>EinsteinProbe/WXT</shortName>
+      <contactName>LVK-internal</contactName>
+      <contactEmail>LVK-internal</contactEmail>
+    </Author>
+  </Who>
+  <What>
+    <Param name="TrigID" value="01709015181" ucd="meta.id"/>
+    <Param name="Integ_Time" value="0.0" unit="sec" ucd="time.interval"/>
+  </What>
+  <WhereWhen>
+    <ObsDataLocation>
+      <ObservatoryLocation id="GEOLUN"/>
+      <ObservationLocation>
+        <AstroCoordSystem id="UTC-FK5-GEO"/>
+        <AstroCoords coord_system_id="UTC-FK5-GEO">
+          <Time unit="s">
+            <TimeInstant>
+              <ISOTime>2024-08-01T09:07:13.799Z</ISOTime>
+            </TimeInstant>
+          </Time>
+          <Position2D unit="deg">
+            <Name1>RA</Name1>
+            <Name2>Dec</Name2>
+            <Value2>
+              <C1>345.134</C1>
+              <C2>32.607999999</C2>
+            </Value2>
+            <Error2Radius>0.05071889</Error2Radius>
+          </Position2D>
+        </AstroCoords>
+      </ObservationLocation>
+    </ObsDataLocation>
+  </WhereWhen>
+  <How>
+    <Description>EinsteinProbe, WXT Instrument</Description>
+  </How>
+</voe:VOEvent>

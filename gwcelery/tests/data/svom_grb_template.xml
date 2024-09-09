@@ -1,0 +1,78 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<voe:VOEvent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:voe="http://www.ivoa.net/xml/VOEvent/v2.0" xsi:schemaLocation="http://www.ivoa.net/xml/VOEvent/v2.0 http://www.ivoa.net/xml/VOEvent/VOEvent-v2.0.xsd" version="2.0" role="observation" ivorn="ivo://lvk.internal/svom#grb-2024-02-22T08:51:31.320000Z">
+  <Who>
+    <AuthorIVORN>ivo://org.svom/FSC</AuthorIVORN>
+    <Date>2024-02-22T08:51:55Z</Date>
+    <Author><title>French Science Center</title>
+      <shortName>FSC</shortName>
+      <contactEmail>svom-contact@cea.fr</contactEmail>
+    </Author>
+  </Who>
+  <What>
+    <Param name="Packet_Type" value="576" ucd="meta.id"/>
+    <Param name="Pkt_Ser_Num" value="1" ucd="meta.id"/>
+    <Param name="Instrument" value="ECLAIRs" ucd="instr"/>
+    <Param name="Swift_Trig_Id" value="1213880" ucd="meta.id"/>
+    <Group name="Svom_Identifiers">
+      <Param name="Notice_Level" value="N1e" ucd="meta.id"/>
+      <Param name="Burst_Id" value="sb24022203" ucd="meta.id"/>
+    </Group>
+    <Group name="Detection_Info">
+      <Param name="SNR" value="200.00" unit="sigma" ucd="stat.snr"/>
+      <Param name="Timescale" value="0.0" unit="s" ucd="time.interval"/>
+      <Param name="Lower_Energy_Bound" value="4" unit="keV" ucd="em.energy"/>
+      <Param name="Upper_Energy_Bound" value="20" unit="keV" ucd="em.energy"/>
+      <Param name="Trigger_Type" value="Count_Rate" ucd="instr.param"/>
+    </Group>
+    <Group name="Target_Info">
+      <Param name="Galactic_Lon" value="62.11" unit="deg" ucd="pos.galactic.lon"/>
+      <Param name="Galactic_Lat" value="4.57" unit="deg" ucd="pos.galactic.lat"/>
+      <Param name="Moon_Angle" value="87.67" unit="deg" ucd="pos.angDistance"/>
+      <Param name="Sun_Angle" value="53.07" unit="deg" ucd="pos.angDistance"/>
+    </Group>
+    <Group name="Satellite_Info">
+      <Param name="Slew_Status" value="not_requested" ucd="meta.code.status"/>
+      <Param name="Attitude_Ra" value="288.07" unit="deg" ucd="instr.param"/>
+      <Param name="Attitude_Dec" value="28.84" unit="deg" ucd="instr.param"/>
+      <Param name="Attitude_Roll" value="360.00" unit="deg" ucd="instr.param"/>
+      <Param name="Sat_Longitude" value="0.00" unit="deg" ucd="pos.earth.lon"/>
+      <Param name="Sat_Latitude" value="90.00" unit="deg" ucd="pos.earth.lat"/>
+      <Param name="Sat_Altitude" value="-6356.75" unit="km" ucd="pos.earth.altitude"/>
+    </Group>
+  </What>
+  <WhereWhen>
+    <ObsDataLocation>
+      <ObservatoryLocation id="GEOLEO"/>
+      <ObservationLocation>
+        <AstroCoordSystem id="UTC-ICRS-GEO"/>
+        <AstroCoords coord_system_id="UTC-ICRS-GEO">
+          <Time unit="s">
+            <TimeInstant>
+              <ISOTime>2024-02-22T08:51:31.320000Z</ISOTime>
+            </TimeInstant>
+          </Time>
+          <Position2D unit="deg">
+            <Name1>RA</Name1>
+            <Name2>Dec</Name2>
+            <Value2>
+              <C1>143.2478</C1>
+              <C2>-68.0289</C2>
+            </Value2>
+            <Error2Radius>0.1</Error2Radius>
+          </Position2D>
+        </AstroCoords>
+      </ObservationLocation>
+    </ObsDataLocation>
+  </WhereWhen>
+  <Why>
+    <Inference probability="1.00">
+     <Name>Swift Trigger_Num 1213880</Name>
+       <Concept>process.variation.burst;em.gamma
+       </Concept>
+   </Inference>
+  </Why>
+  <How>
+    <Description>N1E NOTICE DERIVED FROM SWIFT TRIGGER #1213880</Description>
+    <Reference uri="https://gcn.gsfc.nasa.gov/other/1213880.swift"/>
+  </How>
+</voe:VOEvent>

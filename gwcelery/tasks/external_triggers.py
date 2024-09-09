@@ -220,15 +220,9 @@ def handle_grb_igwn_alert(alert):
 
     *   New event/superevent triggers a coincidence search with
         :meth:`gwcelery.tasks.raven.coincidence_search`.
-    *   When both a GW and GRB sky map are available during a coincidence,
-        indicated by the labels ``EM_READY`` and ``EXT_SKYMAP_READY``
-        respectively on the external event, this triggers the spacetime coinc
-        FAR to be calculated and a combined GW-GRB sky map is created using
-        :meth:`gwcelery.tasks.external_skymaps.create_combined_skymap`.
-    *   Re-run sky map comparison if complete, and either the GW or GRB sky
-        map has been updated or if the preferred event changed.
-    *   Re-check RAVEN publishing conditions if the GRB was previously
-        considered non-astrophycial but now should be considered.
+    *   If other type of IGWN alert, pass to _handle_skymaps to decide whether
+        to re-run RAVEN pipeline based on labels or whether to add labels that
+        could start this process.
 
     Parameters
     ----------
@@ -313,10 +307,51 @@ def handle_grb_igwn_alert(alert):
                 raven.coincidence_search(
                     graceid, alert['object'], group=gw_group,
                     searches=searches, pipelines=[pipeline])
+    else:
+        _handle_skymaps(alert)
+
+
+def _handle_skymaps(alert):
+    """Parse an IGWN alert message related to superevents/GRB external triggers
+    and dispatch tasks related to re-running RAVEN pipeline due to new sky
+    maps.
+
+    Notes
+    -----
+    This IGWN alert message handler is triggered by a label associated with
+    completeness of skymaps or change in state, or if a sky map file is
+    uploaded:
+
+    *   When both a GW and GRB sky map are available during a coincidence,
+        indicated by the labels ``EM_READY`` and ``EXT_SKYMAP_READY``
+        respectively on the external event, this triggers the spacetime coinc
+        FAR to be calculated and a combined GW-GRB sky map is created using
+        :meth:`gwcelery.tasks.external_skymaps.create_combined_skymap`.
+    *   If new label indicates sky maps are available in the superevent,
+        apply to all associated external events.
+    *   Re-run sky map comparison if complete, and also if either the GW or GRB
+        sky map has been updated or if the preferred event changed.
+    *   Re-check RAVEN publishing conditions if the GRB was previously
+        considered non-astrophysical but now should be considered.
+
+    Parameters
+    ----------
+    alert : dict
+        IGWN alert packet
+
+    """
+    # Determine GraceDB ID
+    graceid = alert['uid']
+
+    # Define state variables
+    is_superevent = 'S' in graceid
+    is_external_event = alert['object'].get('group') == 'External'
+    is_coincidence = 'EM_COINC' in alert['object']['labels']
+    pe_ready = 'PE_READY' in alert['object']['labels']
+
     # re-run raven pipeline and create combined sky map (if not a Swift event)
     # when sky maps are available
-    elif alert['alert_type'] == 'label_added' and \
-            alert['object'].get('group') == 'External':
+    if alert['alert_type'] == 'label_added' and is_external_event:
         if _skymaps_are_ready(alert['object'], alert['data']['name'],
                               'compare'):
             # if both sky maps present and a coincidence, re-run RAVEN
@@ -327,7 +362,7 @@ def handle_grb_igwn_alert(alert):
             superevent = gracedb.get_superevent(superevent_id)
             _relaunch_raven_pipeline_with_skymaps(
                 superevent, ext_event, graceid)
-        elif 'EM_COINC' in alert['object']['labels']:
+        elif is_coincidence:
             # if not complete, check if GW sky map; apply label to external
             # event if GW sky map
             se_labels = gracedb.get_labels(alert['object']['superevent'])
@@ -337,7 +372,7 @@ def handle_grb_igwn_alert(alert):
                 gracedb.create_label.si('EM_READY', graceid).delay()
     # apply labels from superevent to external event to update state
     # and trigger functionality requiring sky maps, etc.
-    elif alert['alert_type'] == 'label_added' and 'S' in graceid:
+    elif alert['alert_type'] == 'label_added' and is_superevent:
         if 'SKYMAP_READY' in alert['object']['labels']:
             # if sky map in superevent, apply label to all external events
             # at the time
@@ -364,21 +399,17 @@ def handle_grb_igwn_alert(alert):
     # if new GW or external sky map after first being available, try to remake
     # combine sky map and rerun raven pipeline
     elif alert['alert_type'] == 'log' and \
-            'EM_COINC' in alert['object']['labels'] and \
+            is_coincidence and \
             'fit' in alert['data']['filename'] and \
             'flat' not in alert['data']['comment'].lower() and \
             (alert['data']['filename'] !=
              external_skymaps.COMBINED_SKYMAP_FILENAME_MULTIORDER):
         superevent_id, external_id = _get_superevent_ext_ids(
                                          graceid, alert['object'])
-        if 'S' in graceid:
-            superevent = alert['object']
-        else:
-            superevent = gracedb.get_superevent(alert['object']['superevent'])
-            external_event = alert['object']
         # check if combined sky map already made, with the exception of Swift
         # which will fail
-        if 'S' in graceid:
+        if is_superevent:
+            superevent = alert['object']
             # Rerun for all eligible external events
             for ext_id in superevent['em_events']:
                 external_event = gracedb.get_event(ext_id)
@@ -388,6 +419,8 @@ def handle_grb_igwn_alert(alert):
                         superevent, external_event, graceid,
                         use_superevent_skymap=True)
         else:
+            superevent = gracedb.get_superevent(alert['object']['superevent'])
+            external_event = alert['object']
             if REQUIRED_LABELS_BY_TASK['compare'].issubset(
                     set(external_event['labels'])):
                 _relaunch_raven_pipeline_with_skymaps(
@@ -395,11 +428,9 @@ def handle_grb_igwn_alert(alert):
     # Rerun the coincidence FAR calculation if possible with combined sky map
     # if the preferred event changes
     # We don't want to run this logic if PE results are present
-    elif alert['alert_type'] == 'log' and \
-            'PE_READY' not in alert['object']['labels'] and \
-            'EM_COINC' in alert['object']['labels']:
+    elif alert['alert_type'] == 'log' and not pe_ready and is_coincidence:
         new_log_comment = alert['data'].get('comment', '')
-        if 'S' in graceid and \
+        if is_superevent and \
             new_log_comment.startswith('Updated superevent parameters: '
                                        'preferred_event: '):
             superevent = alert['object']
@@ -411,10 +442,8 @@ def handle_grb_igwn_alert(alert):
                     _relaunch_raven_pipeline_with_skymaps(
                         superevent, external_event, graceid,
                         use_superevent_skymap=False)
-    elif alert['alert_type'] == 'label_removed' and \
-            alert['object'].get('group') == 'External':
-        if alert['data']['name'] == 'NOT_GRB' and \
-                'EM_COINC' in alert['object']['labels']:
+    elif alert['alert_type'] == 'label_removed' and is_external_event:
+        if alert['data']['name'] == 'NOT_GRB' and is_coincidence:
             # if NOT_GRB is removed, re-check publishing conditions
             superevent_id = alert['object']['superevent']
             superevent = gracedb.get_superevent(superevent_id)
@@ -495,7 +524,8 @@ def handle_targeted_kafka_alert(alert):
     """
     # Convert alert to VOEvent format
     # FIXME: This is required until native ingesting of kafka events in GraceDB
-    payload, pipeline, time, trig_id = _kafka_to_voevent(alert)
+    payload, pipeline, time, trig_id = \
+        _kafka_to_voevent(alert, 'SubGRBTargeted')
 
     # Veto events that don't pass GRB FAR threshold
     far_grb = alert['far']
@@ -733,15 +763,17 @@ def _create_replace_external_event_and_skymap(
     ).delay()
 
 
-def _kafka_to_voevent(alert):
-    """Parse an alert sent via Kafka from a MOU partner in our joint
-    subthreshold targeted search and convert to an equivalent XML string
-    GCN VOEvent.
+def _kafka_to_voevent(alert, search):
+    """Parse an alert in JSON format sent via Kafka from public GCN Notices or
+    from a MOU partner in our joint subthreshold targeted search, converting
+    to an equivalent XML string VOEvent.
 
     Parameters
     ----------
     alert : dict
         Kafka alert packet
+    search : list
+        External trigger search
 
     Returns
     -------
@@ -750,48 +782,80 @@ def _kafka_to_voevent(alert):
 
     """
     # Define basic values
-    pipeline = alert['mission']
+    pipeline = alert.get('mission')
+    if pipeline is None:
+        if 'instrument' not in alert:
+            raise ValueError("Alert does not contain pipeline information.")
+        elif alert['instrument'].lower() == 'wxt':
+            # FIXME: Replace with official GraceDB name once added
+            pipeline = 'EinsteinProbe'
+
+    # Get times, adding missing
     start_time = alert['trigger_time']
-    alert_time = alert['alert_datetime']
-    far = alert['far']
-    duration = alert['rate_duration']
+    alert_time = alert.get('alert_datetime', start_time)
+    # If missing, add character onto end
+    if not start_time.endswith('Z'):
+        start_time += 'Z'
+    if not alert_time.endswith('Z'):
+        alert_time += 'Z'
+
+    # Try to get FAR is there
+    far = alert.get('far')
+
+    # Go through list of possible values for durations, 0. if no keys match
+    duration = 0.
+    duration_params = ['rate_duration', 'image_duration']
+    for param in duration_params:
+        if param in alert.keys():
+            duration = alert[param]
+            break
+
+    # Form ID out of given list
     id = '_'.join(str(x) for x in alert['id'])
-    # Use central time since starting time is not well measured
-    central_time = \
-        Time(start_time, format='isot', scale='utc').to_value('gps') + \
-        .5 * duration
-    trigger_time = \
-        str(Time(central_time, format='gps', scale='utc').isot) + 'Z'
+    if search == 'SubGRBTargeted':
+        # Use central time since starting time is not well measured
+        central_time = \
+            Time(start_time, format='isot', scale='utc').to_value('gps') + \
+            .5 * duration
+        trigger_time = \
+            str(Time(central_time, format='gps', scale='utc').isot) + 'Z'
+    else:
+        trigger_time = start_time
 
     # sky localization may not be available
     ra = alert.get('ra')
     dec = alert.get('dec')
-    # Try to get dec first then ra, None if both misssing
-    error = alert.get('dec_uncertainty')
-    if error is None:
-        error = alert.get('ra_uncertainty')
-    # Argument should be list if not None
+
+    # Go through list of possible values for error, None if no keys match
+    error = None
+    error_params = ['dec_uncertainty', 'ra_uncertainty', 'ra_dec_error']
+    for param in error_params:
+        if param in alert.keys():
+            error = alert[param]
+            break
+
+    # If argument is list, get value
     if isinstance(error, list):
         error = error[0]
+
     # if any missing sky map info, set to zeros so will be ignored later
     if ra is None or dec is None or error is None:
         ra, dec, error = 0., 0., 0.
 
     # Load template
-    fname = str(Path(__file__).parent /
-                '../tests/data/{}_subgrbtargeted_template.xml'.format(
-                    pipeline.lower()))
+    fname = \
+        str(Path(__file__).parent /
+            f'../tests/data/{pipeline.lower()}_{search.lower()}_template.xml')
     root = etree.parse(fname)
 
     # Update template values
     # Change ivorn to indicate this is a subthreshold targeted event
     root.xpath('.')[0].attrib['ivorn'] = \
-        'ivo://lvk.internal/{0}#targeted_subthreshold-{1}'.format(
-            pipeline.lower(), trigger_time).encode()
-
-    # Update ID
-    root.find("./What/Param[@name='TrigID']").attrib['value'] = \
-        id.encode()
+        'ivo://lvk.internal/{0}#{1}-{2}'.format(
+            pipeline.lower(),
+            ('targeted_subthreshold' if search == 'SubGRBTargeted'
+             else search.lower()),
+            trigger_time).encode()
 
     # Change times to chosen time
     root.find("./Who/Date").text = str(alert_time).encode()
@@ -799,11 +863,27 @@ def _kafka_to_voevent(alert):
                "ObservationLocation/AstroCoords/Time/TimeInstant/"
                "ISOTime")).text = str(trigger_time).encode()
 
-    root.find("./What/Param[@name='FAR']").attrib['value'] = \
-        str(far).encode()
+    # Update ID and duration
+    # SVOM has separate template, use different paths
+    if pipeline == 'SVOM':
+        root.find(("./What/Group[@name='Svom_Identifiers']"
+                   "/Param[@name='Burst_Id']")).attrib['value'] = \
+            id.encode()
 
-    root.find("./What/Param[@name='Integ_Time']").attrib['value'] = \
-        str(duration).encode()
+        root.find(("./What/Group[@name='Detection_Info']"
+                  "/Param[@name='Timescale']")).attrib['value'] = \
+            str(duration).encode()
+    # Every other type uses similar format
+    else:
+        root.find("./What/Param[@name='TrigID']").attrib['value'] = \
+            id.encode()
+
+        root.find("./What/Param[@name='Integ_Time']").attrib['value'] = \
+            str(duration).encode()
+
+    if far is not None:
+        root.find("./What/Param[@name='FAR']").attrib['value'] = \
+            str(far).encode()
 
     # Sky position
     root.find(("./WhereWhen/ObsDataLocation/"

@@ -81,7 +81,7 @@ def create_upload_external_event(gpstime, pipeline, ext_search):
 
         # Return VOEvent for testing until GraceDB natively ingests kafka
         # alerts
-        return external_triggers._kafka_to_voevent(alert)[0]
+        return external_triggers._kafka_to_voevent(alert, ext_search)[0]
 
     # Otherwise modify respective VOEvent template
     else:
