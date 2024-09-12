@@ -466,7 +466,9 @@ def handle_snews_igwn_alert(alert):
 
 
 @alerts.handler('fermi_targeted',
-                'swift_targeted')
+                'swift_targeted',
+                queue='exttrig',
+                shared=False)
 def handle_targeted_kafka_alert(alert):
     """Parse an alert sent via Kafka from a MOU partner in our joint
     subthreshold targeted search.
@@ -621,7 +623,8 @@ def _relaunch_raven_pipeline_with_skymaps(superevent, ext_event, graceid,
     canvas.delay()
 
 
-@app.task(shared=False)
+@app.task(shared=False,
+          queue='exttrig')
 def _create_replace_external_event_and_skymap(
         events, payload, search, pipeline,
         label=None, ext_group='External', notice_date=None, notice_type=None,
