@@ -6,7 +6,7 @@ Quick start
 These instructions are suitable for installing GWCelery for development and
 testing on any machine.
 
-GWCelery requires Python >= 3.7 and a Linux or UNIX-like operating system. It
+GWCelery requires Python >= 3.10 and a Linux or UNIX-like operating system. It
 does not support Windows.
 
 To install
