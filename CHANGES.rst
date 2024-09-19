@@ -28,6 +28,9 @@ Changelog
     external sky map to zero. This at least prevents erroneous results when
     we receive a sky map with these invalid values.
 
+-   Roll back ligo-followup-advocate to 1.2.9 until SSM triggers are planned
+    in production.
+
 2.5.1 "Cactus cat" (2024-08-20)
 -------------------------------
 
