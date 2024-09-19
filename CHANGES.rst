@@ -6,6 +6,9 @@ Changelog
 
 -   Update bilby_pipe to v1.4.2.
 
+-   Roll back ligo-followup-advocate to 1.2.9 until SSM triggers are planned
+    in production.
+
 2.5.1 "Cactus cat" (2024-08-20)
 -------------------------------
 

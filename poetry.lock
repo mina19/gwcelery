@@ -2593,13 +2593,13 @@ scikit-learn = "1.2.1"
 
 [[package]]
 name = "ligo-followup-advocate"
-version = "1.2.10"
+version = "1.2.9"
 description = "LIGO/Virgo/KAGRA Follow-up Advocate Tools"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "ligo_followup_advocate-1.2.10-py3-none-any.whl", hash = "sha256:ff291b0b08d9b2e3b9458e30d8df4412bf28734dd7e06fcea3da299abf1b6f6e"},
-    {file = "ligo_followup_advocate-1.2.10.tar.gz", hash = "sha256:8fabdc381bbfc374bbf3c6cc6a97a8b69a5d801024c2f39472c1752263a37ef8"},
+    {file = "ligo_followup_advocate-1.2.9-py3-none-any.whl", hash = "sha256:342aca8f41b3e16032a9c10861c2c183e4c7565abb1248fb5a8ab9cbf123cee8"},
+    {file = "ligo_followup_advocate-1.2.9.tar.gz", hash = "sha256:d6e7eaa923eb5143e4bb3da2459755464d6cdf43fe352addb8e97b9accdccfeb"},
 ]
 
 [package.dependencies]
@@ -6127,4 +6127,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.12"
-content-hash = "f3c429787d0d094fe9cf2443481832303e862bbdbb258735a5ce13c1437fb70b"
+content-hash = "30356fcdc4742e5527d7dab6acf00c5cfcd64c590ea0bedde29f10485b79cc3b"
