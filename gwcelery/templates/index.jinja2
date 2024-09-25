@@ -647,7 +647,7 @@
     /* Enable typeahead completion for superevent ID fields. */
     $("[name='superevent_id']").typeahead({
         highlight: true,
-        minLength: 0
+        minLength: 1
     }, {
         source: new Bloodhound({
             queryTokenizer: Bloodhound.tokenizers.whitespace,
@@ -674,7 +674,7 @@
 
         $(this).typeahead({
             highlight: true,
-            minLength: 0
+            minLength: 1
         }, {
             source: bloodhound,
             display: 'graceid',
@@ -726,7 +726,7 @@
 
         $(this).typeahead({
             highlight: true,
-            minLength: 0
+            minLength: 1
         }, {
             source: bloodhound
         });
@@ -759,7 +759,7 @@
 
         $(this).typeahead({
             highlight: true,
-            minLength: 0
+            minLength: 1
         }, {
             source: bloodhound
         });
