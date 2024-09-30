@@ -6105,4 +6105,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.12"
-content-hash = "a52faa8b501c5dde0ae6b756c508a25bf34cdc875648a6ecb403966ce3967ab5"
+content-hash = "da87a33976fad98d4163bc63c5ca72706016b8957ebb6ecad82ff5ddcc705741"
