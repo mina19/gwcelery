@@ -13,9 +13,9 @@ References
 import os
 import subprocess
 import tempfile
-from distutils.dir_util import mkpath
 
 import lxml.etree
+import platformdirs
 
 from .. import app
 
@@ -35,8 +35,7 @@ def _escape_args(args):
 
 def _mklog(suffix):
     """Create a unique path for an HTCondor log."""
-    condor_dir = os.path.expanduser('~/.cache/condor')
-    mkpath(condor_dir)
+    condor_dir = platformdirs.user_cache_dir('condor', ensure_exists=True)
     with tempfile.NamedTemporaryFile(dir=condor_dir, suffix=suffix) as f:
         return f.name
 

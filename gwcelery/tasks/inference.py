@@ -4,10 +4,10 @@ import json
 import os
 import subprocess
 import urllib
-from distutils.dir_util import mkpath
-from distutils.spawn import find_executable
+from shutil import which
 
 import numpy as np
+import platformdirs
 from bilby_pipe.bilbyargparser import BilbyConfigFileParser
 from bilby_pipe.utils import convert_string_to_dict
 from celery import group
@@ -124,7 +124,7 @@ def prepare_lalinference_ini(event, superevent_id):
         'webdir': os.path.join(
             app.conf['pe_results_path'], superevent_id, 'lalinference'
         ),
-        'paths': [{'name': name, 'path': find_executable(executable)}
+        'paths': [{'name': name, 'path': which(executable)}
                   for name, executable in executables.items()],
         'h1_calibration': _find_appropriate_cal_env(
             trigtime,
@@ -141,7 +141,7 @@ def prepare_lalinference_ini(event, superevent_id):
         'mc': min([sngl['mchirp'] for sngl in singleinspiraltable]),
         'q': min([sngl['mass2'] / sngl['mass1']
                   for sngl in singleinspiraltable]),
-        'mpirun': find_executable('mpirun')
+        'mpirun': which('mpirun')
     }
     return ini_template.render(ini_settings)
 
@@ -933,8 +933,7 @@ def start_pe(event, superevent_id, pe_pipeline):
 
     """
     # make an event directory
-    pipeline_dir = os.path.expanduser('~/.cache/{}'.format(pe_pipeline))
-    mkpath(pipeline_dir)
+    pipeline_dir = platformdirs.user_cache_dir(pe_pipeline, ensure_exists=True)
     event_dir = os.path.join(pipeline_dir, superevent_id)
 
     if pe_pipeline == 'bilby':
@@ -986,9 +985,8 @@ def start_pe(event, superevent_id, pe_pipeline):
         analyses = [pe_pipeline]
         condor_submit_task = condor.submit
 
-    os.mkdir(event_dir)
     for rundir, kwargs, analysis in zip(rundirs, kwargs_list, analyses):
-        mkpath(rundir)
+        os.makedirs(rundir, exist_ok=True)
 
         gracedb.upload.delay(
             filecontents=None, filename=None, graceid=superevent_id,

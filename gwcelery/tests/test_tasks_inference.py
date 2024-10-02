@@ -632,8 +632,8 @@ def test_start_pe(monkeypatch, tmp_path, pipeline):
             submit_rapidpe = Mock(side_effect=mock_condor_submit)
             dag_finished = Mock()
             monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', Mock())
-            monkeypatch.setattr('os.path.expanduser', Mock(
-                return_value=str(tmp_path)))
+            monkeypatch.setattr('platformdirs.user_cache_dir',
+                                Mock(return_value=str(tmp_path)))
             monkeypatch.setattr('gwcelery.tasks.inference.dag_prepare_task',
                                 dag_prepare_task)
             monkeypatch.setattr(
@@ -660,7 +660,7 @@ def test_start_pe(monkeypatch, tmp_path, pipeline):
                              name="condor_submit")
         dag_finished = Mock(name="dag_finished")
         monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', Mock())
-        monkeypatch.setattr('distutils.dir_util.mkpath',
+        monkeypatch.setattr('platformdirs.user_cache_dir',
                             Mock(return_value=str(tmp_path)))
         monkeypatch.setattr('gwcelery.tasks.inference.dag_prepare_task',
                             dag_prepare_task)
@@ -679,7 +679,8 @@ def test_start_pe(monkeypatch, tmp_path, pipeline):
     'host', ["gracedb-playground.ligo.org", "gracedb.ligo.org"])
 def test_bbh_rate_limit(monkeypatch, tmp_path, host):
     monkeypatch.setitem(app.conf, 'gracedb_host', host)
-    monkeypatch.setattr('os.path.expanduser', Mock(return_value=str(tmp_path)))
+    monkeypatch.setattr(
+        'platformdirs.user_cache_dir', Mock(return_value=str(tmp_path)))
     event = {'gpstime': 1187008882, 'graceid': 'G1234',
              'extra_attributes': {'CoincInspiral': {'mchirp': 20}}}
     for i in range(6):
@@ -707,7 +708,7 @@ def test_bbh_rate_limit(monkeypatch, tmp_path, host):
     condor_submit = Mock(side_effect=mock_condor_submit)
     dag_finished = Mock()
     monkeypatch.setattr('gwcelery.tasks.gracedb.upload.run', Mock())
-    monkeypatch.setattr('distutils.dir_util.mkpath',
+    monkeypatch.setattr('platformdirs.user_cache_dir',
                         Mock(return_value=str(tmp_path)))
     monkeypatch.setattr('gwcelery.tasks.inference.dag_prepare_task',
                         dag_prepare_task)

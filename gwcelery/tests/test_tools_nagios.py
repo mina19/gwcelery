@@ -1,5 +1,5 @@
-from distutils.spawn import find_executable
 from pathlib import Path
+from shutil import which
 from unittest.mock import Mock
 
 import lal
@@ -87,7 +87,7 @@ def test_nagios(capsys, monkeypatch, request, socket_enabled, starter,
 
     # broker, no worker
 
-    redis_server = find_executable('redis-server')
+    redis_server = which('redis-server')
     if redis_server is None:
         pytest.skip('redis-server is not installed')
     starter.exec_process(
