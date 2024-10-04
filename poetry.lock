@@ -367,13 +367,13 @@ numpy = "*"
 
 [[package]]
 name = "bilby-pipe"
-version = "1.3.2"
+version = "1.4.2"
 description = "Automating the running of bilby for gravitational wave signals"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "bilby_pipe-1.3.2-py3-none-any.whl", hash = "sha256:f317d4dc31643a53dbe38e5e7a163e072bc607633a7381e3c5ee9061fa7f8ad8"},
-    {file = "bilby_pipe-1.3.2.tar.gz", hash = "sha256:ee4a49b3911a8d2df7864781aa4b3d00b1cef78221bfa0f44968d346e5764032"},
+    {file = "bilby_pipe-1.4.2-py3-none-any.whl", hash = "sha256:13d7eead40fdf86f924f6410b2d68b5747bc41c42bffb00dc438f37f30c55240"},
+    {file = "bilby_pipe-1.4.2.tar.gz", hash = "sha256:ccf20793d59e0ad10be92e554296f791145f9e4572511d58a25aa08063e976c7"},
 ]
 
 [package.dependencies]
@@ -389,7 +389,7 @@ jinja2 = "*"
 ligo-gracedb = "*"
 matplotlib = "*"
 numpy = "*"
-pesummary = ">=0.13.10"
+pesummary = ">=1.3.1"
 plotly = "*"
 pycondor = ">=0.6"
 python-ligo-lw = ">=1.8.0"
@@ -2867,7 +2867,6 @@ files = [
     {file = "lxml-5.2.1-cp36-cp36m-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:c38d7b9a690b090de999835f0443d8aa93ce5f2064035dfc48f27f02b4afc3d0"},
     {file = "lxml-5.2.1-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5670fb70a828663cc37552a2a85bf2ac38475572b0e9b91283dc09efb52c41d1"},
     {file = "lxml-5.2.1-cp36-cp36m-manylinux_2_28_x86_64.whl", hash = "sha256:958244ad566c3ffc385f47dddde4145088a0ab893504b54b52c041987a8c1863"},
-    {file = "lxml-5.2.1-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:b6241d4eee5f89453307c2f2bfa03b50362052ca0af1efecf9fef9a41a22bb4f"},
     {file = "lxml-5.2.1-cp36-cp36m-musllinux_1_1_aarch64.whl", hash = "sha256:2a66bf12fbd4666dd023b6f51223aed3d9f3b40fef06ce404cb75bafd3d89536"},
     {file = "lxml-5.2.1-cp36-cp36m-musllinux_1_1_ppc64le.whl", hash = "sha256:9123716666e25b7b71c4e1789ec829ed18663152008b58544d95b008ed9e21e9"},
     {file = "lxml-5.2.1-cp36-cp36m-musllinux_1_1_s390x.whl", hash = "sha256:0c3f67e2aeda739d1cc0b1102c9a9129f7dc83901226cc24dd72ba275ced4218"},
@@ -3639,40 +3638,40 @@ tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
 
 [[package]]
 name = "pesummary"
-version = "1.2.0"
+version = "1.3.2"
 description = "Python package to produce summary pages for Parameter estimation codes"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "pesummary-1.2.0-py3-none-any.whl", hash = "sha256:b018236b783d1de2f353ad0a5fc63f5af13676adf94e51bfbbd7306f58c65d84"},
-    {file = "pesummary-1.2.0.tar.gz", hash = "sha256:f6c21d6c6607a0b34214784370c19ac846ef1655c8a4289febcb4dc29161cb63"},
+    {file = "pesummary-1.3.2-py3-none-any.whl", hash = "sha256:45ba493630aa0e37dda81b8aab5052355bff501767d088f0f5418b0343873cd8"},
+    {file = "pesummary-1.3.2.tar.gz", hash = "sha256:83c5a46ae1a8eeffb27f475037478785f75d4513616b5da769219cf73123ad1d"},
 ]
 
 [package.dependencies]
-astropy = ">=4.0"
+astropy = ">=5.0"
 corner = "*"
 deepdish = "*"
-gwpy = ">=2.1.2"
+gwpy = ">=3.0.6"
 h5py = "*"
 lalsuite = ">7.11"
 ligo-gracedb = "*"
-matplotlib = "<3.8.0"
+matplotlib = ">=3.6.0"
 numpy = ">=1.15.4"
 pandas = "*"
 pillow = "*"
 plotly = "*"
 pygments = "*"
-scipy = ">=1.8.0"
+scipy = ">=1.8.0,<1.14.0"
 seaborn = ">=0.12.2,<0.13.0"
 statsmodels = "*"
 tables = "*"
 tqdm = ">=4.44.0"
 
 [package.extras]
-docs = ["Sphinx (>=4.0.0,!=5.0.0)", "ipykernel", "nbsphinx", "requests", "sphinx-argparse", "sphinx-panels", "sphinx-rtd-theme", "sphinxcontrib-programoutput"]
+docs = ["Sphinx (>=4.0.0,!=5.0.0)", "ipykernel", "nbsphinx", "pycbc", "requests", "sphinx-argparse", "sphinx-panels", "sphinx-rtd-theme", "sphinxcontrib-programoutput"]
 extras = ["GitPython", "bilby (>=1.1.1)", "coloredlogs", "gwosc", "jupyter-client", "ligo-em-bright (>=1.1.5)", "ligo.skymap", "nbformat", "pepredicates (>=0.0.3)"]
 lint = ["flake8 (>=3.7.0)", "flake8-bandit"]
-test = ["astropy (>=4.0,!=4.3.0)", "beautifulsoup4", "bilby-pipe", "coverage", "coverage-badge", "cython (>=0.28.5)", "markupsafe (==2.0.1)", "pycbc (>=2.0.3)", "pytest (>=3.0.0)", "pytest-cov", "pytest-rerunfailures", "pytest-xdist", "requests", "testfixtures"]
+test = ["astropy (>=4.0,!=4.3.0)", "beautifulsoup4", "bilby-pipe", "coverage (<=7.4.4)", "coverage-badge", "cython (>=0.28.5)", "markupsafe (==2.0.1)", "pycbc (>=2.0.3)", "pytest (>=3.0.0)", "pytest-cov", "pytest-rerunfailures", "pytest-xdist", "requests", "testfixtures"]
 
 [[package]]
 name = "pexpect"
@@ -6128,4 +6127,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.12"
-content-hash = "85e107130de41895f0a1fb765e1a2b9d9d1917268bfebc11700c3d0444177dfb"
+content-hash = "f3c429787d0d094fe9cf2443481832303e862bbdbb258735a5ce13c1437fb70b"
