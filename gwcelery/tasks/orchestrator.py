@@ -413,7 +413,7 @@ def handle_burst_event(alert):
     filename = alert['data']['filename']
 
     # Pipeline is uploading a flat resultion skymap file
-    # Converting to a multiirder ones with proper name.
+    # Converting to a multiorder ones with proper name.
     # FIXME: Remove block when CWB starts to upload skymaps
     # in multiorder format
     if filename.endswith('.fits.gz'):
