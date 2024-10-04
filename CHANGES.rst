@@ -4,6 +4,8 @@ Changelog
 2.5.2 (unreleased)
 ------------------
 
+-   Update bilby_pipe to v1.4.2.
+
 -   Enabled SSM triggers and HasSSM source property
 
 -   Rework determining the preferred external event using a keyfunc method
