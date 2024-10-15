@@ -64,7 +64,7 @@ def plot(contents):
     properties = dict(sorted(properties.items(), reverse=True))
     probs, names = list(properties.values()), list(properties.keys())
 
-    with plt.style.context('seaborn-white'):
+    with plt.style.context('seaborn-v0_8-white'):
         fig, ax = plt.subplots(figsize=(3, 1))
         ax.barh(names, probs)
         ax.barh(names, [1.0 - p for p in probs],

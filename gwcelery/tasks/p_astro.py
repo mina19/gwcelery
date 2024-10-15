@@ -150,7 +150,7 @@ def plot(contents):
     probs, names = zip(
         *sorted(zip(classification.values(), classification.keys())))
 
-    with plt.style.context('seaborn-white'):
+    with plt.style.context('seaborn-v0_8-white'):
         fig, ax = plt.subplots(figsize=(2.5, 2))
         ax.barh(names, probs)
         for i, prob in enumerate(probs):
