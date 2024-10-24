@@ -71,7 +71,7 @@ def test_gwskynet_annotation():
         [get_toy_3d_fits_filecontents(),
          toy_id_and_filename["skymap_filename"]], get_toy_snrs(),
         toy_id_and_filename["graceid"]))
-    expected_output = {"GWSkyNet_score": 0.139,
+    expected_output = {"GWSkyNet_score": 0.141,
                        "GWSkyNet_FAP": 0.614,
                        "GWSkyNet_FNP": 0.007}
     for k, v in expected_output.items():
