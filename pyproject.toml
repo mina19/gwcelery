@@ -69,7 +69,7 @@ gwpy = ">=3.0.8"  # https://git.ligo.org/emfollow/gwcelery/-/issues/183
 GWSkyNet = "2.4.1" # https://git.ligo.org/emfollow/gwcelery/-/issues/774
 healpy = "*"
 hop-client = ">=0.7.0"  # https://github.com/scimma/hop-client/pull/176
-igwn-alert = ">=0.2.2"
+igwn-alert = ">=0.6.3"  # https://git.ligo.org/computing/igwn-alert/client/-/merge_requests/30
 igwn-gwalert-schema = "^1.0.0"
 imapclient = "*"
 importlib-metadata = { version = "*"}
