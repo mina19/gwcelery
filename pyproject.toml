@@ -81,7 +81,7 @@ ligo-gracedb = ">=2.7.5"  # https://git.ligo.org/lscsoft/gracedb-client/-/issues
 ligo-raven = ">=3.2,<4.0"
 ligo-segments = "*"
 "ligo.em-bright" = ">=1.2.1"  # https://git.ligo.org/emfollow/gwcelery/-/issues/816
-"ligo.skymap" = ">=2.1.1"
+"ligo.skymap" = ">=2.1.2"  # https://git.ligo.org/lscsoft/ligo.skymap/-/merge_requests/441
 lscsoft-glue = "*"
 lxml = "*"
 numba = ">=0.56"  # Poetry update chooses an old version of numba and its deps that break the python3.9 and 3.10 build tests if this is not specified; dependence on numba comes from rift. Version chosen because it adds python 3.10 support. This requirement can be dropped here if RIFT adds it https://git.ligo.org/rapidpe-rift/rift/-/issues/24
