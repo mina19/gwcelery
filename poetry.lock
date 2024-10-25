@@ -3159,7 +3159,8 @@ files = [
 [package.dependencies]
 numpy = [
     {version = ">=1.21.2", markers = "python_version >= \"3.10\" and python_version < \"3.11\""},
-    {version = ">=1.23.3", markers = "python_version >= \"3.11\""},
+    {version = ">=1.23.3", markers = "python_version >= \"3.11\" and python_version < \"3.12\""},
+    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
 ]
 
 [package.extras]
@@ -3655,6 +3656,7 @@ files = [
 numpy = [
     {version = ">=1.22.4", markers = "python_version < \"3.11\""},
     {version = ">=1.23.2", markers = "python_version == \"3.11\""},
+    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -5602,7 +5604,10 @@ h5py = ">=3.10.0"
 keras = ">=3.2.0"
 libclang = ">=13.0.0"
 ml-dtypes = ">=0.3.1,<0.5.0"
-numpy = {version = ">=1.23.5,<2.0.0", markers = "python_version <= \"3.11\""}
+numpy = [
+    {version = ">=1.23.5,<2.0.0", markers = "python_version <= \"3.11\""},
+    {version = ">=1.26.0,<2.0.0", markers = "python_version >= \"3.12\""},
+]
 opt-einsum = ">=2.3.2"
 packaging = "*"
 protobuf = ">=3.20.3,<4.21.0 || >4.21.0,<4.21.1 || >4.21.1,<4.21.2 || >4.21.2,<4.21.3 || >4.21.3,<4.21.4 || >4.21.4,<4.21.5 || >4.21.5,<5.0.0dev"
@@ -5643,7 +5648,10 @@ h5py = ">=3.10.0"
 keras = ">=3.2.0"
 libclang = ">=13.0.0"
 ml-dtypes = ">=0.3.1,<0.5.0"
-numpy = {version = ">=1.23.5,<2.0.0", markers = "python_version <= \"3.11\""}
+numpy = [
+    {version = ">=1.23.5,<2.0.0", markers = "python_version <= \"3.11\""},
+    {version = ">=1.26.0,<2.0.0", markers = "python_version >= \"3.12\""},
+]
 opt-einsum = ">=2.3.2"
 packaging = "*"
 protobuf = ">=3.20.3,<4.21.0 || >4.21.0,<4.21.1 || >4.21.1,<4.21.2 || >4.21.2,<4.21.3 || >4.21.3,<4.21.4 || >4.21.4,<4.21.5 || >4.21.5,<5.0.0dev"
@@ -6206,5 +6214,5 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.10,<3.12"
-content-hash = "f474e3b5d8071d5590bb4dca832c9c87ca09143f41d200edb15791458947bd31"
+python-versions = "^3.10,<3.13"
+content-hash = "f7af2b834aafac0b699679ff34483277d128ff710b3770073e3a953535ee69d9"

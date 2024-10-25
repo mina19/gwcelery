@@ -38,12 +38,10 @@ def test_pick_coinc():
 def test_upload_event(mock_create_signoff, mock_get_superevents,
                       mock_create_event):
     num = 16 if app.conf['mock_events_simulate_multiple_uploads'] else 1
-    coinc = pick_coinc()
 
     upload_event()
 
-    mock_create_event.has_calls(
-            [call(coinc, 'MDC', 'gstlal', 'CBC') for count in range(num)])
+    assert mock_create_event.call_count == num
     mock_get_superevents.assert_called_once_with('MDC event: M1234')
     mock_create_signoff.assert_called_once()
     msg = ('If this had been a real gravitational-wave event candidate, '
