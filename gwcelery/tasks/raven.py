@@ -384,8 +384,8 @@ def update_coinc_far(coinc_far_dict, superevent, ext_event):
         gracedb.update_superevent(
             superevent_id,
             em_type=ext_event['graceid'],
-            time_coinc_far=coinc_far_dict['temporal_coinc_far'],
-            space_coinc_far=coinc_far_dict['spatiotemporal_coinc_far'])
+            time_coinc_far=coinc_far_dict.get('temporal_coinc_far'),
+            space_coinc_far=coinc_far_dict.get('spatiotemporal_coinc_far'))
     return coinc_far_dict
 
 
@@ -423,10 +423,10 @@ def keyfunc(event_far):
     search_rank = app.conf['external_search_preference'].get(
         event['search'], -1)
     # Map so more significant FAR is a larger number
-    spacetime_far = coinc_far['spatiotemporal_coinc_far']
+    spacetime_far = coinc_far.get('spatiotemporal_coinc_far')
     spacetime_rank = \
         -spacetime_far if spacetime_far is not None else -float('inf')
-    temporal_far = coinc_far['temporal_coinc_far']
+    temporal_far = coinc_far.get('temporal_coinc_far')
     temporal_rank = \
         -temporal_far if temporal_far is not None else -float('inf')
 

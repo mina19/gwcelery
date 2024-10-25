@@ -438,8 +438,11 @@ def test_update_superevent(monkeypatch,
     superevent = {'superevent_id': superevent_id,
                   'labels': []}
     ext_event = _mock_get_ext_event('E100')
-    coinc_far_dict = {'temporal_coinc_far': new_time_far,
-                      'spatiotemporal_coinc_far': new_space_far}
+    if search == 'Supernova':
+        coinc_far_dict = {}
+    else:
+        coinc_far_dict = {'temporal_coinc_far': new_time_far,
+                          'spatiotemporal_coinc_far': new_space_far}
     raven.update_coinc_far(coinc_far_dict, superevent, ext_event)
     if result:
         mock_update_superevent.assert_called_with(
