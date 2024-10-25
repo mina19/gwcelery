@@ -1,6 +1,6 @@
 <?xml version = '1.0' encoding = 'UTF-8'?>
 <voe:VOEvent
-      ivorn="ivo://nasa.gsfc.gcn/Fermi#GBM_Flt_Pos_2018-05-24T09:58:26.31_548848711_0-566"
+      ivorn="ivo://nasa.gsfc.gcn/Fermi#GBM_Fin_Pos_2018-05-24T09:58:26.31_548848711_0-566"
       role="observation" version="2.0"
       xmlns:voe="http://www.ivoa.net/xml/VOEvent/v2.0"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -17,7 +17,7 @@
     <Description>This VOEvent message was created with GCN VOE version: 1.25 07feb18</Description>
   </Who>
   <What>
-    <Param name="Packet_Type"    value="111" />
+    <Param name="Packet_Type"    value="115" />
     <Param name="Pkt_Ser_Num"    value="15" />
     <Param name="TrigID"         value="548848711" ucd="meta.id" />
     <Param name="Sequence_Num"   value="0" ucd="meta.id.part" />

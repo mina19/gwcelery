@@ -12,6 +12,7 @@ from . import data
 
 @pytest.mark.parametrize('pipeline, path',
                          [['Fermi', 'fermi_grb_gcn.xml'],
+                          ['Fermi_final', 'fermi_final_gcn.xml'],
                           ['INTEGRAL', 'integral_grb_gcn.xml'],
                           ['INTEGRAL_MDC', 'integral_mdc_gcn.xml']])
 @patch('gwcelery.tasks.external_skymaps.create_upload_external_skymap.run')
@@ -41,7 +42,7 @@ def test_handle_create_grb_event(mock_create_event,
     mock_create_event.assert_called_once_with(
         filecontents=text,
         search='GRB',
-        pipeline='INTEGRAL' if pipeline == 'INTEGRAL_MDC' else pipeline,
+        pipeline=pipeline.split('_')[0],
         group='External',
         labels=None)
     calls = [
@@ -65,8 +66,10 @@ def test_handle_create_grb_event(mock_create_event,
             ['data_quality'])
     ]
     mock_upload.assert_has_calls(calls, any_order=True)
-    gcn_type_dict = {'Fermi': 115, 'INTEGRAL': 53, 'INTEGRAL_MDC': 53}
+    gcn_type_dict = {'Fermi': 111, 'Fermi_final': 115,
+                     'INTEGRAL': 53, 'INTEGRAL_MDC': 53}
     time_dict = {'Fermi': '2018-05-24T18:35:45',
+                 'Fermi_final': '2018-05-24T18:35:45',
                  'INTEGRAL': '2017-02-03T19:00:05',
                  'INTEGRAL_MDC': '2023-04-04T06:31:24'}
     mock_create_upload_external_skymap.assert_called_once_with(
@@ -90,7 +93,7 @@ def test_handle_create_grb_event(mock_create_event,
          },
         gcn_type_dict[pipeline], time_dict[pipeline])
     # If Fermi FINAL notice, check we try to grab sky map from HEASARC
-    if pipeline == 'Fermi':
+    if 'final' in path:
         mock_get_upload_external_skymap.assert_called_once_with(
             {'graceid': 'E1',
              'gpstime': 1,

@@ -86,11 +86,11 @@ def test_handle_create_grb_event(monkeypatch,
                           labels=None))
     if expected_result:
         mock_create_event.assert_has_calls(calls)
-        if ext_search == 'SubGRB' or \
-                ('Fermi' in pipelines and ext_search == 'GRB'):
+        if ext_search == 'SubGRB':
             mock_get_upload_external_skymap.assert_called()
         else:
             mock_create_upload_external_skymap.assert_called()
+            mock_get_upload_external_skymap.assert_not_called()
     else:
         mock_create_event.assert_not_called()
         mock_create_upload_external_skymap.assert_not_called()
