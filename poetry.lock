@@ -2641,16 +2641,16 @@ six = "*"
 
 [[package]]
 name = "ligo-skymap"
-version = "2.1.1"
+version = "2.1.2"
 description = "Tools for reading, writing, manipulating, and making LIGO/Virgo/KAGRA sky maps"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "ligo.skymap-2.1.1-cp310-abi3-macosx_11_0_x86_64.whl", hash = "sha256:9829111a173d274a8cedb42999af76f1fd45ef5a3c718b0a22457235cebda9e0"},
-    {file = "ligo.skymap-2.1.1-cp310-abi3-macosx_12_0_arm64.whl", hash = "sha256:baaeb83f8f92dcd9bfbb986dc89b7ed8fb0d849d0297543110f624b6732d7306"},
-    {file = "ligo.skymap-2.1.1-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:dd470fecc3e29842cc6f80ccbd0c36538a1ae4a4dad80481bab1769bcef5974d"},
-    {file = "ligo.skymap-2.1.1-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:cd7abf488d7382369a6c13c53e5a51aac3207c2dab315457a2339fc38858c70e"},
-    {file = "ligo_skymap-2.1.1.tar.gz", hash = "sha256:9c1da8aaecc486cf2d750d6dd78755fb758c81f231b7bb0382cd76723e32d16d"},
+    {file = "ligo.skymap-2.1.2-cp310-abi3-macosx_11_0_x86_64.whl", hash = "sha256:2a7ab387e32fdecf5b147e773e476bf71836bd7bfed311739b293472e275aa10"},
+    {file = "ligo.skymap-2.1.2-cp310-abi3-macosx_12_0_arm64.whl", hash = "sha256:27a618df87f2be5939cd63387340b5490632ba326f6d4219b9106babc55d64b8"},
+    {file = "ligo.skymap-2.1.2-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:004c3f3344a46c8422a87b96ed8fed081d288fe50f2c8b210655ba34a6faaff5"},
+    {file = "ligo.skymap-2.1.2-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:63de2b2fcf28062afabf57b8c45319e0769985e04ce6d9d91f1ad992402141ed"},
+    {file = "ligo_skymap-2.1.2.tar.gz", hash = "sha256:b1472528dd1046615569c20a96dc142c67df188c4768b25a7281f333db31923d"},
 ]
 
 [package.dependencies]
@@ -6217,4 +6217,4 @@ test = ["fastavro", "pytest-celery", "pytest-cov", "pytest-flask", "pytest-socke
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.12"
-content-hash = "dc9f66a216b04ba057430614fbe74b1676108091285af9b7ffe0b82886d01963"
+content-hash = "555bb98eee544a639c2c2acee417789b7356f7e40482927bcc56f5967087cc76"
