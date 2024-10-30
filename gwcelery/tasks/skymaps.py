@@ -151,7 +151,7 @@ def plot_volume(filecontents):
         return pngfile.read()
 
 
-@app.task(shared=False)
+@app.task(shared=False, queue='highmem')
 def flatten(filecontents, filename):
     """Convert a HEALPix FITS file from multi-resolution UNIQ indexing to the
     more common IMPLICIT indexing using the command-line tool
@@ -165,7 +165,7 @@ def flatten(filecontents, filename):
         return open(outfilename, 'rb').read()
 
 
-@app.task(shared=False)
+@app.task(shared=False, queue='highmem')
 def unflatten(filecontents, filename):
     """Convert a HEALPix FITS file to multi-resolution UNIQ indexing from
     the more common IMPLICIT indexing using the command-line tool

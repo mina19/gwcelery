@@ -51,6 +51,10 @@ arguments = "gwcelery worker -l info -n gwcelery-em-bright-worker@%h -f %n.log -
 description = gwcelery-em-bright-worker
 queue
 
+arguments = "gwcelery worker -l info -n gwcelery-highmem-worker@%h -f %n.log -Q highmem -c 2 --prefetch-multiplier 1"
+description = gwcelery-highmem-worker
+queue
+
 # Jobs defined below this point will run on specially configured cluster nodes.
 +Online_EMFollow = True
 Requirements = (TARGET.Online_EMFollow =?= True)

@@ -35,6 +35,12 @@ Changelog
     queue. The dedicated ``gwskynet`` queue was necessary due to high memory
     usage that was fixed in GWSkyNet 2.5.1.
 
+-   Reallocate the tasks for flattening and unflattening sky maps to a
+    dedicated Celery queue for high memory usage tasks. This should prevent
+    out-of-memory conditions that had resulted from these tasks being routed in
+    round-robin fashion to workers in the high-concurrency general-purpose
+    queue.
+
 2.5.1 "Cactus cat" (2024-08-20)
 -------------------------------
 

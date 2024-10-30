@@ -139,6 +139,7 @@ following commands::
     $ gwcelery worker -l info -n gwcelery-superevent-worker -Q superevent -c 1
     $ gwcelery worker -l info -n gwcelery-voevent-worker -Q voevent -P solo
     $ gwcelery worker -l info -n gwcelery-em-bright-worker-Q em-bright -c 2 --prefetch-multiplier 1
+    $ gwcelery worker -l info -n gwcelery-highmem-worker -Q highmem -c 2 --prefetch-multiplier 1
     $ gwcelery flask run
 
 .. hint::

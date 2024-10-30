@@ -299,13 +299,18 @@ of several processes:
     A Celery worker that is dedicated to computing source properties of
     compact binary coalescences.
 
-10. **General-Purpose Worker**
+10. **High Memory Worker**
+
+    A Celery worker with low concurrency that is dedicated to running tasks
+    that use a large amount of memory.
+
+11. **General-Purpose Worker**
 
     A Celery worker that accepts all other tasks. This worker also runs an
     :doc:`embedded IGWN Alert listener service <gwcelery.igwn_alert>` that is started
     and stopped as a bootstep.
 
-10. **Flask Web Application**
+12. **Flask Web Application**
 
     A web application that provides forms to manually initiate certain tasks,
     including sending an update alert or creating a mock event.
