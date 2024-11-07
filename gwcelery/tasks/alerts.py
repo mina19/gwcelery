@@ -206,7 +206,7 @@ def _add_external_coinc_to_alert(alert_dict, superevent,
     return alert_dict, combined_skymap
 
 
-@app.task(bind=True, shared=False, queue='kafka-producer', ignore_result=True)
+@app.task(bind=True, shared=False, queue='kafka', ignore_result=True)
 def _upload_notice(self, payload, brokerhost, superevent_id):
     '''
     Upload serialized alert notice to GraceDB
@@ -229,7 +229,7 @@ def _upload_notice(self, payload, brokerhost, superevent_id):
                          superevent_id, message, tags=['public', 'em_follow'])
 
 
-@app.task(bind=True, queue='kafka-producer', shared=False)
+@app.task(bind=True, queue='kafka', shared=False)
 def _send(self, alert_dict, skymap, brokerhost, combined_skymap=None):
     """Write the alert to the Kafka topic"""
     # Copy the alert dictionary so we dont modify the original
@@ -258,14 +258,14 @@ def _send(self, alert_dict, skymap, brokerhost, combined_skymap=None):
     return payload
 
 
-@app.task(bind=True, queue='kafka-producer', shared=False)
+@app.task(bind=True, queue='kafka', shared=False)
 def _send_with_combined(self, alert_dict_combined_skymap, skymap, brokerhost):
     alert_dict, combined_skymap = alert_dict_combined_skymap
     return _send(alert_dict, skymap, brokerhost,
                  combined_skymap=combined_skymap)
 
 
-@app.task(bind=True, ignore_result=True, queue='kafka-producer', shared=False)
+@app.task(bind=True, ignore_result=True, queue='kafka', shared=False)
 def send(self, skymap_and_classification, superevent, alert_type,
          raven_coinc=False, combined_skymap_filename=None):
     """Send an public alert to all currently connected kafka brokers.

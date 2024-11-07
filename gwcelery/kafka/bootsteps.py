@@ -234,7 +234,7 @@ class Consumer(KafkaBootStep):
     name = 'Kafka consumer'
 
     def include_if(self, consumer):
-        return 'kafka-consumer' in consumer.app.amqp.queues
+        return 'kafka' in consumer.app.amqp.queues
 
     def start(self, consumer):
         log.info(f'Starting {self.name}, topics: ' +
@@ -285,7 +285,7 @@ class Producer(KafkaBootStep):
     name = 'Kafka producer'
 
     def include_if(self, consumer):
-        return 'kafka-producer' in consumer.app.amqp.queues
+        return 'kafka' in consumer.app.amqp.queues
 
     def start(self, consumer):
         log.info(f'Starting {self.name}, topics: ' +

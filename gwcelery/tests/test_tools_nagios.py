@@ -28,8 +28,8 @@ def test_nagios_unknown_error(monkeypatch, capsys):
 def celery_worker_parameters():
     return dict(
         perform_ping_check=False,
-        queues=['celery', 'exttrig', 'em-bright', 'kafka-consumer',
-                'kafka-producer', 'multiprocessing', 'openmp', 'superevent',
+        queues=['celery', 'exttrig', 'em-bright', 'kafka',
+                'multiprocessing', 'openmp', 'superevent',
                 'voevent', 'skynet']
     )
 
