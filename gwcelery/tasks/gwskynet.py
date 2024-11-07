@@ -24,7 +24,9 @@ def GWSkyNet_model():
     return GWSkyNet.load_GWSkyNet_model()
 
 
-@app.task(queue='skynet', shared=False)
+# FIXME: run GWSkyNet on general-purpose workers
+# once https://git.ligo.org/manleong.chan/gwskynet/-/issues/6 is fixed.
+@app.task(queue='openmp', shared=False)
 def gwskynet_annotation(input_list, SNRs, superevent_id):
     """Perform the series of tasks necessary for GWSkyNet to
 

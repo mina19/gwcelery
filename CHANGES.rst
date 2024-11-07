@@ -31,6 +31,10 @@ Changelog
 -   Roll back ligo-followup-advocate to 1.2.9 until SSM triggers are planned
     in production.
 
+-   Direct GWSkyNet tasks to the ``openmp`` queue and retire the old ``skynet``
+    queue. The dedicated ``gwskynet`` queue was necessary due to high memory
+    usage that was fixed in GWSkyNet 2.5.1.
+
 2.5.1 "Cactus cat" (2024-08-20)
 -------------------------------
 
