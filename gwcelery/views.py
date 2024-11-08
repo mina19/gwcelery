@@ -100,7 +100,7 @@ def typeahead_superevent_id():
     else:
         prefix = 'S'
         category = 'production'
-        date_end = datetime.datetime.utcnow()
+        date_end = datetime.datetime.now(datetime.timezone.utc)
         date_start = date_end - datetime.timedelta(days=7)
         date_partial = ''
         date_partial_length = 0
