@@ -20,4 +20,4 @@ cp "${GRID_PROXY_PATH}" "${X509_USER_CERT}"
 cp "${GRID_PROXY_PATH}" "${X509_USER_KEY}"
 
 kinit_keytab "${HOME}/read-cvmfs.keytab"
-htgettoken -v -a vault.ligo.org -i igwn -r read-cvmfs-${USER} --scopes=read:/virgo --credkey=read-cvmfs-${USER}/robot/${USER}.ligo.caltech.edu --nooidc >> ${HOME}/htgettoken_output.txt
+chronic htgettoken -v -a vault.ligo.org -i igwn -r read-cvmfs-${USER} --scopes=read:/virgo --credkey=read-cvmfs-${USER}/robot/${USER}.ligo.caltech.edu --nooidc
