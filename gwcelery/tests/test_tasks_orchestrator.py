@@ -826,11 +826,14 @@ def _mock_get_log(se_id):
 
 
 @pytest.mark.parametrize(  # noqa: F811
-    'labels,superevent_id,ext_id',
-    [[[], 'S1234', 'E1'],
-     [['EM_COINC', 'RAVEN_ALERT'], 'S1234', 'E2'],
-     [['EM_COINC', 'RAVEN_ALERT', 'COMBINEDSKYMAP_READY'], 'S1234', 'E3'],
-     [['EM_COINC', 'RAVEN_ALERT', 'COMBINEDSKYMAP_READY'], 'S2468', 'E3']])
+    'labels,superevent_id,ext_id,search',
+    [[[], 'S1234', 'E1', 'AllSky'],
+     [[], 'S1234', 'E1', 'SSM'],
+     [['EM_COINC', 'RAVEN_ALERT'], 'S1234', 'E2', 'AllSky'],
+     [['EM_COINC', 'RAVEN_ALERT', 'COMBINEDSKYMAP_READY'], 'S1234',
+        'E3', 'AllSky'],
+     [['EM_COINC', 'RAVEN_ALERT', 'COMBINEDSKYMAP_READY'], 'S2468',
+        'E3', 'AllSky']])
 @patch('gwcelery.tasks.gracedb.expose._orig_run', return_value=None)
 @patch('gwcelery.tasks.gracedb.get_log',
        side_effect=_mock_get_log)
@@ -853,7 +856,7 @@ def test_handle_superevent_initial_alert(mock_create_initial_circular,
                                          mock_create_voevent,
                                          mock_create_tag, mock_get_log,
                                          mock_expose, labels,
-                                         superevent_id, ext_id):
+                                         superevent_id, ext_id, search):
     """Test that the ``ADVOK`` label triggers an initial alert.
     This test varies the labels in the superevent and external event in order
     to test the non-RAVEN alerts, RAVEN alerts without a combined sky map, and
@@ -867,6 +870,7 @@ def test_handle_superevent_initial_alert(mock_create_initial_circular,
             'category': 'Production',
             'superevent_id': superevent_id,
             'em_type': ext_id if labels else '',
+            'preferred_event_data': dict(search=search),
             'category': 'Production'}
     }
     combined_skymap_needed = ('COMBINEDSKYMAP_READY' in labels)
@@ -883,19 +887,45 @@ def test_handle_superevent_initial_alert(mock_create_initial_circular,
     # Run function under test
     orchestrator.handle_superevent(alert)
 
-    mock_create_voevent.assert_called_once_with(
-        superevent_id, 'initial', BBH=0.02, BNS=0.94, NSBH=0.03, ProbHasNS=0.0,
-        ProbHasRemnant=0.0, Terrestrial=0.01, internal=False, open_alert=True,
+    voevent_kwargs = dict(
+        ProbHasRemnant=0.0, ProbHasNS=0.0, internal=False, open_alert=True,
         skymap_filename='foobar.multiorder.fits,0', skymap_type='foobar',
         raven_coinc='RAVEN_ALERT' in labels, HasMassGap=0.0,
         Significant=1,  # this field is true for initial alerts
         combined_skymap_filename=(combined_skymap_filename if
-                                  combined_skymap_needed else None))
+                                  combined_skymap_needed else None)
+    )
+    download_calls = (
+        superevent_initial_alert_download(
+            'foobar.multiorder.fits,0',
+            superevent_id
+        ),
+        superevent_initial_alert_download('em_bright.json,0', superevent_id)
+    )
+    public_tag_calls = [
+        call('foobar.multiorder.fits,0', 'public', superevent_id),
+        call('em_bright.json,0', 'public', superevent_id),
+        call('S1234-Initial-1.xml', 'public', superevent_id)
+    ]
+    if search != "SSM":
+        # For SSM alerts there is no p-astro information
+        voevent_kwargs.update(
+            dict(BBH=0.02, BNS=0.94, NSBH=0.03, Terrestrial=0.01)
+        )
+        download_calls += (
+            superevent_initial_alert_download(
+                'p_astro.json,0',
+                superevent_id
+            ),
+        )
+        public_tag_calls.append(
+            call('p_astro.json,0', 'public', superevent_id),
+        )
+    mock_create_voevent.assert_called_once()
+    assert mock_create_voevent.call_args.args == (superevent_id, 'initial')
+    assert set(voevent_kwargs) == set(mock_create_voevent.call_args.kwargs)
     mock_alerts_send.assert_called_once_with(
-        (superevent_initial_alert_download('foobar.multiorder.fits,0',
-                                           superevent_id),
-         superevent_initial_alert_download('em_bright.json,0', superevent_id),
-         superevent_initial_alert_download('p_astro.json,0', superevent_id)) +
+        download_calls +
         ((6 if combined_skymap_needed else 4) * (None,)),
         alert['object'], 'initial', raven_coinc='RAVEN_ALERT' in labels,
         combined_skymap_filename=combined_skymap_filename)
@@ -904,12 +934,7 @@ def test_handle_superevent_initial_alert(mock_create_initial_circular,
         mock_create_emcoinc_circular.assert_called_once_with(superevent_id)
     else:
         mock_create_initial_circular.assert_called_once_with(superevent_id)
-    mock_create_tag.assert_has_calls(
-        [call('foobar.multiorder.fits,0', 'public', superevent_id),
-         call('em_bright.json,0', 'public', superevent_id),
-         call('p_astro.json,0', 'public', superevent_id),
-         call('S1234-Initial-1.xml', 'public', superevent_id)],
-        any_order=True)
+    mock_create_tag.assert_has_calls(public_tag_calls, any_order=True)
     mock_expose.assert_called_once_with(superevent_id)
 
 

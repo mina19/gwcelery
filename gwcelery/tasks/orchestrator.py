@@ -792,7 +792,8 @@ def earlywarning_preliminary_alert(event, alert, alert_type='preliminary',
         em_bright_filename = 'em_bright.json'
     elif alert_group == 'cbc':
         skymap_filename = 'bayestar.multiorder.fits'
-        p_astro_filename = alert_pipeline + '.p_astro.json'
+        p_astro_filename = alert_pipeline + '.p_astro.json' \
+            if alert_search != 'ssm' else None
         em_bright_filename = 'em_bright.json'
     elif alert_group == 'burst':
         skymap_filename = event['pipeline'].lower() + '.multiorder.fits'
@@ -1067,6 +1068,7 @@ def earlywarning_preliminary_initial_update_alert(
     """
     labels = superevent['labels']
     superevent_id = superevent['superevent_id']
+    search = superevent['preferred_event_data']['search'].lower()
 
     if 'INJ' in labels:
         return
@@ -1082,7 +1084,7 @@ def earlywarning_preliminary_initial_update_alert(
     combined_skymap_needed = False
     skymap_needed = (skymap_filename is None)
     em_bright_needed = (em_bright_filename is None)
-    p_astro_needed = (p_astro_filename is None)
+    p_astro_needed = False if search == 'ssm' else (p_astro_filename is None)
     raven_coinc = ('RAVEN_ALERT' in labels and bool(superevent['em_type']))
     if raven_coinc:
         ext_labels = gracedb.get_labels(superevent['em_type'])
@@ -1277,9 +1279,15 @@ def earlywarning_preliminary_initial_update_alert(
         download_andor_expose_group = [
             gracedb.download.si(em_bright_filename, superevent_id) if
             em_bright_filename is not None else identity.s(None),
-            gracedb.download.si(p_astro_filename, superevent_id) if
-            p_astro_filename is not None else identity.s(None),
         ]
+        if search != 'ssm':
+            download_andor_expose_group += [
+                gracedb.download.si(p_astro_filename, superevent_id) if
+                p_astro_filename is not None else identity.s(None)
+            ]
+        else:
+            # for SSM events skip downloading p-astro file
+            download_andor_expose_group += [identity.s(None)]
         high_profile_canvas = identity.si()
 
         voevent_canvas = _create_voevent.s(

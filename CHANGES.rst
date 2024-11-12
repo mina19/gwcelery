@@ -42,6 +42,9 @@ Changelog
 -   Fix coincidence search so SubGRB events can only be found in coincidence
     with CBC-like events (group is CBC or from CWB BBH search).
 
+-   Don't download p-astro file for SSM alert canvas, since they are not required
+    by policy.
+
 2.5.2 "Cactus cat" (2024-11-18)
 -------------------------------
 
