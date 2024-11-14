@@ -41,6 +41,9 @@ Changelog
     round-robin fashion to workers in the high-concurrency general-purpose
     queue.
 
+-   Fix coincidence search so SubGRB events can only be found in coincidence
+    with CBC-like events (group is CBC or from CWB BBH search).
+
 2.5.1 "Cactus cat" (2024-08-20)
 -------------------------------
 

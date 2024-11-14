@@ -250,14 +250,28 @@ def handle_grb_igwn_alert(alert):
                                          group='Burst', se_searches=['MDC'])
                 return
 
-            if alert['object']['search'] in ['SubGRB', 'SubGRBTargeted']:
+            elif alert['object']['search'] == 'SubGRB':
+                # Launch search with standard CBC
+                raven.coincidence_search(
+                    graceid, alert['object'],
+                    searches=['SubGRB'],
+                    group='CBC',
+                    pipelines=[alert['object']['pipeline']])
+                # Launch search with CWB BBH
+                raven.coincidence_search(
+                    graceid, alert['object'],
+                    searches=['SubGRB'],
+                    group='Burst',
+                    se_searches=['BBH'],
+                    pipelines=[alert['object']['pipeline']])
+            elif alert['object']['search'] == 'SubGRBTargeted':
                 # if sub-threshold GRB, launch search with that pipeline
                 raven.coincidence_search(
                     graceid, alert['object'],
-                    searches=['SubGRB', 'SubGRBTargeted'],
+                    searches=['SubGRBTargeted'],
                     se_searches=['AllSky', 'BBH'],
                     pipelines=[alert['object']['pipeline']])
-            else:
+            elif alert['object']['search'] == 'GRB':
                 # launch standard Burst-GRB search
                 raven.coincidence_search(graceid, alert['object'],
                                          group='Burst', se_searches=['AllSky'])
