@@ -1,10 +1,8 @@
 Changelog
 =========
 
-2.5.2 (unreleased)
+2.6.0 (unreleased)
 ------------------
-
--   Update bilby_pipe to v1.4.2.
 
 -   Enabled SSM triggers and HasSSM source property
 
@@ -44,6 +42,17 @@ Changelog
 -   Fix coincidence search so SubGRB events can only be found in coincidence
     with CBC-like events (group is CBC or from CWB BBH search).
 
+2.5.2 "Cactus cat" (2024-11-18)
+-------------------------------
+
+-   Update ``bilby_pipe`` to v1.4.2, ``GWSkyNet`` to v2.5.1, and
+    ``ligo.skymap`` to v2.1.2.
+
+-   Roll back ``ligo-followup-advocate`` to 1.2.9 until SSM triggers are
+    planned in production.
+
+-   Change all external ingestion handlers and functions to concurrency of 1.
+
 2.5.1 "Cactus cat" (2024-08-20)
 -------------------------------
 
@@ -55,7 +64,7 @@ Changelog
 2.5.0 "Cactus cat" (2024-08-08)
 -------------------------------
 
--   Update ``ligo-rrt-chat``` to v0.1.5, ``ligo-followup-advocate`` to v1.2.10, and
+-   Update ``ligo-rrt-chat`` to v0.1.5, ``ligo-followup-advocate`` to v1.2.10, and
     ``ligo.skymap`` to v2.0.1.
 
 -   Change functions calls to prepare for NumPy 2.0 release.
