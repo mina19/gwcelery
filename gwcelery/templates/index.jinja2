@@ -48,9 +48,10 @@
                     </div>
                 </div>
                 <div class="form-group col-md">
-                    <label for=gracedb-host>LVAlert Host</label>
+                    <label for=gracedb-host>igwn-alert [options]</label>
                     <div class="input-group">
-                        <input id=gracedb-host class=form-control readonly value="{{ conf.lvalert_host }}">
+                      <input id=gracedb-host class=form-control readonly
+			     value="-s {{ conf.igwn_alert_server }} -g {{ conf.igwn_alert_group }}">
                     </div>
                 </div>
                 <div class="form-group col-md">
