@@ -23,6 +23,7 @@ from ligo.skymap.moc import bayestar_adaptive_grid
 from ligo.skymap.plot.bayes_factor import plot_bayes_factor
 
 from .. import _version, app
+from ..util import closing_figures
 from ..util.cmdline import handling_system_exit
 from ..util.tempfile import NamedTemporaryFile
 from . import gracedb, skymaps
@@ -787,6 +788,7 @@ def create_upload_external_skymap(event, notice_type, notice_date):
 
 
 @app.task(shared=False)
+@closing_figures()
 def plot_overlap_integral(coinc_far_dict, superevent, ext_event,
                           var_label=r"\mathcal{I}_{\Omega}"):
     """Plot and upload visualization of the sky map overlap integral computed
