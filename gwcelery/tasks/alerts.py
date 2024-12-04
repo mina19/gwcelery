@@ -197,8 +197,8 @@ def _add_external_coinc_to_alert(alert_dict, superevent,
         'ivorn': external_event['extra_attributes']['GRB']['ivorn'],
         'observatory': external_event['pipeline'],
         'search': external_event['search'],
-        'time_difference': round(superevent['t_0']
-                                 - external_event['gpstime'], 2),
+        'time_difference': round(external_event['gpstime'] -
+                                 superevent['t_0'], 2),
         'time_coincidence_far': superevent['time_coinc_far'],
         'time_sky_position_coincidence_far': superevent['space_coinc_far']
     }
