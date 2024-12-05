@@ -45,6 +45,7 @@ Changelog
 -   Don't download p-astro file for SSM alert canvas, since they are not required
     by policy.
 
+<<<<<<< HEAD
 -   Automatically rotate and compress log files to avoid running out of disk
     space. Logs are rotated and compressed once per week and deleted after one
     month.
@@ -62,6 +63,9 @@ Changelog
 
 -   Plot external sky maps with contour lines and annotate with contained
     areas; remove central RA/dec position.
+
+-   Drop support for Python 3.10, conforming to
+    `SPEC 0 — Minimum Supported Dependencies <https://scientific-python.org/specs/spec-0000/>`_.
 
 2.5.2 "Cactus cat" (2024-11-18)
 -------------------------------

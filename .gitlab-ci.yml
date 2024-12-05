@@ -56,9 +56,6 @@ build:
     - poetry check --lock
     - poetry install -E test
   needs: []
-test/poetry/python3.10:
-  extends: .test-poetry
-  image: python:3.10
 test/poetry/python3.11:
   extends: .test-poetry
   image: python:3.11
@@ -78,9 +75,6 @@ test/poetry/python3.12:
     - *install-redis
   needs:
     - build
-test/wheel/python3.10:
-  extends: .test-wheel
-  image: python:3.10
 test/wheel/python3.11:
   extends: .test-wheel
   image: python:3.11
@@ -170,7 +164,7 @@ pages:
   only:
     - main
   needs:
-    - test/poetry/python3.10
+    - test/poetry/python3.11
 
 # Upload package to PyPI.
 # Place your PyPI API token in the repository's GitLab CI secrets.
