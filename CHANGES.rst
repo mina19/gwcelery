@@ -45,6 +45,18 @@ Changelog
 -   Don't download p-astro file for SSM alert canvas, since they are not required
     by policy.
 
+-   Automatically rotate and compress log files to avoid running out of disk
+    space. Logs are rotated and compressed once per week and deleted after one
+    month.
+
+-   Logs are now stored in the directory ``~/.local/state/log``, which is the
+    per-user equivalent of ``/var/log`` (at least according to the conventions
+    of `systemd <https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html#Specifiers>`_).
+
+-   Rename the certificate renewal script from ``renew-cert.sh`` to ``cron.sh``
+    to reflect the fact that it is now responsible for additional maintenance
+    tasks including log rotation.
+
 2.5.2 "Cactus cat" (2024-11-18)
 -------------------------------
 

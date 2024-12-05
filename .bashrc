@@ -6,6 +6,9 @@ if [ -f /etc/bashrc ]; then
     . /etc/bashrc
 fi
 
+# Create log directories.
+mkdir -p $HOME/.local/state/log
+
 # Add user site directory to the PATH. On Linux, this is usuall ~/.local/bin.
 export PATH="$(python3.11 -m site --user-base)/bin${PATH+:${PATH}}"
 

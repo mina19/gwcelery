@@ -1,5 +1,7 @@
 #!/usr/bin/bash
-# Renew the robot certificate from the Kerberos keytab.
+# Perform hourly maintenance activities.
+
+# Stop on error.
 set -e
 
 # This script is designed to be run by cron.
@@ -11,6 +13,7 @@ kinit_keytab() {
     kinit "${principal}" -k -t "$1"
 }
 
+# Renew GraceDB credentials.
 X509_USER_CERT="$HOME/.globus/usercert.pem"
 X509_USER_KEY="$HOME/.globus/userkey.pem"
 kinit_keytab "${HOME}/.globus/krb5.keytab"
@@ -19,5 +22,9 @@ GRID_PROXY_PATH="$(ecp-cert-info -path)"
 cp "${GRID_PROXY_PATH}" "${X509_USER_CERT}"
 cp "${GRID_PROXY_PATH}" "${X509_USER_KEY}"
 
+# Renew CVMFS credentials.
 kinit_keytab "${HOME}/read-cvmfs.keytab"
 chronic htgettoken -v -a vault.ligo.org -i igwn -r read-cvmfs-${USER} --scopes=read:/virgo --credkey=read-cvmfs-${USER}/robot/${USER}.ligo.caltech.edu --nooidc
+
+# Rotate log files.
+logrotate --state ~/.local/state/logrotate.status ~/.config/logrotate.conf

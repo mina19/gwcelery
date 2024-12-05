@@ -114,3 +114,16 @@ systems)::
 
 If you have to make any changes to your Redis configuration, be sure to restart
 the Redis daemon.
+
+Cron
+----
+
+For deployments of GWCelery at
+`LIGO Data Grid computing sites <https://computing.docs.ligo.org/guide/computing-centres/ldg/>`_,
+it is recommended that you configure :manpage:`cron <cron(8)>` to call the
+script ``cron.sh`` once per hour by adding the following to your
+:manpage:`crontab <crontab(1)>`::
+
+    @hourly $HOME/cron.sh
+
+This script automatically renews credentials and rotates log files.
