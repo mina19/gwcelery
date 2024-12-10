@@ -1144,7 +1144,7 @@ def earlywarning_preliminary_initial_update_alert(
         message = 'Combined LVK-external sky map copied from {0}'.format(
             ext_id)
         message_png = (
-            'Mollweide projection of <a href="/api/events/{se_id}/files/'
+            'Mollweide projection of <a href="/api/superevents/{se_id}/files/'
             '{filename}">{filename}</a>, copied from {ext_id}').format(
                se_id=superevent_id,
                ext_id=ext_id,

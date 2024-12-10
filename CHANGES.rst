@@ -57,6 +57,9 @@ Changelog
     to reflect the fact that it is now responsible for additional maintenance
     tasks including log rotation.
 
+-   Fixed the broken link at the combined sky map png which was pointing to a
+    wrong URL.
+
 2.5.2 "Cactus cat" (2024-11-18)
 -------------------------------
 
