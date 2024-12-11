@@ -60,6 +60,9 @@ Changelog
 -   Fixed the broken link at the combined sky map png which was pointing to a
     wrong URL.
 
+-   Plot external sky maps with contour lines and annotate with contained
+    areas; remove central RA/dec position.
+
 2.5.2 "Cactus cat" (2024-11-18)
 -------------------------------
 

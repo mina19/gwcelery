@@ -450,8 +450,6 @@ def read_upload_skymap_from_base64(event, skymap_str):
     """
 
     graceid = event['graceid']
-    ra = event['extra_attributes']['GRB']['ra']
-    dec = event['extra_attributes']['GRB']['dec']
 
     # Decode base64 encoded string to bytes string
     skymap_data = b64decode(skymap_str)
@@ -476,7 +474,7 @@ def read_upload_skymap_from_base64(event, skymap_str):
                     event['pipeline']),
                 ['sky_loc']),
 
-            skymaps.plot_allsky.si(skymap_data, ra=ra, dec=dec)
+            skymaps.plot_allsky.si(skymap_data)
             |
             gracedb.upload.s(event['pipeline'].lower() + '_skymap.png',
                              graceid,
@@ -776,7 +774,7 @@ def create_upload_external_skymap(event, notice_type, notice_date):
                 extra_sentence),
             ['sky_loc'])
         |
-        skymaps.plot_allsky.si(skymap_data, ra=ra, dec=dec)
+        skymaps.plot_allsky.si(skymap_data)
         |
         gracedb.upload.s(event['pipeline'].lower() + '_skymap.png',
                          graceid,

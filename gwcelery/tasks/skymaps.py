@@ -115,7 +115,7 @@ def fits_header(filecontents, filename):
 
 @app.task(shared=False)
 @closing_figures()
-def plot_allsky(filecontents, ra=None, dec=None):
+def plot_allsky(filecontents):
     """Plot a Mollweide projection of a sky map using the command-line tool
     :doc:`ligo-skymap-plot <ligo.skymap:tool/ligo_skymap_plot>`.
     """
@@ -125,12 +125,8 @@ def plot_allsky(filecontents, ra=None, dec=None):
     with NamedTemporaryFile(mode='rb', suffix='.png') as pngfile, \
             NamedTemporaryFile(content=filecontents) as fitsfile, \
             handling_system_exit():
-        if ra is not None and dec is not None:
-            ligo_skymap_plot.main([fitsfile.name, '-o', pngfile.name,
-                                   '--annotate', '--radec', str(ra), str(dec)])
-        else:
-            ligo_skymap_plot.main([fitsfile.name, '-o', pngfile.name,
-                                   '--annotate', '--contour', '50', '90'])
+        ligo_skymap_plot.main([fitsfile.name, '-o', pngfile.name,
+                               '--annotate', '--contour', '50', '90'])
         return pngfile.read()
 
 
