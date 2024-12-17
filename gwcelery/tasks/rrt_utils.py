@@ -8,7 +8,7 @@ from ..util.tempfile import NamedTemporaryFile
 from . import gracedb
 
 
-@app.task(shared=False)
+@app.task(ignore_result=True, shared=False)
 def check_high_profile(skymap, em_bright,
                        p_astro, superevent):
     superevent_id = superevent['superevent_id']
@@ -16,7 +16,7 @@ def check_high_profile(skymap, em_bright,
     # RAVEN_ALERT HIGH_PROFILE is implemented in raven.py
     # Checking if the label is applied beforehand
     if 'HIGH_PROFILE' in superevent['labels']:
-        return "HIGH_PROFILE already applied"
+        return  # HIGH_PROFILE already applied
 
     # low-far unmodelled burst condition
     far_list = []
@@ -32,7 +32,7 @@ def check_high_profile(skymap, em_bright,
        far_list_sorted[0]["search"] != "BBH":
         gracedb.create_label.si(
             'HIGH_PROFILE', superevent_id).delay()
-        return "Event with the lowest FAR is a Burst event. Applying label"
+        return  # Event with the lowest FAR is a Burst event. Applying label
 
     # annotation number condition
     preferred_event = superevent['preferred_event_data']
@@ -55,5 +55,5 @@ def check_high_profile(skymap, em_bright,
             if (p_bns > 0.1 or p_nsbh > 0.1 or has_remnant > 0.1 or sky_area < 100):  # noqa: E501
                 gracedb.create_label.si(
                     'HIGH_PROFILE', superevent_id).delay()
-                return "Annotations condition satisfied. Applying label"
-    return "No conditions satisfied. Skipping"
+                return  # Annotations condition satisfied. Applying label
+    return  # No conditions satisfied. Skipping
